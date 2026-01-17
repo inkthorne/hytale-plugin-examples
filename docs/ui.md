@@ -3,7 +3,7 @@
 ## Overview
 **Package:** `com.hypixel.hytale.server.core.ui`
 
-Hytale provides UI building APIs for creating custom interfaces. UI is managed through XML-based definitions sent to clients via command builders.
+Hytale provides UI building APIs for creating custom interfaces. UI is managed through a curly-brace DSL format sent to clients via command builders.
 
 ---
 
@@ -497,10 +497,10 @@ Group {
 
     Group #MyPanel {
         Anchor: (Width: 300, Height: 100);
-        Background: #000000(0.8);
+        Background: (Color: #000000(0.8));
 
         Label #MyLabel {
-            Style: (FontSize: 24, TextColor: #00ff00, Alignment: Center);
+            Style: (FontSize: 24, TextColor: #00ff00, HorizontalAlignment: Center);
             Text: "Hello World";
         }
     }
@@ -526,6 +526,299 @@ Group {
 | `LeftCenterWrap` | Left-aligned with center wrapping |
 
 **Note:** `Top` and `Left` are the most commonly used values for stacking layouts.
+
+---
+
+## UI DSL Syntax Reference
+
+Hytale's UI system uses a custom curly-brace DSL (Domain Specific Language) for defining user interfaces. This section provides a comprehensive reference for the syntax.
+
+### Element Types
+
+#### Container Elements
+| Element | Description |
+|---------|-------------|
+| `Group` | Basic container for grouping other elements |
+
+#### Text Elements
+| Element | Description |
+|---------|-------------|
+| `Label` | Static text display |
+| `TimerLabel` | Label that displays timer/countdown values |
+
+#### Button Elements
+| Element | Description |
+|---------|-------------|
+| `Button` | Basic clickable button (icon-based) |
+| `TextButton` | Button with text content |
+| `BackButton` | Navigation back button |
+
+#### Input Elements
+| Element | Description |
+|---------|-------------|
+| `TextField` | Single-line text input |
+| `NumberField` | Numeric input field |
+| `CompactTextField` | Smaller text input variant |
+| `CheckBox` | Boolean toggle checkbox |
+| `Slider` | Range slider control |
+| `DropdownBox` | Dropdown selection menu |
+
+#### Display Elements
+| Element | Description |
+|---------|-------------|
+| `Sprite` | Image/sprite display |
+| `AssetImage` | Asset-based image display |
+| `ItemSlot` | Inventory item slot display |
+
+### Property Reference
+
+#### Anchor Properties
+
+The `Anchor` property controls element positioning and sizing:
+
+```
+Anchor: (Width: 300, Height: 100);              // Fixed size
+Anchor: (Width: 300, Height: 100, Top: 20);     // Fixed size with top offset
+Anchor: Full;                                    // Fill parent completely
+Anchor: Horizontal;                              // Fill horizontally
+Anchor: Vertical;                                // Fill vertically
+```
+
+| Property | Description |
+|----------|-------------|
+| `Width` | Fixed width in pixels |
+| `Height` | Fixed height in pixels |
+| `Top` | Distance from parent's top edge |
+| `Bottom` | Distance from parent's bottom edge |
+| `Left` | Distance from parent's left edge |
+| `Right` | Distance from parent's right edge |
+| `Full` | Fill parent completely (preset) |
+| `Horizontal` | Fill horizontally (preset) |
+| `Vertical` | Fill vertically (preset) |
+
+#### Padding Properties
+
+The `Padding` property controls internal spacing:
+
+```
+Padding: (Full: 10);                  // Equal padding all sides
+Padding: (Horizontal: 20, Vertical: 10);  // Horizontal and vertical
+Padding: (Top: 10, Bottom: 10, Left: 20, Right: 20);  // Individual sides
+```
+
+| Property | Description |
+|----------|-------------|
+| `Full` | Equal padding on all sides |
+| `Horizontal` | Left and right padding |
+| `Vertical` | Top and bottom padding |
+| `Top` | Top padding only |
+| `Bottom` | Bottom padding only |
+| `Left` | Left padding only |
+| `Right` | Right padding only |
+
+#### Visibility Properties
+
+| Property | Description |
+|----------|-------------|
+| `Visible` | Boolean visibility (`true`/`false`) |
+| `FlexWeight` | Flex layout weight for sizing |
+| `Opacity` | Element opacity (0.0 to 1.0) |
+
+### Style Properties
+
+The `Style` property controls text and visual appearance:
+
+```
+Style: (FontSize: 24, TextColor: #ffffff, HorizontalAlignment: Center);
+```
+
+#### Font Properties
+| Property | Values/Description |
+|----------|-------------|
+| `FontSize` | Numeric size (e.g., `24`) |
+| `FontName` | Font name string |
+| `RenderBold` | Boolean for bold text |
+| `RenderUppercase` | Boolean for uppercase transform |
+| `LetterSpacing` | Numeric letter spacing |
+
+#### Color Properties
+| Property | Description |
+|----------|-------------|
+| `TextColor` | Text color (e.g., `#ffffff`, `#00ff00(0.8)`) |
+| `OutlineColor` | Text outline color |
+
+#### Alignment Properties
+| Property | Values |
+|----------|--------|
+| `HorizontalAlignment` | `Start`, `Center`, `End` |
+| `VerticalAlignment` | `Start`, `Center`, `End` |
+
+#### Text Properties
+| Property | Description |
+|----------|-------------|
+| `Wrap` | Boolean for text wrapping |
+
+### Background Formats
+
+The `Background` property supports multiple formats:
+
+```
+// Color with alpha
+Background: #333333(0.9);
+
+// Simple texture
+Background: "Texture.png";
+
+// Color object format
+Background: (Color: #000000(0.5));
+
+// 9-slice patch (for scalable UI elements)
+Background: (TexturePath: "Common/UI/Shared/ButtonBackground.png", Border: 20);
+
+// Full 9-slice with individual borders
+Background: (TexturePath: "img.png", BorderTop: 10, BorderBottom: 10, BorderLeft: 20, BorderRight: 20);
+```
+
+### Variable and Import Syntax
+
+#### File Imports
+```
+$Common = "../Common.ui";           // Import file as variable
+$Shared = "Shared/Components.ui";   // Relative path import
+```
+
+#### Variable Definitions
+```
+@ButtonHeight = 44;                 // Define numeric variable
+@PrimaryColor = #3498db;            // Define color variable
+@LabelStyle = (FontSize: 16, TextColor: #ffffff);  // Define style variable
+```
+
+#### Using Variables
+```
+Anchor: (Height: @ButtonHeight);    // Use variable value
+Style: @LabelStyle;                 // Use style variable
+```
+
+#### Spread Operator
+```
+Group {
+    ...@CommonStyles                // Spread variable properties into element
+}
+```
+
+#### Localization Keys
+```
+Text: %server.customUI.welcomeMessage;    // Localization key lookup
+Text: %server.customUI.playerName;        // Server-provided localized text
+```
+
+#### Element ID References
+```
+#ElementId                          // Reference to element by ID
+#MyButton                           // Example: reference to button with ID "MyButton"
+```
+
+### State-Based Styling
+
+Elements can have different styles for different interaction states:
+
+```
+Style: (
+    Default: (Background: #333333, TextColor: #ffffff);
+    Hovered: (Background: #444444, TextColor: #ffffff);
+    Pressed: (Background: #222222, TextColor: #cccccc);
+    Disabled: (Background: #111111, TextColor: #666666);
+);
+```
+
+Available states:
+| State | Description |
+|-------|-------------|
+| `Default` | Normal/idle state |
+| `Hovered` | Mouse hovering over element |
+| `Pressed` | Element being clicked/pressed |
+| `Disabled` | Element is disabled |
+| `Focused` | Element has keyboard focus |
+| `Selected` | Element is selected |
+
+### Event Handling
+
+UI elements can send data events to the server using `SendData`:
+
+```
+TextButton #MyButton {
+    Text: "Click Me";
+    OnActivating: (SendData: "button_clicked");
+}
+```
+
+The event data string is received in the `handleDataEvent()` method of your `CustomUIPage`:
+
+```java
+@Override
+public void handleDataEvent(Ref<EntityStore> ref, Store<EntityStore> store, String data) {
+    if (data.equals("button_clicked")) {
+        // Handle button click
+    }
+}
+```
+
+#### Event Properties
+| Property | Description |
+|----------|-------------|
+| `OnActivating` | Triggered when element is clicked/activated |
+
+### Complete Example
+
+```
+// Import shared components
+$Common = "../Common.ui";
+
+// Define variables
+@PanelBackground = (Color: #1a1a2e(0.95));
+@ButtonStyle = (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center);
+
+Group {
+    LayoutMode: CenterMiddle;
+    Anchor: Full;
+    Background: (Color: #000000(0.7));
+
+    Group #MainPanel {
+        Anchor: (Width: 400, Height: 300);
+        Background: @PanelBackground;
+        Padding: (Full: 20);
+        LayoutMode: Top;
+
+        Label #Title {
+            Style: (FontSize: 28, TextColor: #e94560, HorizontalAlignment: Center, RenderBold: true);
+            Text: "My Custom UI";
+        }
+
+        Group #ButtonContainer {
+            Anchor: (Height: 50);
+            Padding: (Top: 20);
+            LayoutMode: Center;
+
+            TextButton #ActionButton {
+                Anchor: (Width: 150, Height: 44);
+                Background: (Color: #0f3460);
+                Style: @ButtonStyle;
+                Text: "Take Action";
+                OnActivating: (SendData: "action_pressed");
+            }
+        }
+
+        TextButton #CloseButton {
+            Anchor: (Width: 100, Height: 36);
+            Background: (Color: #533483);
+            Style: (FontSize: 14, TextColor: #ffffff, HorizontalAlignment: Center);
+            Text: "Close";
+            OnActivating: (SendData: "close");
+        }
+    }
+}
+```
 
 ---
 
@@ -859,7 +1152,7 @@ protected void setup() {
 ---
 
 ## Notes
-- UI systems are XML-based; understand the client protocol for full usage
+- UI systems use a curly-brace DSL format; see the UI DSL Syntax Reference section below
 - Window/Page/HUD managers handle network synchronization automatically
 - Use `Value.ref()` for dynamic bindings that update when document values change
 - File browser provides secure path resolution to prevent directory traversal
