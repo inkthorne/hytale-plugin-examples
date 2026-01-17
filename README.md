@@ -1,6 +1,6 @@
 # Hytale Plugin Examples
 
-A complete reference for Hytale server plugin development with documentation and working examples.
+A reference for Hytale server plugin development with documentation and working examples.
 
 ## Documentation
 
