@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayer
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
 
 /**
  * Command with a position argument demonstrating argument parsing.
@@ -35,9 +36,9 @@ public class TeleportCommand extends AbstractPlayerCommand {
         Transform current = playerRef.getTransform();
         Vector3d targetPos = relPos.getRelativePosition(current.getPosition(), world);
 
-        // Update player position
-        Transform newTransform = new Transform(targetPos, current.getRotation());
-        playerRef.updatePosition(world, newTransform, playerRef.getHeadRotation());
+        // Add Teleport component - processed by TeleportSystems to actually move the player
+        Teleport teleport = Teleport.createForPlayer(world, targetPos, current.getRotation());
+        store.addComponent(ref, Teleport.getComponentType(), teleport);
 
         playerRef.sendMessage(Message.raw("Teleported to " + formatPosition(targetPos)));
     }

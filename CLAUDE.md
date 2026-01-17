@@ -22,6 +22,8 @@ Deploy to Hytale mods folder:
 deploy.bat
 ```
 
+**Note:** When running from bash, use `./build.bat` and `./deploy.bat` (with the `./` prefix).
+
 Mods directory: `%APPDATA%\Hytale\UserData\Mods\`
 
 ## Requirements
