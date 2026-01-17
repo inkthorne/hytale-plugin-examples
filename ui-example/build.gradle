@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.example'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+def appData = System.getenv("APPDATA") ?: "${System.getProperty('user.home')}/AppData/Roaming"
+def hytaleServerJar = file("${appData}/Hytale/install/release/package/game/latest/Server/HytaleServer.jar")
+
+dependencies {
+    compileOnly files(hytaleServerJar)
+}
+
+jar {
+    archiveBaseName.set('ui-example')
+    archiveVersion.set(version)
+
+    manifest {
+        attributes(
+            'Main-Class': 'com.example.ui.UIPlugin'
+        )
+    }
+}

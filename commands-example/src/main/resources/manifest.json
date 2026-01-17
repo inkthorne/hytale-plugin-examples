@@ -1,0 +1,5 @@
+{
+  "Group": "Examples",
+  "Name": "CommandsExample",
+  "Main": "com.example.commands.CommandsPlugin"
+}

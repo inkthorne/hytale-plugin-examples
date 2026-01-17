@@ -1,0 +1,6 @@
+{
+  "Group": "Examples",
+  "Name": "UIExample",
+  "Main": "com.example.ui.UIPlugin",
+  "IncludesAssetPack": true
+}

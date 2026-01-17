@@ -1,0 +1,48 @@
+package com.example.commands;
+
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.math.vector.Transform;
+import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.command.system.CommandContext;
+import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
+import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
+import com.hypixel.hytale.server.core.command.system.arguments.types.RelativeDoublePosition;
+import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+/**
+ * Command with a position argument demonstrating argument parsing.
+ * Usage: /tp <x> <y> <z>
+ * Supports relative coordinates: /tp ~10 ~ ~-5
+ */
+public class TeleportCommand extends AbstractPlayerCommand {
+
+    private final RequiredArg<RelativeDoublePosition> positionArg;
+
+    public TeleportCommand() {
+        super("tp", "Teleport to a position");
+        positionArg = withRequiredArg("position", "Target position", ArgTypes.RELATIVE_POSITION);
+    }
+
+    @Override
+    protected void execute(CommandContext ctx, Store<EntityStore> store,
+                          Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+        RelativeDoublePosition relPos = ctx.get(positionArg);
+        Transform current = playerRef.getTransform();
+        Vector3d targetPos = relPos.getRelativePosition(current.getPosition(), world);
+
+        // Update player position
+        Transform newTransform = new Transform(targetPos, current.getRotation());
+        playerRef.updatePosition(world, newTransform, playerRef.getHeadRotation());
+
+        playerRef.sendMessage(Message.raw("Teleported to " + formatPosition(targetPos)));
+    }
+
+    private String formatPosition(Vector3d pos) {
+        return String.format("%.1f, %.1f, %.1f", pos.getX(), pos.getY(), pos.getZ());
+    }
+}

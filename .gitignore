@@ -1,0 +1,29 @@
+# Build outputs
+build/
+out/
+
+# Gradle
+.gradle/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+*.launch
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Hytale Server JAR (users must provide their own)
+libs/HytaleServer.jar
+
+# Temporary files
+*.log
+*.tmp
