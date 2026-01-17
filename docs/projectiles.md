@@ -1,0 +1,499 @@
+# Projectiles API
+
+## Class Hierarchy
+```
+ProjectileConfig (asset-based configuration)
+  implements JsonAssetWithMap, NetworkSerializable, BallisticData
+
+PhysicsConfig (interface)
+  └── StandardPhysicsConfig (default implementation)
+
+Projectile (ECS component)
+  implements Component<EntityStore>
+
+ProjectileInteraction
+  extends SimpleInstantInteraction
+  implements BallisticDataProvider
+```
+
+## ProjectileModule
+**Package:** `com.hypixel.hytale.server.core.modules.projectile`
+
+Main module for spawning and managing projectiles.
+
+### Getting the Module
+```java
+ProjectileModule module = ProjectileModule.get();
+```
+
+### Key Methods
+```java
+// Spawn a projectile
+Ref<EntityStore> spawnProjectile(
+    Ref<EntityStore> shooter,
+    CommandBuffer<EntityStore> commandBuffer,
+    ProjectileConfig config,
+    Vector3d position,
+    Vector3d velocity
+)
+
+// Spawn with custom UUID
+Ref<EntityStore> spawnProjectile(
+    UUID uuid,
+    Ref<EntityStore> shooter,
+    CommandBuffer<EntityStore> commandBuffer,
+    ProjectileConfig config,
+    Vector3d position,
+    Vector3d velocity
+)
+
+// Get component types
+ComponentType<EntityStore, Projectile> getProjectileComponentType()
+ComponentType<EntityStore, StandardPhysicsProvider> getStandardPhysicsProviderComponentType()
+ComponentType<EntityStore, PredictedProjectile> getPredictedProjectileComponentType()
+```
+
+---
+
+## ProjectileConfig
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.config`
+
+Asset-based configuration for projectile behavior.
+
+**Implements:** `JsonAssetWithMap`, `NetworkSerializable<ProjectileConfig>`, `BallisticData`
+
+### Getting Configs from Assets
+```java
+// Get the asset store
+AssetStore<String, ProjectileConfig, DefaultAssetMap<String, ProjectileConfig>> store =
+    ProjectileConfig.getAssetStore();
+
+// Get the asset map
+DefaultAssetMap<String, ProjectileConfig> map = ProjectileConfig.getAssetMap();
+```
+
+### Key Methods
+```java
+// Identity
+String getId()
+
+// Ballistic properties
+double getLaunchForce()
+double getMuzzleVelocity()
+double getGravity()
+double getVerticalCenterShot()
+double getDepthShot()
+boolean isPitchAdjustShot()
+
+// Spawn positioning
+Vector3f getSpawnOffset()
+Direction getSpawnRotationOffset()
+Vector3d getCalculatedOffset(float yaw, float pitch)
+
+// Physics behavior
+PhysicsConfig getPhysicsConfig()
+
+// Visuals
+Model getModel()
+
+// Sound events
+int getLaunchWorldSoundEventIndex()
+int getProjectileSoundEventIndex()
+
+// Interactions
+Map<InteractionType, String> getInteractions()
+```
+
+---
+
+## BallisticData
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.config`
+
+Interface for ballistic properties.
+
+### Methods
+```java
+double getMuzzleVelocity()    // Initial projectile speed
+double getGravity()           // Gravity multiplier
+double getVerticalCenterShot() // Vertical offset for aiming
+double getDepthShot()         // Forward offset for spawn
+boolean isPitchAdjustShot()   // Whether to adjust pitch for trajectory
+```
+
+---
+
+## PhysicsConfig
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.config`
+
+Interface for projectile physics behavior.
+
+### Methods
+```java
+// Apply physics to a projectile entity
+void apply(
+    Holder<EntityStore> holder,
+    Ref<EntityStore> ref,
+    Vector3d position,
+    ComponentAccessor<EntityStore> accessor,
+    boolean flag
+)
+
+// Get gravity (default implementation available)
+double getGravity()
+```
+
+---
+
+## StandardPhysicsConfig
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.config`
+
+Default physics implementation for projectiles.
+
+**Implements:** `PhysicsConfig`
+
+### Constants
+```java
+static final StandardPhysicsConfig DEFAULT  // Default physics config
+```
+
+### Key Methods
+```java
+// Gravity
+double getGravity()
+
+// Bouncing
+double getBounciness()        // How much velocity is retained on bounce (0-1)
+int getBounceCount()          // Maximum number of bounces
+double getBounceLimit()       // Minimum velocity to continue bouncing
+
+// Surface behavior
+boolean isSticksVertically()  // Whether projectile sticks to vertical surfaces
+boolean isAllowRolling()      // Whether projectile can roll on surfaces
+double getRollingFrictionFactor()  // Friction when rolling
+
+// Water interaction
+double getSwimmingDampingFactor()  // Velocity damping in water
+double getHitWaterImpulseLoss()    // Velocity loss when entering water
+
+// Physics application
+void apply(
+    Holder<EntityStore> holder,
+    Ref<EntityStore> ref,
+    Vector3d position,
+    ComponentAccessor<EntityStore> accessor,
+    boolean flag
+)
+```
+
+---
+
+## ImpactConsumer
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.config`
+
+Callback interface for handling projectile impacts.
+
+### Method
+```java
+void onImpact(
+    Ref<EntityStore> projectileRef,    // The projectile entity
+    Vector3d impactPosition,           // Where it hit
+    Ref<EntityStore> targetRef,        // Entity that was hit (if any)
+    String interactionId,              // Interaction identifier
+    CommandBuffer<EntityStore> buffer  // Command buffer for responses
+)
+```
+
+---
+
+## BounceConsumer
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.config`
+
+Callback interface for handling projectile bounces.
+
+### Method
+```java
+void onBounce(
+    Ref<EntityStore> projectileRef,    // The projectile entity
+    Vector3d bouncePosition,           // Where it bounced
+    CommandBuffer<EntityStore> buffer  // Command buffer for responses
+)
+```
+
+---
+
+## BallisticDataProvider
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.config`
+
+Interface for types that provide ballistic data.
+
+### Method
+```java
+BallisticData getBallisticData()  // Get the ballistic properties
+```
+
+### Implementations
+- `ProjectileInteraction` - Provides ballistic data from its config
+
+---
+
+## Projectile Component
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.component`
+
+ECS component marking an entity as a projectile.
+
+**Implements:** `Component<EntityStore>`
+
+### Getting the Component
+```java
+ComponentType<EntityStore, Projectile> type = Projectile.getComponentType();
+Projectile projectile = store.getComponent(ref, type);
+```
+
+---
+
+## PredictedProjectile
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.component`
+
+ECS component for client-side projectile prediction. Links a predicted projectile to its UUID.
+
+**Implements:** `Component<EntityStore>`
+
+### Getting the Component
+```java
+ComponentType<EntityStore, PredictedProjectile> type = PredictedProjectile.getComponentType();
+// Or via ProjectileModule
+ComponentType<EntityStore, PredictedProjectile> type =
+    ProjectileModule.get().getPredictedProjectileComponentType();
+```
+
+### Methods
+```java
+// Constructor
+PredictedProjectile(UUID uuid)
+
+// Get the prediction UUID
+UUID getUuid()
+
+// Clone for ECS
+Component<EntityStore> clone()
+```
+
+### Usage Example
+```java
+// Check if a projectile has prediction
+PredictedProjectile predicted = store.getComponent(ref, PredictedProjectile.getComponentType());
+if (predicted != null) {
+    UUID predictionId = predicted.getUuid();
+    // This projectile is being predicted on the client
+}
+```
+
+---
+
+## StandardPhysicsProvider
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.config`
+
+ECS component that provides physics simulation for projectiles. Handles collision, bouncing, rolling, and fluid interaction.
+
+**Implements:** `Component<EntityStore>`, `IBlockCollisionConsumer`
+
+### Getting the Component
+```java
+ComponentType<EntityStore, StandardPhysicsProvider> type = StandardPhysicsProvider.getComponentType();
+// Or via ProjectileModule
+ComponentType<EntityStore, StandardPhysicsProvider> type =
+    ProjectileModule.get().getStandardPhysicsProviderComponentType();
+```
+
+### Constants
+```java
+static final int WATER_DETECTION_EXTREMA_COUNT;  // Samples for water detection
+static final double MIN_BOUNCE_EPSILON;          // Minimum bounce velocity
+static final double MIN_BOUNCE_EPSILON_SQUARED;  // Squared minimum
+```
+
+### State Enum
+```java
+StandardPhysicsProvider.STATE getState()
+void setState(StandardPhysicsProvider.STATE state)
+```
+
+### Physics Configuration
+```java
+StandardPhysicsConfig getPhysicsConfig()
+```
+
+### Position and Movement
+```java
+Vector3d getPosition()
+Vector3d getVelocity()
+Vector3d getMovement()           // Current tick movement
+Vector3d getNextMovement()       // Next tick planned movement
+```
+
+### Ground and Fluid State
+```java
+boolean isOnGround()
+void setOnGround(boolean onGround)
+boolean isSwimming()
+boolean isInFluid()
+void setInFluid(boolean inFluid)
+double getDragCoefficient(double value)
+```
+
+### Bounce Tracking
+```java
+boolean isBounced()
+void setBounced(boolean bounced)
+int getBounces()
+void incrementBounces()
+```
+
+### Collision Data
+```java
+double getCollisionStart()
+void setCollisionStart(double start)
+Vector3d getContactPosition()
+Vector3d getContactNormal()
+boolean isSliding()
+void setSliding(boolean sliding)
+```
+
+### Fluid Interaction
+```java
+double getDisplacedMass()
+void setDisplacedMass(double mass)
+double getSubSurfaceVolume()
+void setSubSurfaceVolume(double volume)
+double getEnterFluid()
+void setEnterFluid(double value)
+double getLeaveFluid()
+void setLeaveFluid(double value)
+```
+
+### Collision Providers
+```java
+BlockCollisionProvider getBlockCollisionProvider()
+EntityRefCollisionProvider getEntityCollisionProvider()
+BlockTracker getTriggerTracker()
+BlockTracker getFluidTracker()
+```
+
+### Physics State
+```java
+ForceProviderEntity getForceProviderEntity()
+ForceProvider[] getForceProviders()
+ForceProviderStandardState getForceProviderStandardState()
+PhysicsBodyStateUpdater getStateUpdater()
+PhysicsBodyState getStateBefore()
+PhysicsBodyState getStateAfter()
+RestingSupport getRestingSupport()
+```
+
+### Callbacks
+```java
+ImpactConsumer getImpactConsumer()
+BounceConsumer getBounceConsumer()
+```
+
+### World and Entity
+```java
+void setWorld(World world)
+UUID getCreatorUuid()
+boolean isProvidesCharacterCollisions()
+```
+
+### Collision Handling (IBlockCollisionConsumer)
+```java
+Result onCollision(int x, int y, int z, Vector3d velocity, BlockContactData contact,
+                   BlockData block, Box box)
+Result probeCollisionDamage(int x, int y, int z, Vector3d velocity,
+                            BlockContactData contact, BlockData block)
+void onCollisionDamage(int x, int y, int z, Vector3d velocity,
+                       BlockContactData contact, BlockData block)
+Result onCollisionSliceFinished()
+void onCollisionFinished()
+```
+
+### Tick Methods
+```java
+void finishTick(TransformComponent transform, Velocity velocity)
+void rotateBody(double angle, Vector3f axis)
+```
+
+### Usage Example
+```java
+// Get physics provider from a projectile
+StandardPhysicsProvider physics = store.getComponent(ref,
+    StandardPhysicsProvider.getComponentType());
+
+if (physics != null) {
+    // Check state
+    if (physics.isOnGround()) {
+        // Projectile has landed
+    }
+
+    // Check bounces
+    int bounceCount = physics.getBounces();
+    StandardPhysicsConfig config = physics.getPhysicsConfig();
+    if (bounceCount >= config.getBounceCount()) {
+        // Max bounces reached
+    }
+
+    // Get velocity
+    Vector3d vel = physics.getVelocity();
+}
+```
+
+---
+
+## ProjectileInteraction
+**Package:** `com.hypixel.hytale.server.core.modules.projectile.interaction`
+
+Interaction that launches projectiles when triggered.
+
+**Extends:** `SimpleInstantInteraction`
+**Implements:** `BallisticDataProvider`
+
+### Key Methods
+```java
+ProjectileConfig getConfig()           // Get the projectile config
+BallisticData getBallisticData()       // Get ballistic properties
+WaitForDataFrom getWaitForDataFrom()   // Client/server data sync mode
+boolean needsRemoteSync()              // Whether to sync across network
+```
+
+---
+
+## Usage Examples
+
+### Spawning a Projectile
+```java
+ProjectileModule module = ProjectileModule.get();
+
+// Get projectile config from assets
+ProjectileConfig config = ProjectileConfig.getAssetMap().get("arrow");
+
+// Calculate spawn position and velocity
+Vector3d spawnPos = new Vector3d(x, y, z);
+Vector3d velocity = new Vector3d(dirX * config.getMuzzleVelocity(),
+                                  dirY * config.getMuzzleVelocity(),
+                                  dirZ * config.getMuzzleVelocity());
+
+// Spawn the projectile
+Ref<EntityStore> projectileRef = module.spawnProjectile(
+    shooterRef,
+    commandBuffer,
+    config,
+    spawnPos,
+    velocity
+);
+```
+
+### Checking if Entity is a Projectile
+```java
+Projectile projectileComp = store.getComponent(ref, Projectile.getComponentType());
+if (projectileComp != null) {
+    // Entity is a projectile
+}
+```

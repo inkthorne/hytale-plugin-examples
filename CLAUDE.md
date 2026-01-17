@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a collection of example plugins for Hytale game server development. Each example is a standalone Gradle project demonstrating different aspects of the plugin API.
+This is a complete reference for Hytale server plugin development containing:
+- **docs/**: Comprehensive API documentation (28 markdown files)
+- **examples/**: Standalone Gradle projects demonstrating different aspects of the plugin API
 
 ## Build Commands
 
@@ -53,5 +55,5 @@ Mods directory: `%APPDATA%\Hytale\UserData\Mods\`
 
 ## Examples
 
-- **commands-example**: Command system (no-arg, position args, permissions)
-- **ui-example**: Custom UI pages and HUD management
+- **examples/commands/**: Command system (no-arg, position args, permissions)
+- **examples/ui/**: Custom UI pages and HUD management

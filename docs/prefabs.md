@@ -1,0 +1,566 @@
+# Prefabs API
+
+Prefabs are pre-defined block/entity selections that can be loaded and placed into the world. They allow consistent structure creation with blocks, fluids, and entities.
+
+## Class Hierarchy
+```
+PrefabStore                    (central storage and loading)
+BlockSelection                 (prefab data: blocks, fluids, entities)
+PrefabEntry                    (prefab file metadata)
+PrefabRotation                 (rotation enum)
+PrefabWeights                  (weighted random selection)
+```
+
+---
+
+## PrefabStore
+**Package:** `com.hypixel.hytale.server.core.prefab`
+
+Central storage for loading and saving prefabs. Access via `PrefabStore.get()`.
+
+### Constants
+```java
+static final Path PREFABS_PATH                    // Default prefabs directory
+static final Predicate<Path> PREFAB_FILTER        // File filter for prefab files
+```
+
+### Getting the Store
+```java
+PrefabStore store = PrefabStore.get();
+```
+
+### Loading Prefabs
+```java
+// Load server prefab by name
+BlockSelection getServerPrefab(String name)
+
+// Load asset prefab by name
+BlockSelection getAssetPrefab(String name)
+
+// Load from any asset pack
+BlockSelection getAssetPrefabFromAnyPack(String name)
+
+// Load world generation prefab
+BlockSelection getWorldGenPrefab(String name)
+
+// Load from specific path
+BlockSelection getPrefab(Path path)
+
+// Load directory of prefabs
+Map<Path, BlockSelection> getServerPrefabDir(String dirName)
+Map<Path, BlockSelection> getAssetPrefabDir(String dirName)
+Map<Path, BlockSelection> getWorldGenPrefabDir(String dirName)
+Map<Path, BlockSelection> getPrefabDir(Path path)
+```
+
+### Saving Prefabs
+```java
+void saveServerPrefab(String name, BlockSelection selection)
+void saveServerPrefab(String name, BlockSelection selection, boolean overwrite)
+void saveAssetPrefab(String name, BlockSelection selection)
+void saveAssetPrefab(String name, BlockSelection selection, boolean overwrite)
+void saveWorldGenPrefab(String name, BlockSelection selection)
+void saveWorldGenPrefab(String name, BlockSelection selection, boolean overwrite)
+void savePrefab(Path path, BlockSelection selection, boolean overwrite)
+```
+
+### Path Queries
+```java
+Path getServerPrefabsPath()
+Path getAssetPrefabsPath()
+Path getWorldGenPrefabsPath()
+Path getWorldGenPrefabsPath(String subPath)
+Path getAssetRootPath()
+Path getAssetPrefabsPathForPack(AssetPack pack)
+Path findAssetPrefabPath(String name)
+List<AssetPackPrefabPath> getAllAssetPrefabPaths()
+AssetPack findAssetPackForPrefabPath(Path path)
+```
+
+### Usage Example
+```java
+PrefabStore store = PrefabStore.get();
+
+// Load a prefab
+BlockSelection house = store.getServerPrefab("buildings/house");
+
+// Place it in the world
+house.place(commandSender, world);
+```
+
+---
+
+## BlockSelection
+**Package:** `com.hypixel.hytale.server.core.prefab.selection.standard`
+
+The core prefab data structure containing blocks, fluids, and entities. This is what gets loaded from prefab files and placed in the world.
+
+### Constructors
+```java
+BlockSelection()
+BlockSelection(int initialBlockCapacity, int initialFluidCapacity)
+BlockSelection(BlockSelection source)  // Copy constructor
+```
+
+### Position & Bounds
+```java
+// Current position
+int getX()
+int getY()
+int getZ()
+void setPosition(int x, int y, int z)
+
+// Anchor point (placement origin)
+int getAnchorX()
+int getAnchorY()
+int getAnchorZ()
+void setAnchor(int x, int y, int z)
+void setAnchorAtWorldPos(int x, int y, int z)
+
+// Selection bounds
+Vector3i getSelectionMin()
+Vector3i getSelectionMax()
+boolean hasSelectionBounds()
+void setSelectionArea(Vector3i min, Vector3i max)
+```
+
+### Content Info
+```java
+int getBlockCount()
+int getFluidCount()
+int getEntityCount()
+int getSelectionVolume()
+```
+
+### Block Access
+```java
+boolean hasBlockAtWorldPos(int x, int y, int z)
+boolean hasBlockAtLocalPos(int x, int y, int z)
+int getBlockAtWorldPos(int x, int y, int z)
+BlockHolder getBlockHolderAtWorldPos(int x, int y, int z)
+int getFluidAtWorldPos(int x, int y, int z)
+byte getFluidLevelAtWorldPos(int x, int y, int z)
+int getSupportValueAtWorldPos(int x, int y, int z)
+Holder<ChunkStore> getStateAtWorldPos(int x, int y, int z)
+```
+
+### Adding Content
+```java
+// Blocks
+void addEmptyAtWorldPos(int x, int y, int z)
+void addBlockAtWorldPos(int x, int y, int z, int blockType, int rotation, int filler, int supportValue)
+void addBlockAtWorldPos(int x, int y, int z, int blockType, int rotation, int filler, int supportValue, Holder<ChunkStore> state)
+void addBlockAtLocalPos(int x, int y, int z, int blockType, int rotation, int filler, int supportValue)
+
+// Fluids
+void addFluidAtWorldPos(int x, int y, int z, int fluidType, byte level)
+void addFluidAtLocalPos(int x, int y, int z, int fluidType, byte level)
+
+// Entities
+void addEntityFromWorld(Holder<EntityStore> holder)
+void addEntityHolderRaw(Holder<EntityStore> holder)
+```
+
+### Iteration
+```java
+void forEachBlock(BlockIterator iterator)
+void forEachFluid(FluidIterator iterator)
+void forEachEntity(Consumer<Holder<EntityStore>> consumer)
+```
+
+### Placement
+```java
+// Place and return undo selection
+BlockSelection place(CommandSender sender, World world)
+BlockSelection place(CommandSender sender, World world, BlockMask mask)
+BlockSelection place(CommandSender sender, World world, Vector3i position, BlockMask mask)
+BlockSelection place(CommandSender sender, World world, Vector3i position, BlockMask mask, Consumer<Ref<EntityStore>> entityConsumer)
+
+// Place without undo
+void placeNoReturn(World world, Vector3i position, ComponentAccessor<EntityStore> accessor)
+void placeNoReturn(String id, CommandSender sender, World world, ComponentAccessor<EntityStore> accessor)
+
+// Check if placement is valid
+boolean canPlace(World world, Vector3i position, IntList invalidBlocks)
+boolean matches(World world, Vector3i position)
+```
+
+### Transformation
+```java
+// Rotation (returns new BlockSelection)
+BlockSelection rotate(Axis axis, int degrees)
+BlockSelection rotate(Axis axis, int degrees, Vector3f pivot)
+BlockSelection rotateArbitrary(float yaw, float pitch, float roll)
+
+// Flip
+BlockSelection flip(Axis axis)
+
+// Make positions relative to anchor
+BlockSelection relativize()
+BlockSelection relativize(int x, int y, int z)
+
+// Clone
+BlockSelection cloneSelection()
+
+// Combine selections
+void add(BlockSelection other)
+void copyPropertiesFrom(BlockSelection other)
+```
+
+### Copying from World
+```java
+void copyFromAtWorld(int x, int y, int z, WorldChunk chunk, BlockPhysics physics)
+```
+
+### Usage Example
+```java
+// Load and place a prefab
+PrefabStore store = PrefabStore.get();
+BlockSelection prefab = store.getServerPrefab("structures/tower");
+
+// Place at player position
+Transform transform = playerRef.getTransform();
+Vector3i pos = new Vector3i(
+    (int) transform.getPosition().getX(),
+    (int) transform.getPosition().getY(),
+    (int) transform.getPosition().getZ()
+);
+
+// Place returns undo selection
+BlockSelection undo = prefab.place(commandSender, world, pos, null);
+
+// To undo, place the undo selection
+// undo.place(commandSender, world);
+```
+
+### Rotation Example
+```java
+BlockSelection prefab = store.getServerPrefab("buildings/house");
+
+// Rotate 90 degrees around Y axis
+BlockSelection rotated = prefab.rotate(Axis.Y, 90);
+rotated.place(commandSender, world);
+```
+
+---
+
+## PrefabRotation
+**Package:** `com.hypixel.hytale.server.core.prefab`
+
+Enum for standard prefab rotations (90-degree increments around Y axis).
+
+### Enum Values
+```java
+public enum PrefabRotation {
+    ROTATION_0,    // No rotation
+    ROTATION_90,   // 90 degrees clockwise
+    ROTATION_180,  // 180 degrees
+    ROTATION_270   // 270 degrees (90 counter-clockwise)
+}
+
+static final PrefabRotation[] VALUES  // All values array
+static final String PREFIX            // Rotation name prefix
+```
+
+### Methods
+```java
+// Conversion
+static PrefabRotation fromRotation(Rotation blockRotation)
+static PrefabRotation valueOfExtended(String name)
+
+// Combine rotations
+PrefabRotation add(PrefabRotation other)
+
+// Apply rotation to vectors
+void rotate(Vector3d vec)
+void rotate(Vector3i vec)
+void rotate(Vector3l vec)
+
+// Get rotated coordinates
+int getX(int x, int z)
+int getZ(int x, int z)
+
+// Get yaw angle
+float getYaw()
+
+// Get rotated block rotation/filler values
+int getRotation(int originalRotation)
+int getFiller(int originalFiller)
+```
+
+### Usage Example
+```java
+// Rotate a position
+Vector3i pos = new Vector3i(5, 0, 3);
+PrefabRotation.ROTATION_90.rotate(pos);
+// pos is now rotated 90 degrees around origin
+
+// Combine rotations
+PrefabRotation combined = PrefabRotation.ROTATION_90.add(PrefabRotation.ROTATION_180);
+// combined == ROTATION_270
+```
+
+---
+
+## PrefabEntry
+**Package:** `com.hypixel.hytale.server.core.prefab`
+
+Java Record containing prefab file metadata. Used when listing available prefabs.
+
+### Record Components
+```java
+Path path()           // Full file path
+Path relativePath()   // Path relative to prefabs directory
+AssetPack pack()      // Asset pack containing this prefab (may be null)
+String displayName()  // Human-readable display name
+```
+
+### Methods
+```java
+boolean isFromBasePack()       // Is from the base game
+boolean isFromAssetPack()      // Is from an asset pack
+String getPackName()           // Get asset pack name
+String getFileName()           // Get file name only
+String getDisplayNameWithPack() // Display name including pack
+```
+
+---
+
+## PrefabWeights
+**Package:** `com.hypixel.hytale.server.core.prefab`
+
+Weighted random selection for prefabs. Allows assigning different spawn weights to different prefab variants.
+
+### Constants
+```java
+static final PrefabWeights NONE           // Empty weights
+static final double DEFAULT_WEIGHT        // Default weight value
+static final char DELIMITER_CHAR          // Delimiter for parsing
+static final char ASSIGNMENT_CHAR         // Assignment char for parsing
+static final Codec<PrefabWeights> CODEC   // Serialization codec
+```
+
+### Constructors
+```java
+PrefabWeights()                           // Empty weights
+static PrefabWeights parse(String spec)   // Parse from string format
+```
+
+### Weight Management
+```java
+int size()                                // Number of entries
+double getWeight(String prefabName)       // Get weight for prefab
+void setWeight(String prefabName, double weight)  // Set weight
+void removeWeight(String prefabName)      // Remove weight entry
+double getDefaultWeight()                 // Get default weight
+void setDefaultWeight(double weight)      // Set default weight
+```
+
+### Random Selection
+```java
+// Select from array using weights
+<T> T get(T[] options, Function<T, String> nameExtractor, Random random)
+
+// Select using pre-generated random value (0.0-1.0)
+<T> T get(T[] options, Function<T, String> nameExtractor, double randomValue)
+```
+
+### Serialization
+```java
+String getMappingString()                 // Get as parseable string
+Set<Entry<String>> entrySet()             // Get all entries
+```
+
+### Usage Example
+```java
+// Create weighted selection
+PrefabWeights weights = new PrefabWeights();
+weights.setWeight("common_tree", 0.6);
+weights.setWeight("rare_tree", 0.3);
+weights.setWeight("unique_tree", 0.1);
+
+// Select random prefab
+String[] prefabNames = {"common_tree", "rare_tree", "unique_tree"};
+Random random = new Random();
+String selected = weights.get(prefabNames, name -> name, random);
+
+// Load and place selected prefab
+BlockSelection prefab = PrefabStore.get().getServerPrefab("trees/" + selected);
+prefab.place(commandSender, world);
+```
+
+---
+
+## Prefab Events
+
+Events related to prefab pasting and entity placement from prefabs.
+
+**Package:** `com.hypixel.hytale.server.core.prefab.event`
+
+### Event Summary
+
+| Class | Description | Cancellable |
+|-------|-------------|-------------|
+| `PrefabPasteEvent` | Prefab is being pasted into world (ECS) | Yes |
+| `PrefabPlaceEntityEvent` | Entity placed from prefab (ECS) | No |
+
+---
+
+### PrefabPasteEvent
+
+ECS event fired when a prefab is being pasted into the world. Extends `CancellableEcsEvent`.
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `getPrefabId()` | `int` | Internal ID of the prefab being pasted |
+| `isPasteStart()` | `boolean` | True if this is the start of pasting, false if end |
+| `isCancelled()` | `boolean` | Whether the paste is cancelled |
+| `setCancelled(boolean)` | `void` | Cancel or uncancel the paste |
+
+> **Note:** `getPrefabId()` returns an internal integer ID, not the string path used with `PrefabStore`.
+
+---
+
+### PrefabPlaceEntityEvent
+
+ECS event fired when an entity is placed as part of a prefab. Extends `EcsEvent` (not cancellable).
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `getPrefabId()` | `int` | ID of the prefab containing this entity |
+| `getHolder()` | `Holder<EntityStore>` | Entity holder for the placed entity |
+
+---
+
+### Prefab Events Usage
+
+Prefab events are ECS events, so handle them using an `EntityEventSystem`:
+
+```java
+import com.hypixel.hytale.component.*;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.server.core.prefab.event.PrefabPasteEvent;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+public class PrefabPasteSystem extends EntityEventSystem<EntityStore, PrefabPasteEvent> {
+
+    public PrefabPasteSystem() {
+        super(PrefabPasteEvent.class);
+    }
+
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk,
+                       Store<EntityStore> store, CommandBuffer<EntityStore> buffer,
+                       PrefabPasteEvent event) {
+        if (event.isPasteStart()) {
+            System.out.println("Starting to paste prefab: " + event.getPrefabId());
+        } else {
+            System.out.println("Finished pasting prefab: " + event.getPrefabId());
+        }
+
+        // Optionally cancel the paste
+        // event.setCancelled(true);
+    }
+
+    @Override
+    public Query<EntityStore> getQuery() {
+        return null; // Or a specific component type
+    }
+}
+```
+
+```java
+import com.hypixel.hytale.component.*;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.server.core.prefab.event.PrefabPlaceEntityEvent;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+public class PrefabPlaceEntitySystem extends EntityEventSystem<EntityStore, PrefabPlaceEntityEvent> {
+
+    public PrefabPlaceEntitySystem() {
+        super(PrefabPlaceEntityEvent.class);
+    }
+
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk,
+                       Store<EntityStore> store, CommandBuffer<EntityStore> buffer,
+                       PrefabPlaceEntityEvent event) {
+        var holder = event.getHolder();
+        System.out.println("Entity placed from prefab " + event.getPrefabId() + ": " + holder);
+    }
+
+    @Override
+    public Query<EntityStore> getQuery() {
+        return null; // Or a specific component type
+    }
+}
+```
+
+### Registration
+
+```java
+@Override
+protected void setup() {
+    getEntityStoreRegistry().registerSystem(new PrefabPasteSystem());
+    getEntityStoreRegistry().registerSystem(new PrefabPlaceEntitySystem());
+}
+```
+
+---
+
+## Complete Usage Example
+
+```java
+import com.hypixel.hytale.math.Axis;
+import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.server.core.prefab.PrefabStore;
+import com.hypixel.hytale.server.core.prefab.PrefabRotation;
+import com.hypixel.hytale.server.core.prefab.PrefabWeights;
+import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
+
+@Override
+protected void execute(CommandContext ctx, Store<EntityStore> store,
+                      Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+    PrefabStore prefabStore = PrefabStore.get();
+
+    // Load a prefab
+    BlockSelection building = prefabStore.getServerPrefab("buildings/small_house");
+    if (building == null) {
+        playerRef.sendMessage(Message.raw("Prefab not found!"));
+        return;
+    }
+
+    // Get player position
+    Transform transform = playerRef.getTransform();
+    Vector3i placePos = new Vector3i(
+        (int) transform.getPosition().getX() + 5,
+        (int) transform.getPosition().getY(),
+        (int) transform.getPosition().getZ()
+    );
+
+    // Rotate 90 degrees
+    BlockSelection rotated = building.rotate(Axis.Y, 90);
+
+    // Place in world
+    BlockSelection undo = rotated.place(playerRef, world, placePos, null);
+
+    playerRef.sendMessage(Message.raw("Placed building with " +
+        building.getBlockCount() + " blocks at " + placePos));
+
+    // Store undo for later if needed
+    // undoStack.push(undo);
+}
+```
+
+---
+
+## Notes
+
+- BlockSelection is the actual prefab data structure - it contains blocks, fluids, and entities
+- Use `PrefabStore.get()` to access the singleton store
+- Placement returns an undo BlockSelection that can be placed to revert changes
+- Rotations create new BlockSelection instances (immutable pattern)
+- Prefab files are typically stored in the server's prefabs directory
+- PrefabWeights allows weighted random selection for variety in procedural generation

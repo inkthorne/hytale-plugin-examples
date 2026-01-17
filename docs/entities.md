@@ -1,0 +1,581 @@
+# Entities API
+
+## Class Hierarchy
+```
+Entity (abstract, implements Component<EntityStore>)
+  └── LivingEntity (abstract)
+        └── Player (implements CommandSender, PermissionHolder)
+
+InteractionManager (component for interaction chains)
+```
+
+## PlayerRef
+**Package:** `com.hypixel.hytale.server.core.universe`
+
+Lightweight reference to a player, passed to commands. Use this for sending messages.
+
+**Implements:** `Component<EntityStore>`, `MetricProvider`, `IMessageReceiver`
+
+### Key Methods
+```java
+// Constructor
+PlayerRef(Holder<EntityStore> holder, UUID uuid, String username, String language,
+          PacketHandler handler, ChunkTracker tracker)
+
+// Messaging
+void sendMessage(Message msg)
+
+// Identity
+UUID getUuid()
+String getUsername()
+String getLanguage()
+void setLanguage(String lang)
+
+// Position
+Transform getTransform()
+UUID getWorldUuid()
+Vector3f getHeadRotation()
+void updatePosition(World world, Transform transform, Vector3f headRotation)
+
+// References
+boolean isValid()
+Ref<EntityStore> getReference()
+Holder<EntityStore> getHolder()
+<T extends Component<EntityStore>> T getComponent(ComponentType<EntityStore, T> type)
+
+// Network
+PacketHandler getPacketHandler()
+ChunkTracker getChunkTracker()
+void referToServer(String host, int port)
+void referToServer(String host, int port, byte[] data)
+
+// Player Management
+HiddenPlayersManager getHiddenPlayersManager()
+
+// Lifecycle
+void addToStore()
+void removeFromStore()
+
+// Component type for ECS access
+static ComponentType<EntityStore, PlayerRef> getComponentType()
+```
+
+## Player
+**Package:** `com.hypixel.hytale.server.core.entity.entities.player`
+
+Full player entity with all game state.
+
+**Extends:** `LivingEntity`
+**Implements:** `CommandSender`, `PermissionHolder`, `MetricProvider`
+
+### Key Methods
+```java
+// Messaging & Permissions
+void sendMessage(Message msg)
+boolean hasPermission(String permission)
+boolean hasPermission(String permission, boolean defaultValue)
+
+// Identity
+String getDisplayName()
+PlayerRef getPlayerRef()
+PacketHandler getPlayerConnection()
+
+// Game State
+GameMode getGameMode()
+static void setGameMode(Ref<EntityStore> ref, GameMode mode, ComponentAccessor<EntityStore> accessor)
+static void initGameMode(Ref<EntityStore> ref, ComponentAccessor<EntityStore> accessor)
+boolean isFirstSpawn()
+void setFirstSpawn(boolean firstSpawn)
+
+// Inventory
+Inventory getInventory()
+Inventory setInventory(Inventory inventory)
+void sendInventory()
+
+// Position & Movement
+void moveTo(Ref<EntityStore> ref, double x, double y, double z, ComponentAccessor<EntityStore> accessor)
+void addLocationChange(Ref<EntityStore> ref, double x, double y, double z, ComponentAccessor<EntityStore> accessor)
+static Transform getRespawnPosition(Ref<EntityStore> ref, String spawnPoint, ComponentAccessor<EntityStore> accessor)
+void applyMovementStates(Ref<EntityStore> ref, SavedMovementStates saved, MovementStates current, ComponentAccessor<EntityStore> accessor)
+void resetVelocity(Velocity velocity)
+void processVelocitySample()
+
+// Managers
+WindowManager getWindowManager()
+PageManager getPageManager()
+HudManager getHudManager()
+HotbarManager getHotbarManager()
+WorldMapTracker getWorldMapTracker()
+
+// View Distance
+int getViewRadius()
+int getClientViewRadius()
+void setClientViewRadius(int radius)
+
+// Spawn Protection
+boolean hasSpawnProtection()
+void setLastSpawnTimeNanos(long nanos)
+long getSinceLastSpawnNanos()
+
+// Mounting
+int getMountEntityId()
+void setMountEntityId(int id)
+
+// Item Durability
+boolean canDecreaseItemStackDurability()
+boolean canApplyItemStackPenalties()
+void updateItemStackDurability()
+
+// Block Processing
+void configTriggerBlockProcessing(boolean trigger, boolean process, CollisionResultComponent result)
+
+// Persistence
+void saveConfig(World world, Holder<EntityStore> holder)
+
+// Connection State
+boolean isWaitingForClientReady()
+
+// Component type for ECS access
+static ComponentType<EntityStore, Player> getComponentType()
+```
+
+## LivingEntity
+**Package:** `com.hypixel.hytale.server.core.entity`
+
+Base class for entities with health, inventory, etc.
+
+### Key Methods
+```java
+// Inventory
+Inventory getInventory()
+Inventory setInventory(Inventory inventory)
+Inventory setInventory(Inventory inventory, boolean notify)
+
+// Movement
+void moveTo(Ref<EntityStore> ref, double x, double y, double z, ComponentAccessor<EntityStore> accessor)
+double getCurrentFallDistance()
+void setCurrentFallDistance(double distance)
+
+// Stats
+StatModifiersManager getStatModifiersManager()
+
+// Environment
+boolean canBreathe(Ref<EntityStore> ref, BlockMaterial material, int fluidLevel, ComponentAccessor<EntityStore> accessor)
+```
+
+## Entity
+**Package:** `com.hypixel.hytale.server.core.entity`
+
+Base class for all entities.
+
+### Key Methods
+```java
+// Lifecycle
+boolean remove()
+boolean wasRemoved()
+void loadIntoWorld(World world)
+void unloadFromWorld()
+void markNeedsSave()
+
+// Identity
+int getNetworkId()
+UUID getUuid()
+void setLegacyUUID(UUID uuid)
+String getLegacyDisplayName()
+
+// Position
+TransformComponent getTransformComponent()
+void setTransformComponent(TransformComponent transform)
+void moveTo(Ref<EntityStore> ref, double x, double y, double z, ComponentAccessor<EntityStore> accessor)
+World getWorld()
+
+// Collision
+boolean isCollidable()
+
+// ECS
+void setReference(Ref<EntityStore> ref)
+Ref<EntityStore> getReference()
+void clearReference()
+Holder<EntityStore> toHolder()
+```
+
+## Usage in Commands
+```java
+@Override
+protected void execute(CommandContext ctx, Store<EntityStore> store,
+                      Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+    // Use playerRef for simple messaging
+    playerRef.sendMessage(Message.raw("Hello!"));
+
+    // Get full Player for more operations
+    Player player = store.getComponent(ref, Player.getComponentType());
+    player.hasPermission("myplugin.admin");
+
+    // Get player position
+    Transform transform = playerRef.getTransform();
+}
+```
+
+---
+
+## Entity Stats (EntityStatMap)
+
+Component that holds entity stats like health, stamina, mana, etc.
+
+**Package:** `com.hypixel.hytale.server.core.modules.entitystats`
+
+### Getting the Component
+
+```java
+EntityStatMap stats = store.getComponent(ref, EntityStatMap.getComponentType());
+```
+
+### DefaultEntityStatTypes
+
+**Package:** `com.hypixel.hytale.server.core.modules.entitystats.asset`
+
+Provides stat indices for common stats:
+
+```java
+int healthIndex = DefaultEntityStatTypes.getHealth();
+int oxygenIndex = DefaultEntityStatTypes.getOxygen();
+int staminaIndex = DefaultEntityStatTypes.getStamina();
+int manaIndex = DefaultEntityStatTypes.getMana();
+int signatureIndex = DefaultEntityStatTypes.getSignatureEnergy();
+int ammoIndex = DefaultEntityStatTypes.getAmmo();
+```
+
+### Modifying Stats
+
+```java
+EntityStatMap stats = store.getComponent(ref, EntityStatMap.getComponentType());
+int healthIndex = DefaultEntityStatTypes.getHealth();
+
+// Modify stat values
+stats.subtractStatValue(healthIndex, 5.0f);   // Subtract 5 health
+stats.addStatValue(healthIndex, 10.0f);       // Add 10 health
+stats.setStatValue(healthIndex, 100.0f);      // Set to 100
+stats.maximizeStatValue(healthIndex);         // Set to max
+stats.minimizeStatValue(healthIndex);         // Set to min (usually 0)
+```
+
+### Reading Stat Values
+
+```java
+EntityStatValue healthStat = stats.get(healthIndex);
+float currentHealth = healthStat.get();
+float maxHealth = healthStat.getMax();
+float minHealth = healthStat.getMin();
+```
+
+### Example: Damage Player on Hit
+
+```java
+// In a damage event handler, subtract health from attacker
+if (source instanceof Damage.EntitySource entitySource) {
+    Ref<EntityStore> attackerRef = entitySource.getRef();
+    EntityStatMap stats = store.getComponent(attackerRef, EntityStatMap.getComponentType());
+    if (stats != null) {
+        int healthIndex = DefaultEntityStatTypes.getHealth();
+        stats.subtractStatValue(healthIndex, 5.0f);
+    }
+}
+```
+
+---
+
+## StatModifiersManager
+**Package:** `com.hypixel.hytale.server.core.entity`
+
+Manages stat modifiers for living entities. Used to recalculate entity stats when equipment, buffs, or other modifiers change.
+
+### Getting the Manager
+```java
+LivingEntity entity = ...;
+StatModifiersManager manager = entity.getStatModifiersManager();
+```
+
+### Methods
+```java
+// Trigger stat recalculation
+void setRecalculate(boolean recalculate)
+
+// Queue specific stats to be cleared before recalculation
+void queueEntityStatsToClear(int[] statIndices)
+
+// Recalculate all stat modifiers for an entity
+void recalculateEntityStatModifiers(
+    Ref<EntityStore> ref,
+    EntityStatMap stats,
+    ComponentAccessor<EntityStore> accessor
+)
+```
+
+### Usage Example
+```java
+// Force recalculation of entity stats after changing equipment
+LivingEntity entity = store.getComponent(ref, LivingEntity.getComponentType());
+if (entity != null) {
+    StatModifiersManager manager = entity.getStatModifiersManager();
+    manager.setRecalculate(true);
+
+    EntityStatMap stats = store.getComponent(ref, EntityStatMap.getComponentType());
+    manager.recalculateEntityStatModifiers(ref, stats, store);
+}
+```
+
+---
+
+## Velocity API
+
+Component for applying forces and impulses to entities.
+
+**Package:** `com.hypixel.hytale.server.core.modules.physics.component`
+
+### Getting the Component
+
+```java
+Velocity velocity = store.getComponent(ref, Velocity.getComponentType());
+```
+
+Or when you have a chunk index:
+```java
+Velocity velocity = chunk.getComponent(index, Velocity.getComponentType());
+```
+
+### Important: Player vs NPC Velocity
+
+Players are **client-authoritative** for movement. The server cannot directly modify player velocity - changes must be synchronized to the client via the instruction system.
+
+| Method | Use Case | Client Sync |
+|--------|----------|-------------|
+| `addForce(x,y,z)` | Server-side physics (untested) | No |
+| `set(x,y,z)` | Server-side physics (untested) | No |
+| `addInstruction(...)` | **All entities** (players + NPCs) | Yes |
+
+### Applying Velocity to Players
+
+Use `addInstruction()` for players - this queues velocity changes that get synchronized to the client:
+
+```java
+Velocity velocity = chunk.getComponent(index, Velocity.getComponentType());
+if (velocity != null) {
+    Vector3d impulse = new Vector3d(0.0, 15.0, 0.0);  // Upward impulse
+    VelocityConfig config = new VelocityConfig();
+    velocity.addInstruction(impulse, config, ChangeVelocityType.Add);
+}
+```
+
+### VelocityConfig
+
+**Package:** `com.hypixel.hytale.server.core.modules.physics.velocity`
+
+Configuration for velocity behavior. Default constructor provides standard physics behavior.
+
+### ChangeVelocityType
+
+**Package:** `com.hypixel.hytale.server.core.modules.physics.velocity`
+
+Enum controlling how velocity is applied:
+- `Add` - Add to current velocity
+- `Set` - Replace current velocity
+
+### Applying Velocity to NPCs/Entities
+
+For NPCs and creatures, `addInstruction()` works the same as for players:
+
+```java
+Velocity velocity = chunk.getComponent(index, Velocity.getComponentType());
+if (velocity != null) {
+    Vector3d impulse = new Vector3d(0.0, 15.0, 0.0);
+    VelocityConfig config = new VelocityConfig();
+    velocity.addInstruction(impulse, config, ChangeVelocityType.Add);
+}
+```
+
+Note: `addForce()` and `set()` exist but haven't been verified to work.
+
+### Example: Launch Player Upward
+
+```java
+public void launchPlayer(Store<EntityStore> store, Ref<EntityStore> ref) {
+    Velocity velocity = store.getComponent(ref, Velocity.getComponentType());
+    if (velocity != null) {
+        Vector3d impulse = new Vector3d(0.0, 20.0, 0.0);
+        VelocityConfig config = new VelocityConfig();
+        velocity.addInstruction(impulse, config, ChangeVelocityType.Add);
+    }
+}
+```
+
+### Example: Knockback from Damage
+
+```java
+// In a damage system, apply knockback to the damaged entity
+public void applyKnockback(Velocity velocity, Vector3d direction, double force) {
+    Vector3d knockback = new Vector3d(
+        direction.getX() * force,
+        5.0,  // Small upward component
+        direction.getZ() * force
+    );
+    VelocityConfig config = new VelocityConfig();
+    velocity.addInstruction(knockback, config, ChangeVelocityType.Add);
+}
+```
+
+---
+
+## InteractionManager
+
+**Package:** `com.hypixel.hytale.server.core.entity`
+
+Component for managing entity interaction chains. Used with trigger blocks to execute interaction sequences when entities enter or contact special blocks.
+
+### Tick & Lifecycle
+```java
+void tick()   // Process pending interactions
+void clear()  // Clear all interaction chains
+```
+
+### Chain Management
+```java
+// Start a new interaction chain
+boolean tryStartChain(...)
+
+// Execute pending chains
+void executeChain(...)
+
+// Cancel active chains
+void cancelChains()
+```
+
+### Query
+```java
+// Check if a chain can run
+boolean canRun(...)
+
+// Get active chains
+Object getChains()
+```
+
+### Rules
+```java
+// Apply interaction rules
+void applyRules(...)
+```
+
+### Usage with CollisionResult
+
+The `InteractionManager` is used when processing trigger blocks:
+
+```java
+CollisionResult result = new CollisionResult(false, true);  // Enable triggers
+module.findIntersections(world, hitbox, position, result, true, false);
+
+// Process triggers with interaction manager
+InteractionManager manager = store.getComponent(ref, InteractionManager.getComponentType());
+result.defaultTriggerBlocksProcessing(manager, entity, ref, flag, accessor);
+```
+
+---
+
+## Entity Events
+
+**Package:** `com.hypixel.hytale.server.core.event.events.entity`
+
+Events related to entity lifecycle. For inventory-related events (`LivingEntityInventoryChangeEvent`, `DropItemEvent`, `SwitchActiveSlotEvent`, `InteractivelyPickupItemEvent`), see [inventory.md](inventory.md#inventory-events).
+
+### Event Summary
+
+| Class | Description |
+|-------|-------------|
+| `EntityEvent` | Base entity event |
+| `EntityRemoveEvent` | Entity is removed |
+| `LivingEntityUseBlockEvent` | Living entity uses a block (keyed by block type) |
+
+---
+
+### EntityEvent
+
+**Package:** `com.hypixel.hytale.server.core.event.events.entity`
+
+Base class for entity-related events.
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `getEntity()` | `Entity` | The entity this event relates to |
+
+---
+
+### EntityRemoveEvent
+
+**Package:** `com.hypixel.hytale.server.core.event.events.entity`
+
+Fired when an entity is removed from the world.
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `getEntity()` | `Entity` | The entity being removed |
+| `getRemoveReason()` | `RemoveReason` | Why the entity is being removed |
+
+---
+
+### LivingEntityUseBlockEvent
+
+**Package:** `com.hypixel.hytale.server.core.event.events.entity`
+
+Fired when a living entity uses/interacts with a block. Implements `IEvent<String>` (keyed by block type).
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `getBlockType()` | `String` | The block type being used |
+| `getRef()` | `Ref<EntityStore>` | Entity reference |
+
+### Usage Example
+
+Since this is a keyed event (keyed by block type String), use `registerGlobal()` to catch all block uses:
+
+```java
+import com.hypixel.hytale.server.core.event.events.entity.LivingEntityUseBlockEvent;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+
+@Override
+protected void setup() {
+    // Listen for all block uses
+    getEventRegistry().registerGlobal(LivingEntityUseBlockEvent.class, event -> {
+        var ref = event.getRef();
+        String blockType = event.getBlockType();
+        System.out.println("Entity used block: " + blockType);
+    });
+
+    // Or listen for a specific block type
+    getEventRegistry().register(LivingEntityUseBlockEvent.class, "hytale:crafting_table", event -> {
+        System.out.println("Entity used crafting table!");
+    });
+}
+```
+
+---
+
+### Entity Events Usage Example
+
+```java
+import com.hypixel.hytale.server.core.event.events.entity.EntityRemoveEvent;
+
+@Override
+protected void setup() {
+    // Listen for entity removals
+    getEventRegistry().registerGlobal(EntityRemoveEvent.class, event -> {
+        var entity = event.getEntity();
+        var reason = event.getRemoveReason();
+        System.out.println("Entity removed: " + entity + " reason: " + reason);
+    });
+}
+```
+
+### ECS Inventory Events
+
+For ECS inventory events like `SwitchActiveSlotEvent` and `DropItemEvent`, see the [Inventory Events section in inventory.md](inventory.md#inventory-events).
+
+See [events.md](events.md) for general `EntityEventSystem` usage patterns.

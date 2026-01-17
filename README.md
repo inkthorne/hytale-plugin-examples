@@ -1,16 +1,26 @@
 # Hytale Plugin Examples
 
-A collection of minimal, self-contained example plugins demonstrating Hytale plugin development.
+A complete reference for Hytale server plugin development with documentation and working examples.
+
+## Documentation
+
+The [docs/](./docs/) directory contains comprehensive documentation for the Hytale Plugin API:
+
+- [Getting Started](./docs/getting-started.md) - Project setup and first plugin
+- [Commands](./docs/commands.md) - Command system and argument types
+- [UI System](./docs/ui-system.md) - Custom UI pages and HUD management
+- [Events](./docs/events.md) - Event handling and listeners
+- And more...
 
 ## Examples
 
-### [commands-example](./commands-example/)
+### [examples/commands/](./examples/commands/)
 Demonstrates the command system with:
 - Simple no-argument commands
 - Commands with position arguments
 - Admin commands with permission requirements
 
-### [ui-example](./ui-example/)
+### [examples/ui/](./examples/ui/)
 Demonstrates the UI system with:
 - Opening custom UI pages
 - Toggling HUD components
@@ -27,7 +37,7 @@ Demonstrates the UI system with:
 Each example can be built independently:
 
 ```batch
-cd commands-example
+cd examples/commands
 build.bat
 ```
 
