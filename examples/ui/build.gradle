@@ -22,8 +22,8 @@ dependencies {
 }
 
 jar {
-    archiveBaseName.set('ui-example')
-    archiveVersion.set(version)
+    archiveBaseName.set('example-ui')
+    archiveVersion.set('')
 
     manifest {
         attributes(

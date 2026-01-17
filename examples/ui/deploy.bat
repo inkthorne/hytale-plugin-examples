@@ -1,10 +1,10 @@
 @echo off
 set "MODS_DIR=%APPDATA%\Hytale\UserData\Mods"
-set "JAR_FILE=build\libs\ui-example-1.0.0.jar"
+set "JAR_FILE=build\libs\example-ui.jar"
 
 if not exist "%JAR_FILE%" (
     echo JAR not found. Building first...
-    call gradlew build
+    call gradlew.bat build
     if %ERRORLEVEL% NEQ 0 (
         echo Build failed!
                 exit /b 1

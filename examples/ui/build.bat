@@ -1,8 +1,8 @@
 @echo off
-echo Building ui-example plugin...
-call gradlew build
+echo Building example-ui plugin...
+call gradlew.bat build
 if %ERRORLEVEL% EQU 0 (
-    echo Build successful! JAR located at: build\libs\ui-example-1.0.0.jar
+    echo Build successful! JAR located at: build\libs\example-ui.jar
 ) else (
     echo Build failed!
 )

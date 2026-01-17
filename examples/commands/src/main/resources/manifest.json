@@ -1,5 +1,11 @@
 {
-  "Group": "Examples",
-  "Name": "CommandsExample",
+  "Group": "inkthorne",
+  "Name": "Example Commands",
+  "Version": "0.1.0",
+  "Authors": [
+    {
+      "Name": "inkthorne"
+    }
+  ],
   "Main": "com.example.commands.CommandsPlugin"
 }

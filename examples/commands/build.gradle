@@ -22,8 +22,8 @@ dependencies {
 }
 
 jar {
-    archiveBaseName.set('commands-example')
-    archiveVersion.set(version)
+    archiveBaseName.set('example-commands')
+    archiveVersion.set('')
 
     manifest {
         attributes(
