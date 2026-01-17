@@ -1,4 +1,4 @@
-package com.example.commands;
+package hytale.examples.commands;
 
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;

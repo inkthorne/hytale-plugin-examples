@@ -10,18 +10,11 @@ This is a complete reference for Hytale server plugin development containing:
 
 ## Build Commands
 
-Build any example (from its directory):
-```bash
-./build.bat
-```
-Or with Gradle:
-```bash
-./gradlew build
-```
+From an example's directory, use the batch files:
 
-Deploy to Hytale mods folder:
 ```bash
-./deploy.bat
+./build.bat    # Build the plugin
+./deploy.bat   # Build and deploy to Hytale mods folder
 ```
 
 Mods directory: `%APPDATA%\Hytale\UserData\Mods\`

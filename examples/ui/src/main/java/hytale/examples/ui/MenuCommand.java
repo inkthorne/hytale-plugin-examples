@@ -1,27 +1,30 @@
-package com.example.commands;
+package hytale.examples.ui;
 
+import hytale.examples.ui.pages.SimpleMenuPage;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
+import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
- * Simplest possible command - no arguments, just sends a message.
- * Usage: /hello
+ * Opens a custom UI page for the player.
+ * Usage: /menu
  */
-public class HelloCommand extends AbstractPlayerCommand {
+public class MenuCommand extends AbstractPlayerCommand {
 
-    public HelloCommand() {
-        super("hello", "Sends a friendly greeting");
+    public MenuCommand() {
+        super("menu", "Opens a custom menu");
     }
 
     @Override
     protected void execute(CommandContext ctx, Store<EntityStore> store,
                           Ref<EntityStore> ref, PlayerRef playerRef, World world) {
-        playerRef.sendMessage(Message.raw("Hello, " + playerRef.getUsername() + "!"));
+        Player player = store.getComponent(ref, Player.getComponentType());
+        SimpleMenuPage page = new SimpleMenuPage(playerRef);
+        player.getPageManager().openCustomPage(ref, store, page);
     }
 }

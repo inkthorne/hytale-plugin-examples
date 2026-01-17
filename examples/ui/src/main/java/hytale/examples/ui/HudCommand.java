@@ -1,4 +1,4 @@
-package com.example.ui;
+package hytale.examples.ui;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;

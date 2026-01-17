@@ -1,4 +1,4 @@
-package com.example.ui.pages;
+package hytale.examples.ui.pages;
 
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.BasicCustomUIPage;

@@ -7,6 +7,6 @@
       "Name": "inkthorne"
     }
   ],
-  "Main": "com.example.ui.UIPlugin",
+  "Main": "hytale.examples.ui.UIPlugin",
   "IncludesAssetPack": true
 }

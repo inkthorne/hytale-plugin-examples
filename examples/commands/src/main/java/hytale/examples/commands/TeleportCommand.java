@@ -1,4 +1,4 @@
-package com.example.commands;
+package hytale.examples.commands;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;

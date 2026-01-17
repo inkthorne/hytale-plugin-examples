@@ -7,5 +7,5 @@
       "Name": "inkthorne"
     }
   ],
-  "Main": "com.example.commands.CommandsPlugin"
+  "Main": "hytale.examples.commands.CommandsPlugin"
 }
