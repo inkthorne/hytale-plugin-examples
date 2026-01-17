@@ -13,7 +13,6 @@ public class CommandsPlugin extends JavaPlugin {
     protected void setup() {
         getCommandRegistry().registerCommand(new HelloCommand());
         getCommandRegistry().registerCommand(new TeleportCommand());
-        getCommandRegistry().registerCommand(new GiveItemCommand());
 
         getLogger().atInfo().log("CommandsExample plugin loaded!");
     }
