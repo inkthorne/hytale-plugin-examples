@@ -28,6 +28,13 @@ Mods directory: `%APPDATA%\Hytale\UserData\Mods\`
 - Java 25+
 - Hytale installed (provides `HytaleServer.jar` from `%APPDATA%\Hytale\install\release\package\game\latest\Server\`)
 
+## Hytale Reference Files
+
+The Hytale installation contains reference files useful for plugin development:
+
+- **HytaleServer.jar**: `%APPDATA%\Hytale\install\release\package\game\latest\Server\HytaleServer.jar` - Decompile to explore API classes and code syntax
+- **Assets.zip**: `%APPDATA%\Hytale\install\release\package\game\latest\Assets.zip` - Contains Hytale assets; use as reference for asset structure and formatting
+
 ## Architecture
 
 ### Plugin Structure
