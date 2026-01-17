@@ -40,18 +40,16 @@ Mods directory: `%APPDATA%\Hytale\UserData\Mods\`
 
 ### Command System
 - Simple commands extend `AbstractPlayerCommand`
-- Commands targeting other players extend `AbstractTargetPlayerCommand`
-- Arguments registered via `withRequiredArg()` with types like `ArgTypes.RELATIVE_POSITION`, `ArgTypes.ITEM_ASSET`
+- Arguments registered via `withRequiredArg()` with types like `ArgTypes.RELATIVE_POSITION`
 - Execute method receives `CommandContext`, entity store, player ref, and world
 
 ### UI System
 - Custom pages extend `BasicCustomUIPage`
 - UI layouts defined in `.ui` files using Hytale's curly-brace DSL (placed in `resources/Common/UI/Custom/`)
-- Button clicks send data events via `OnActivating: (SendData: "event_name");` and handled in `handleDataEvent()`
 - Root `Group` in `.ui` files must NOT have an ID; named elements go inside it
 - HUD controlled via `player.getHudManager().setVisibleHudComponents()`
 
 ## Examples
 
-- **examples/commands/**: Command system (no-arg, position args, permissions)
+- **examples/commands/**: Command system (no-arg and position args)
 - **examples/ui/**: Custom UI pages and HUD management
