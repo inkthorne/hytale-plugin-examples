@@ -24,10 +24,4 @@ dependencies {
 jar {
     archiveBaseName.set('example-commands')
     archiveVersion.set('')
-
-    manifest {
-        attributes(
-            'Main-Class': 'com.example.commands.CommandsPlugin'
-        )
-    }
 }

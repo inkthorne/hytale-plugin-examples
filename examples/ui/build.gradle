@@ -24,10 +24,4 @@ dependencies {
 jar {
     archiveBaseName.set('example-ui')
     archiveVersion.set('')
-
-    manifest {
-        attributes(
-            'Main-Class': 'com.example.ui.UIPlugin'
-        )
-    }
 }

@@ -5,12 +5,11 @@ Demonstrates the Hytale UI system with custom pages and HUD management.
 ## Commands
 
 ### `/menu`
-Opens a custom UI page with clickable options.
+Opens a simple custom UI page.
 
 The page demonstrates:
 - Loading a `.ui` definition file
-- Handling button click events via `SendData`
-- Page dismiss handling
+- Using `CanDismiss` lifetime (press ESC to close)
 
 ### `/hud <show|hide>`
 Toggles HUD components visibility.
@@ -33,7 +32,7 @@ gradlew build
 
 ## Installation
 
-Copy `build/libs/ui-example-1.0.0.jar` to:
+Copy `build/libs/example-ui.jar` to:
 ```
 %APPDATA%\Hytale\UserData\Mods\
 ```

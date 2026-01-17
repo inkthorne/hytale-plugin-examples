@@ -1,6 +1,6 @@
 # Commands Example Plugin
 
-Demonstrates the Hytale command system with three example commands.
+Demonstrates the Hytale command system with two example commands.
 
 ## Commands
 
@@ -16,13 +16,6 @@ Teleport command demonstrating position arguments. Supports relative coordinates
 - `/tp 100 64 200` - Teleport to absolute coordinates
 - `/tp ~10 ~ ~-5` - Move 10 blocks on X, stay same Y, move -5 on Z
 
-### `/giveitem <player> <item>`
-Admin command demonstrating permissions and player targeting.
-
-**Requires:** `admin` permission
-
-**Example:** `/giveitem Steve hytale:torch`
-
 ## Building
 
 ```batch
@@ -37,7 +30,7 @@ gradlew build
 
 ## Installation
 
-Copy `build/libs/commands-example-1.0.0.jar` to:
+Copy `build/libs/example-commands.jar` to:
 ```
 %APPDATA%\Hytale\UserData\Mods\
 ```
@@ -47,7 +40,6 @@ Copy `build/libs/commands-example-1.0.0.jar` to:
 - `CommandsPlugin.java` - Main plugin class, registers commands
 - `HelloCommand.java` - Simplest command example (extends `AbstractPlayerCommand`)
 - `TeleportCommand.java` - Command with `RELATIVE_POSITION` argument
-- `GiveItemCommand.java` - Admin command with permissions (extends `AbstractTargetPlayerCommand`)
 
 ## Key API Patterns
 
