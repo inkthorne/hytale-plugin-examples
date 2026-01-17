@@ -6,9 +6,9 @@ A complete reference for Hytale server plugin development with documentation and
 
 The [docs/](./docs/) directory contains comprehensive documentation for the Hytale Plugin API:
 
-- [Getting Started](./docs/getting-started.md) - Project setup and first plugin
+- [Overview](./docs/overview.md) - Plugin API overview
 - [Commands](./docs/commands.md) - Command system and argument types
-- [UI System](./docs/ui-system.md) - Custom UI pages and HUD management
+- [UI](./docs/ui.md) - Custom UI pages and HUD management
 - [Events](./docs/events.md) - Event handling and listeners
 - And more...
 
@@ -18,7 +18,6 @@ The [docs/](./docs/) directory contains comprehensive documentation for the Hyta
 Demonstrates the command system with:
 - Simple no-argument commands
 - Commands with position arguments
-- Admin commands with permission requirements
 
 ### [examples/ui/](./examples/ui/)
 Demonstrates the UI system with:
@@ -44,7 +43,7 @@ build.bat
 Or using Gradle directly:
 
 ```batch
-gradlew shadowJar
+gradlew build
 ```
 
 ## Deployment
