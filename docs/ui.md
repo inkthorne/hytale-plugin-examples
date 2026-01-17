@@ -744,32 +744,31 @@ Available states:
 
 ### Event Handling
 
-UI elements can send data events to the server using `SendData`:
-
-```
-TextButton #MyButton {
-    Text: "Click Me";
-    OnActivating: (SendData: "button_clicked");
-}
-```
-
-The event data string is received in the `handleDataEvent()` method of your `CustomUIPage`:
+Button events must be registered server-side using `UIEventBuilder`, not in .ui files.
 
 ```java
+// In your CustomUIPage build method:
+@Override
+public void build(Ref<EntityStore> ref, UICommandBuilder cmdBuilder,
+                  UIEventBuilder eventBuilder, Store<EntityStore> store) {
+    cmdBuilder.append("MyPage.ui");
+    // Register button click event by element ID
+    eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "MyButton");
+}
+
 @Override
 public void handleDataEvent(Ref<EntityStore> ref, Store<EntityStore> store, String data) {
-    if (data.equals("button_clicked")) {
-        // Handle button click
+    if ("MyButton".equals(data)) {
+        // Handle the button click
     }
 }
 ```
 
-#### Event Properties
-| Property | Description |
-|----------|-------------|
-| `OnActivating` | Triggered when element is clicked/activated |
+> **Note:** The `OnActivating: (SendData: ...)` syntax is NOT valid in .ui files. Events must be registered through the Java API.
 
 ### Complete Example
+
+This example shows a panel with labels and buttons using correct syntax:
 
 ```
 // Import shared components
@@ -777,7 +776,6 @@ $Common = "../Common.ui";
 
 // Define variables
 @PanelBackground = (Color: #1a1a2e(0.95));
-@ButtonStyle = (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center);
 
 Group {
     LayoutMode: CenterMiddle;
@@ -795,30 +793,45 @@ Group {
             Text: "My Custom UI";
         }
 
+        Label #Subtitle {
+            Anchor: (Top: 10);
+            Style: (FontSize: 16, TextColor: #AAAAAA, HorizontalAlignment: Center);
+            Text: "Press ESC to close";
+        }
+
         Group #ButtonContainer {
             Anchor: (Height: 50);
             Padding: (Top: 20);
             LayoutMode: Center;
 
+            // TextButton requires state-based styling with LabelStyle
             TextButton #ActionButton {
                 Anchor: (Width: 150, Height: 44);
-                Background: (Color: #0f3460);
-                Style: @ButtonStyle;
+                Style: (
+                    Default: (Background: (Color: #0f3460), LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center)),
+                    Hovered: (Background: (Color: #1a5a90), LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center))
+                );
                 Text: "Take Action";
-                OnActivating: (SendData: "action_pressed");
             }
         }
 
         TextButton #CloseButton {
             Anchor: (Width: 100, Height: 36);
-            Background: (Color: #533483);
-            Style: (FontSize: 14, TextColor: #ffffff, HorizontalAlignment: Center);
+            Style: (
+                Default: (Background: (Color: #533483), LabelStyle: (FontSize: 14, TextColor: #ffffff, HorizontalAlignment: Center)),
+                Hovered: (Background: (Color: #6a4299), LabelStyle: (FontSize: 14, TextColor: #ffffff, HorizontalAlignment: Center))
+            );
             Text: "Close";
-            OnActivating: (SendData: "close");
         }
     }
 }
 ```
+
+> **Styling Differences:**
+> - **Label** uses direct style: `Style: (FontSize: 24, TextColor: #FFFFFF, ...)`
+> - **TextButton** uses state-based styling: `Style: (Default: (LabelStyle: (...)), Hovered: (...))`
+>
+> Button click events must be registered server-side via `UIEventBuilder.addEventBinding()`.
 
 ---
 

@@ -2,40 +2,19 @@ Group {
     LayoutMode: Center;
 
     Group #MenuContainer {
-        Anchor: (Width: 400, Height: 300);
+        Anchor: (Width: 400, Height: 200);
         Background: (Color: #333333(0.9));
+        LayoutMode: Top;
+        Padding: (Full: 20);
 
         Label #Title {
-            Anchor: (Top: 20);
             Style: (FontSize: 24, TextColor: #FFFFFF, HorizontalAlignment: Center);
             Text: "Simple Menu";
         }
 
-        Group #OptionsPanel {
-            LayoutMode: Top;
-            Anchor: (Top: 70);
-
-            Label #Option1 {
-                Padding: (Bottom: 10);
-                Style: (FontSize: 16, TextColor: #FFFFFF, HorizontalAlignment: Center);
-                Text: "Option 1";
-            }
-
-            Label #Option2 {
-                Padding: (Bottom: 10);
-                Style: (FontSize: 16, TextColor: #FFFFFF, HorizontalAlignment: Center);
-                Text: "Option 2";
-            }
-
-            Label #Option3 {
-                Style: (FontSize: 16, TextColor: #FFFFFF, HorizontalAlignment: Center);
-                Text: "Option 3";
-            }
-        }
-
-        Label #CloseHint {
-            Anchor: (Bottom: 20);
-            Style: (FontSize: 12, TextColor: #AAAAAA, HorizontalAlignment: Center);
+        Label #Subtitle {
+            Anchor: (Top: 20);
+            Style: (FontSize: 16, TextColor: #AAAAAA, HorizontalAlignment: Center);
             Text: "Press ESC to close";
         }
     }
