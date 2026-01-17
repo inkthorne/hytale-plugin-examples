@@ -28,7 +28,7 @@ Demonstrates the UI system with:
 ## Requirements
 
 - Hytale installed (uses `HytaleServer.jar` from `%APPDATA%\Hytale`)
-- Java 21+
+- Java 25+
 - Gradle (wrapper included)
 
 ## Building
@@ -55,4 +55,4 @@ Copy the built JAR from `build/libs/` to:
 
 ## License
 
-These examples are provided for educational purposes.
+MIT License - see [LICENSE](./LICENSE) for details.

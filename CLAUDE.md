@@ -12,18 +12,20 @@ Refer to `docs/overview.md` for guidance when implementing Java code for plugins
 
 ## Build Commands
 
-From an example's directory, use the batch files:
+From an example's directory (e.g., `examples/commands/`), run:
 
 ```bash
 ./build.bat    # Build the plugin
 ./deploy.bat   # Build and deploy to Hytale mods folder
 ```
 
+Note: Use `./` prefix when running from bash.
+
 Mods directory: `%APPDATA%\Hytale\UserData\Mods\`
 
 ## Requirements
 
-- Java 21+
+- Java 25+
 - Hytale installed (provides `HytaleServer.jar` from `%APPDATA%\Hytale\install\release\package\game\latest\Server\`)
 
 ## Architecture
