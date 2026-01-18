@@ -288,6 +288,8 @@ Enum representing the type of interaction in a `PlayerInteractEvent`. Use `event
 | `EntityStatEffect` | Stat effect applied |
 | `Wielding` | Wielding state change |
 
+> **See also:** [Complete InteractionType Reference](interactions.md#interactiontype-enum)
+
 ---
 
 ## PlayerInteractEvent Usage Examples
@@ -471,6 +473,8 @@ protected void setup() {
     getEntityStoreRegistry().registerSystem(new GameModeChangeSystem());
 }
 ```
+
+> **See also:** [ECS Event Handling](components.md#entityeventsystem)
 
 ---
 

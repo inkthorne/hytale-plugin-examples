@@ -53,6 +53,8 @@ public class AdminCommand extends AbstractPlayerCommand {
 
 Players without the required permission won't be able to execute the command.
 
+> **See also:** [Commands API](commands.md#command-permissions)
+
 ---
 
 ## Permission Events
@@ -60,6 +62,8 @@ Players without the required permission won't be able to execute the command.
 **Package:** `com.hypixel.hytale.server.core.event.events.permissions`
 
 Events related to permission changes for players and groups.
+
+> **See also:** [Event Registry](plugin-lifecycle.md#pluginevent)
 
 ### Event Summary
 

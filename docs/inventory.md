@@ -442,6 +442,8 @@ hotbar.registerChangeEvent(EventPriority.EARLY, event -> {
 
 This event is specific to individual `ItemContainer` instances. To listen for general inventory changes across all entities, use `LivingEntityInventoryChangeEvent` instead (see [entities.md](entities.md)).
 
+> **See also:** [Player Events](player.md#player-events)
+
 ---
 
 ## SimpleItemContainer
@@ -739,6 +741,8 @@ entity.setInventory(newInventory, true);  // with notification
 
 Types related to crafting recipes and requirements.
 
+> **See also:** [Interactions System](interactions.md)
+
 ---
 
 ## CraftingRecipe
@@ -813,6 +817,8 @@ public void handle(..., CraftRecipeEvent.Pre event) {
     }
 }
 ```
+
+> **See also:** [Asset Registry](assets.md#asset-types)
 
 ---
 

@@ -59,6 +59,8 @@ getChunkStoreRegistry()    // ComponentRegistryProxy<ChunkStore>
 getClientFeatureRegistry() // ClientFeatureRegistry
 ```
 
+> **See also:** [Commands API](commands.md#commandregistry)
+
 ### Configuration
 ```java
 // Load configuration from file with default fallback
@@ -258,6 +260,8 @@ public class MyPlugin extends JavaPlugin {
     }
 }
 ```
+
+> **See also:** [Event Systems](events.md)
 
 ---
 

@@ -527,6 +527,8 @@ Group {
 
 **Note:** `Top` and `Left` are the most commonly used values for stacking layouts.
 
+> **See also:** [Plugin Lifecycle](plugin-lifecycle.md#plugin-lifecycle-api)
+
 ---
 
 ## UI DSL Syntax Reference
@@ -864,6 +866,8 @@ void resetUserInterface(PlayerRef playerRef)
 // Network
 void sendVisibleHudComponents(PacketHandler handler)
 ```
+
+> **See also:** [Player API](player.md#player-events)
 
 ---
 

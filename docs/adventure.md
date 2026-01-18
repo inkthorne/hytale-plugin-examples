@@ -29,6 +29,8 @@ Abstract base class for instance discovery events. Extends `EcsEvent`.
 | `getInstanceWorldUuid()` | `UUID` | UUID of the discovered instance world |
 | `getDiscoveryConfig()` | `InstanceDiscoveryConfig` | Configuration for this discovery |
 
+> **See also:** [ECS Event Systems](components.md#entityeventsystem)
+
 ---
 
 ## DiscoverInstanceEvent.Display
@@ -181,6 +183,8 @@ Fired when a player opens a treasure chest. Implements `IEvent<String>` (keyed b
 | `getChestUUID()` | `UUID` | UUID of the treasure chest being opened |
 | `getPlayerRef()` | `Ref<EntityStore>` | Reference to the player opening the chest |
 | `getStore()` | `Store<EntityStore>` | Entity store for accessing components |
+
+> **See also:** [Inventory API](inventory.md#inventory)
 
 ### Usage Example
 

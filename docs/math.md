@@ -182,6 +182,8 @@ Vector3i intVec = vec.toVector3i();  // Truncates
 boolean same = vec.equals(other);
 ```
 
+> **See also:** [Transform Component](components.md#transformcomponent)
+
 ---
 
 ## Vector3f
@@ -982,6 +984,8 @@ box.forEachBlock(offsetX, offsetY, offsetZ, scale, (x, y, z) -> {
     return true;  // Continue iteration
 });
 ```
+
+> **See also:** [Collision API](collision.md#box-collision-detection)
 
 ---
 

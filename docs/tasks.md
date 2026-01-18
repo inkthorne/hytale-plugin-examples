@@ -11,6 +11,8 @@ TaskRegistration registerTask(CompletableFuture<Void> future)
 TaskRegistration registerTask(ScheduledFuture<Void> future)
 ```
 
+> **See also:** [Plugin Lifecycle](plugin-lifecycle.md#plugin-lifecycle-api)
+
 ---
 
 ## TaskRegistration

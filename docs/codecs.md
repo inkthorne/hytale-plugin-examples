@@ -61,6 +61,8 @@ protected void setup() {
 }
 ```
 
+> **See also:** [Plugin Configuration](plugin-lifecycle.md#configuration)
+
 ---
 
 ### KeyedCodec<T>
@@ -192,6 +194,8 @@ public class MyRecord {
     public List<String> getTags() { return tags; }
 }
 ```
+
+> **See also:** [Assets API](assets.md#json-asset-pattern)
 
 ---
 

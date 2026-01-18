@@ -58,6 +58,8 @@ public class MyCommand extends AbstractPlayerCommand {
 }
 ```
 
+> **See also:** [Message Formatting API](player.md#message)
+
 ## CommandContext
 **Package:** `com.hypixel.hytale.server.core.command.system`
 
@@ -93,6 +95,8 @@ protected void setup() {
     getCommandRegistry().registerCommand(new MyCommand());
 }
 ```
+
+> **See also:** [Plugin Lifecycle](plugin-lifecycle.md#plugin-lifecycle-api)
 
 ## AbstractCommand Arguments
 **Package:** `com.hypixel.hytale.server.core.command.system`
@@ -149,6 +153,8 @@ void setOwner(CommandOwner owner)               // Set owning plugin
 // Matching
 boolean matches(String input, String alias, int depth)  // Check if input matches command
 ```
+
+> **See also:** [Permissions API](permissions.md#permissionholder)
 
 ## AbstractAsyncCommand
 **Package:** `com.hypixel.hytale.server.core.command.system.basecommands`
@@ -430,3 +436,6 @@ public class DifficultyCommand extends AbstractPlayerCommand {
         playerRef.sendMessage(Message.raw("Set difficulty to " + diff));
     }
 }
+```
+
+> **See also:** [Math/Vector API](math.md#core-types)

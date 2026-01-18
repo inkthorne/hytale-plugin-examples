@@ -24,6 +24,8 @@ getEventRegistry().register(AllNPCsLoadedEvent.class, event -> {
 });
 ```
 
+> **See also:** [Event Registration](plugin-lifecycle.md#server-lifecycle-events)
+
 ### LoadedNPCEvent
 
 **Package:** `com.hypixel.hytale.server.spawning`
@@ -107,6 +109,8 @@ getEventRegistry().register(AllNPCsLoadedEvent.class, event -> {
 ## Sensor Events
 
 Events and classes related to NPC AI sensors. Sensors detect entities and trigger NPC behaviors.
+
+> **See also:** [ECS Event System](components.md#entityeventsystem)
 
 **Package:** `com.hypixel.hytale.server.npc.corecomponents.world`
 

@@ -88,6 +88,8 @@ BlockSelection house = store.getServerPrefab("buildings/house");
 house.place(commandSender, world);
 ```
 
+> **See also:** [World API](world.md#worldchunk)
+
 ---
 
 ## BlockSelection
@@ -394,6 +396,8 @@ prefab.place(commandSender, world);
 ## Prefab Events
 
 Events related to prefab pasting and entity placement from prefabs.
+
+> **See also:** [ECS Event Systems](components.md#entityeventsystem)
 
 **Package:** `com.hypixel.hytale.server.core.prefab.event`
 

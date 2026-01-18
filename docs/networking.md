@@ -37,6 +37,8 @@ ProjectileConfig config = ProjectileConfig.getAssetMap().get("arrow");
 ProjectileConfig packet = config.toPacket();  // Get network-ready version
 ```
 
+> **See also:** [Projectiles API](projectiles.md#projectileconfig)
+
 ---
 
 ## Direction
@@ -98,6 +100,8 @@ Direction offset = projectileConfig.getSpawnRotationOffset();
 float yaw = offset.yaw;
 float pitch = offset.pitch;
 ```
+
+> **See also:** [Math API](math.md#vector3f)
 
 ---
 

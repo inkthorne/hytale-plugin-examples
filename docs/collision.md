@@ -99,7 +99,11 @@ static boolean isBelowMovementThreshold(Vector3d movement)
 ```java
 // Get module configuration
 CollisionModuleConfig getConfig()
+```
 
+> **See also:** [World API](world.md#worldchunk)
+
+```java
 // Find intersections with blocks
 void findIntersections(
     World world,
@@ -231,6 +235,8 @@ boolean isCheckingForCharacterCollisions()
 boolean isComputeOverlaps()
 void setComputeOverlaps(boolean compute)
 ```
+
+> **See also:** [Projectiles API](projectiles.md#standardphysicsprovider)
 
 ### Lifecycle
 ```java
@@ -494,6 +500,8 @@ boolean isBoxIntersecting()
 boolean isTouching()
 boolean touchesCeil()
 ```
+
+> **See also:** [Math API - Box](math.md#box-aabb)
 
 ---
 

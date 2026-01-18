@@ -33,6 +33,8 @@ boolean isTrigger()         // Whether fluid triggers collision events
 Object getInteractions()  // Fluid interaction rules (e.g., water + lava = cobblestone)
 ```
 
+> **See also:** [Collision API](collision.md#collisionconfig)
+
 ---
 
 ## Usage with BlockCollisionData
@@ -50,6 +52,8 @@ if (collision.fluid != null && collision.fluid != Fluid.EMPTY) {
     }
 }
 ```
+
+> **See also:** [World API](world.md#worldchunk)
 
 ## Usage with CollisionConfig
 

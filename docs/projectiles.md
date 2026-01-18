@@ -53,6 +53,8 @@ ComponentType<EntityStore, StandardPhysicsProvider> getStandardPhysicsProviderCo
 ComponentType<EntityStore, PredictedProjectile> getPredictedProjectileComponentType()
 ```
 
+> **See also:** [ECS Components](components.md#component-types)
+
 ---
 
 ## ProjectileConfig
@@ -415,6 +417,8 @@ Result onCollisionSliceFinished()
 void onCollisionFinished()
 ```
 
+> **See also:** [Collision API](collision.md#collision-result)
+
 ### Tick Methods
 ```java
 void finishTick(TransformComponent transform, Velocity velocity)
@@ -444,6 +448,8 @@ if (physics != null) {
     Vector3d vel = physics.getVelocity();
 }
 ```
+
+> **See also:** [Math API](math.md#vector3d)
 
 ---
 

@@ -74,6 +74,8 @@ Common asset type configurations:
 | `particle/` | Particle effect configurations |
 | `gameplay/` | Gameplay configuration assets |
 
+> **See also:** [Codecs API](codecs.md#builtin-codecs)
+
 ---
 
 ## Model
@@ -173,6 +175,8 @@ ModelParticle[] particles = model.getParticles();
 Map<String, ModelAsset.AnimationSet> animations = model.getAnimationSetMap();
 String idleAnim = model.getFirstBoundAnimationId("idle", "default");
 ```
+
+> **See also:** [Projectiles API](projectiles.md#projectileconfig)
 
 ---
 

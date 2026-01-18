@@ -29,6 +29,8 @@ Abstract base class for all asset editor events.
 |--------|-------------|-------------|
 | `getEditorClient()` | `EditorClient` | The editor client |
 
+> **See also:** [Asset Registry](assets.md#asset-registry)
+
 ---
 
 ## AssetEditorActivateButtonEvent
@@ -159,3 +161,5 @@ protected void setup() {
     );
 }
 ```
+
+> **See also:** [Event Registration](plugin-lifecycle.md#server-lifecycle-events)

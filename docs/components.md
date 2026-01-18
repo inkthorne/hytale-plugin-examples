@@ -78,6 +78,8 @@ boolean isInThread()
 void assertThread()
 ```
 
+> **See also:** [Inventory API](inventory.md#itemcontainer)
+
 ---
 
 ### Ref<ECS_TYPE>
@@ -689,6 +691,8 @@ if (transform != null) {
     transform.teleportPosition(new Vector3d(100, 64, 100));
 }
 ```
+
+> **See also:** [Math API](math.md#transform)
 
 ---
 
