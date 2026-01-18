@@ -23,6 +23,12 @@ Note: Use `./` prefix when running from bash.
 
 Mods directory: `%APPDATA%\Hytale\UserData\Mods\`
 
+### Path Configuration
+
+Hytale paths are centralized in shared configuration files:
+- `examples/hytale-paths.gradle` - Used by build.gradle files for `hytaleServerJar` and `hytaleModsDir`
+- `examples/hytale-paths.bat` - Used by deploy.bat scripts for `HYTALE_MODS_DIR`
+
 ## Requirements
 
 - Java 25+

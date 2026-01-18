@@ -1,5 +1,6 @@
 @echo off
-set "MODS_DIR=%APPDATA%\Hytale\UserData\Mods"
+call "%~dp0..\hytale-paths.bat"
+set "MODS_DIR=%HYTALE_MODS_DIR%"
 set "JAR_FILE=build\libs\example-commands.jar"
 
 if not exist "%JAR_FILE%" (
