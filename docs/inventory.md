@@ -133,6 +133,30 @@ ItemStack(String itemId, int quantity, BsonDocument metadata)
 ItemStack(String itemId, int quantity, double durability, double maxDurability, BsonDocument metadata)
 ```
 
+### Item ID Format
+
+Item IDs match the asset filename without the `.json` extension. They do **not** use namespace prefixes.
+
+**Examples:**
+- `Weapon_Sword_Wood` (wooden sword)
+- `Food_Bread` (bread)
+- `Tool_Pickaxe_Iron` (iron pickaxe)
+
+Find valid item IDs in `Assets.zip` under `Assets/Server/Item/Items/`, organized by category.
+
+### Validating Item IDs
+
+To check if an item ID is valid after creating an ItemStack:
+
+```java
+ItemStack stack = new ItemStack(itemId, quantity);
+if (stack.getItem() == Item.UNKNOWN) {
+    // Invalid item ID - handle error
+}
+```
+
+**Note:** Prefer checking against `Item.UNKNOWN` rather than using `isValid()`, which may reject valid items in some cases.
+
 ### Getters
 ```java
 String getItemId()
