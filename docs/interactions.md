@@ -229,3 +229,233 @@ Configured in Root Interaction files: `Server/Item/RootInteractions/Weapons/{Wea
 - **Cooldown**: Minimum delay between attacks (prevents spam)
 - **ClickQueuingTimeout**: Buffer window to queue next attack input
 - **RequireNewClick**: If true, must click again to chain (holding won't auto-chain)
+
+---
+
+## Wielding Interactions (Blocking/Guarding)
+
+The `Wielding` interaction type enables blocking and guarding mechanics for shields and weapons.
+
+**File locations:** `Server/Item/Interactions/Weapons/{WeaponType}/Secondary/Guard/*_Guard_Wield.json`
+
+### Basic Structure
+
+```json
+{
+  "Type": "Wielding",
+  "AngledWielding": {
+    "Angle": 0,
+    "AngleDistance": 90,
+    "DamageModifiers": { "Physical": 0 }
+  },
+  "StaminaCost": {
+    "CostType": "Damage",
+    "Cost": 0.5
+  },
+  "BlockedEffects": {
+    "WorldSoundEventId": "SFX_Shield_T2_Impact",
+    "WorldParticles": [{ "SystemId": "Shield_Block" }]
+  },
+  "BlockedInteractions": {
+    "Interactions": [...]
+  },
+  "Failed": {
+    "Interactions": [...]
+  }
+}
+```
+
+### Key Properties
+
+| Property | Description |
+|----------|-------------|
+| `AngledWielding` | Configures angle-based damage reduction |
+| `DamageModifiers` | Reduce incoming damage by type (0 = full block, 0.5 = 50% reduction) |
+| `StaminaCost` | Stamina consumption when blocking |
+| `BlockedEffects` | Visual/audio effects when block succeeds |
+| `BlockedInteractions` | Interactions to trigger on successful block |
+| `Failed` | What happens when guard breaks (stamina depleted) |
+
+### AngledWielding
+
+Controls directional blocking based on attack angle:
+
+```json
+"AngledWielding": {
+  "Angle": 0,
+  "AngleDistance": 90,
+  "DamageModifiers": { "Physical": 0, "Magical": 0.5 }
+}
+```
+
+- **Angle**: Center angle of the blocking arc (0 = forward)
+- **AngleDistance**: Half-width of the blocking arc in degrees
+- **DamageModifiers**: Multipliers per damage type (0 = full block, 1 = no reduction)
+
+### StaminaCost
+
+Stamina consumption can be based on damage blocked:
+
+```json
+"StaminaCost": {
+  "CostType": "Damage",
+  "Cost": 0.5
+}
+```
+
+- **CostType**: `"Damage"` = cost per point of damage blocked
+- **Cost**: Multiplier for stamina drain
+
+### BlockedEffects
+
+Effects triggered on successful block (sounds, particles, camera effects):
+
+```json
+"BlockedEffects": {
+  "WorldSoundEventId": "SFX_Shield_T2_Impact",
+  "WorldParticles": [
+    { "SystemId": "Shield_Block" }
+  ]
+}
+```
+
+### BlockedInteractions
+
+Trigger additional interactions when a block succeeds. This enables mechanics like granting stats on successful blocks:
+
+```json
+"BlockedInteractions": {
+  "Interactions": [
+    {
+      "Type": "ChangeStat",
+      "StatModifiers": {
+        "SignatureEnergy": 5
+      }
+    },
+    {
+      "Type": "ApplyForce",
+      "Force": [0, 5, -10]
+    }
+  ]
+}
+```
+
+### Failed (Guard Break)
+
+Interactions triggered when stamina is depleted during a block:
+
+```json
+"Failed": {
+  "Interactions": [
+    { "Type": "Stagger" }
+  ]
+}
+```
+
+---
+
+## ChangeStat Interaction
+
+The `ChangeStat` interaction modifies entity stats like health, stamina, or signature energy.
+
+**Example locations:**
+- `Server/Entity/Effects/Potion/*_Regen.json`
+- Used in `BlockedInteractions` for granting stats on block
+
+### Basic Structure
+
+```json
+{
+  "Type": "ChangeStat",
+  "StatModifiers": {
+    "SignatureEnergy": 5,
+    "Stamina": 10
+  }
+}
+```
+
+### StatModifiers
+
+A map of stat names to modification values:
+
+```json
+"StatModifiers": {
+  "SignatureEnergy": 5,
+  "Stamina": 10,
+  "Health": -5
+}
+```
+
+**Available stats:**
+- `SignatureEnergy` - Ultimate/signature ability resource
+- `Stamina` - Used for blocking, sprinting, etc.
+- `Health` - Entity health
+- `Mana` - Magic resource (if applicable)
+
+### Behaviour Options
+
+Control how the stat is modified:
+
+```json
+{
+  "Type": "ChangeStat",
+  "StatModifiers": {
+    "Health": 50
+  },
+  "Behaviour": "Set"
+}
+```
+
+| Behaviour | Description |
+|-----------|-------------|
+| `Add` | Add value to current stat (default) |
+| `Set` | Set stat to exact value |
+
+### ValueType Options
+
+Control whether the value is absolute or percentage-based:
+
+```json
+{
+  "Type": "ChangeStat",
+  "StatModifiers": {
+    "Health": 25
+  },
+  "ValueType": "Percent"
+}
+```
+
+| ValueType | Description |
+|-----------|-------------|
+| (default) | Absolute value |
+| `Percent` | Percentage of max stat |
+
+### Example: Grant Signature Energy on Block
+
+Combine `Wielding` with `BlockedInteractions` and `ChangeStat`:
+
+```json
+{
+  "Type": "Wielding",
+  "BlockedInteractions": {
+    "Interactions": [
+      {
+        "Type": "ChangeStat",
+        "StatModifiers": {
+          "SignatureEnergy": 5
+        }
+      }
+    ]
+  },
+  "AngledWielding": {
+    "Angle": 0,
+    "AngleDistance": 90,
+    "DamageModifiers": { "Physical": 0 }
+  },
+  "BlockedEffects": {
+    "WorldSoundEventId": "SFX_Shield_T2_Impact"
+  }
+}
+```
+
+This grants 5 signature energy each time the player successfully blocks an attack.

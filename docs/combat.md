@@ -405,3 +405,150 @@ public class HitNotificationSystem extends DamageEventSystem {
     }
 }
 ```
+
+---
+
+## Stat Modification on Hit (JSON)
+
+Damage interactions can grant stats to the attacker when they successfully hit an entity. This is configured via the `EntityStatsOnHit` property in damage interaction JSON files.
+
+**File locations:** `Server/Item/Interactions/Weapons/{WeaponType}/Primary/*_Damage.json`
+
+### EntityStatsOnHit
+
+An array of stat modifications applied to the attacker on successful hit:
+
+```json
+{
+  "Type": "DamageEntity",
+  "EntityStatsOnHit": [
+    { "EntityStatId": "SignatureEnergy", "Amount": 1 }
+  ],
+  "DamageParameters": {
+    "DamageAmount": 10,
+    "DamageCauseId": "Physical"
+  }
+}
+```
+
+### Structure
+
+Each entry in the `EntityStatsOnHit` array has:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `EntityStatId` | string | The stat to modify |
+| `Amount` | number | Amount to add to the stat |
+
+### Available Stats
+
+- `SignatureEnergy` - Ultimate/signature ability resource
+- `Stamina` - Used for blocking, sprinting, dodging
+- `Health` - Entity health
+- `Mana` - Magic resource
+
+### Example: Sword Granting Signature Energy
+
+From `Common_Melee_Damage.json`:
+
+```json
+{
+  "Type": "DamageEntity",
+  "EntityStatsOnHit": [
+    { "EntityStatId": "SignatureEnergy", "Amount": 1 }
+  ],
+  "DamageParameters": {
+    "DamageAmount": 5,
+    "DamageCauseId": "Physical"
+  }
+}
+```
+
+This grants 1 signature energy to the attacker each time they land a hit.
+
+---
+
+## Blocking Mechanics (JSON)
+
+Blocking is implemented via the `Wielding` interaction type. See [interactions.md](interactions.md#wielding-interactions-blockingguarding) for full details.
+
+### How Blocking Reduces Damage
+
+The `DamageModifiers` property in `AngledWielding` controls damage reduction per damage type:
+
+```json
+"AngledWielding": {
+  "Angle": 0,
+  "AngleDistance": 90,
+  "DamageModifiers": {
+    "Physical": 0,
+    "Magical": 0.5,
+    "Fire": 1
+  }
+}
+```
+
+| Value | Effect |
+|-------|--------|
+| `0` | Full block (no damage taken) |
+| `0.5` | 50% damage reduction |
+| `1` | No reduction (full damage) |
+
+### Stamina Consumption on Block
+
+Blocking consumes stamina based on the `StaminaCost` property:
+
+```json
+"StaminaCost": {
+  "CostType": "Damage",
+  "Cost": 0.5
+}
+```
+
+- **CostType: "Damage"** - Stamina cost scales with incoming damage
+- **Cost** - Multiplier (0.5 = consume 0.5 stamina per point of damage blocked)
+
+### Granting Stats on Successful Block
+
+Use `BlockedInteractions` with `ChangeStat` to grant stats when a block succeeds:
+
+```json
+{
+  "Type": "Wielding",
+  "BlockedInteractions": {
+    "Interactions": [
+      {
+        "Type": "ChangeStat",
+        "StatModifiers": {
+          "SignatureEnergy": 5
+        }
+      }
+    ]
+  },
+  "AngledWielding": {
+    "Angle": 0,
+    "AngleDistance": 90,
+    "DamageModifiers": { "Physical": 0 }
+  },
+  "BlockedEffects": {
+    "WorldSoundEventId": "SFX_Shield_T2_Impact"
+  }
+}
+```
+
+This configuration:
+1. Blocks all physical damage from the front 180° arc
+2. Plays a sound effect on successful block
+3. Grants 5 signature energy to the blocker
+
+### Guard Break
+
+When stamina is depleted during a block, the `Failed` interactions trigger:
+
+```json
+"Failed": {
+  "Interactions": [
+    { "Type": "Stagger" }
+  ]
+}
+```
