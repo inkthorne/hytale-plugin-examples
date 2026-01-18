@@ -559,6 +559,115 @@ When stamina is depleted during a block, the `Failed` interactions trigger:
 }
 ```
 
+### Timed Blocking and Parry Mechanics
+
+The `Wielding` interaction supports time-limited blocks and parry windows through properties inherited from `ChargingInteraction`.
+
+#### RunTime
+
+Sets a fixed duration for the block. When set, the interaction runs for exactly this duration regardless of input.
+
+```json
+{
+  "Type": "Wielding",
+  "RunTime": 0.5,
+  "DamageModifiers": { "Physical": 0 }
+}
+```
+
+- Without `RunTime`: Block continues while input is held (standard guard)
+- With `RunTime`: Block lasts for the specified duration in seconds
+
+#### FailOnDamage
+
+When `true`, the interaction ends immediately when the entity is hit.
+
+```json
+{
+  "Type": "Wielding",
+  "RunTime": 5,
+  "FailOnDamage": true,
+  "DamageModifiers": { "Physical": 0 },
+  "BlockedInteractions": {
+    "Interactions": [
+      { "Type": "ChangeStat", "StatModifiers": { "SignatureEnergy": 5 } }
+    ]
+  }
+}
+```
+
+**Important:** `FailOnDamage` triggers when the entity is **hit**, not when actual damage is taken. This means it fires even if the attack was fully blocked (damage reduced to 0). This enables parry mechanics where:
+
+1. Player initiates parry (short `RunTime` window)
+2. If hit during window → `BlockedInteractions` triggers (e.g., counter-attack, stat grant), then interaction ends
+3. If not hit → interaction ends after `RunTime` expires
+
+#### Example: Parry Window
+
+From `Server/Item/Interactions/_Debug/Debug_Stick_Parry.json`:
+
+```json
+{
+  "Type": "Wielding",
+  "RunTime": 5,
+  "FailOnDamage": true,
+  "DamageModifiers": { "Physical": 0 },
+  "BlockedInteractions": {
+    "Interactions": [
+      {
+        "Type": "Parallel",
+        "Interactions": [
+          {
+            "Interactions": [
+              { "Type": "ApplyForce", "Forces": [{ "Direction": { "Z": -1 }, "Force": 10 }] }
+            ]
+          },
+          { "Interactions": ["Stick_Attack"] }
+        ]
+      }
+    ]
+  }
+}
+```
+
+This creates a 5-second parry window that:
+- Blocks all physical damage
+- On successful parry: knocks back attacker and triggers a counter-attack
+- Ends after being hit once (`FailOnDamage`) or after 5 seconds (`RunTime`)
+
+#### Example: Click-to-Block
+
+For a simple click-to-block mechanic (single click activates block for a fixed duration):
+
+```json
+{
+  "Type": "Wielding",
+  "RunTime": 0.5,
+  "FailOnDamage": false,
+  "allowIndefiniteHold": false,
+  "cancelOnOtherClick": true,
+  "AngledWielding": {
+    "Angle": 0,
+    "AngleDistance": 90,
+    "DamageModifiers": { "Physical": 0 }
+  },
+  "BlockedEffects": {
+    "WorldSoundEventId": "SFX_Shield_T2_Impact"
+  }
+}
+```
+
+| Property | Value | Effect |
+|----------|-------|--------|
+| `RunTime` | `0.5` | Block lasts exactly 0.5 seconds |
+| `FailOnDamage` | `false` | Block continues even after being hit |
+| `allowIndefiniteHold` | `false` | Block ends when `RunTime` expires, cannot be extended by holding |
+| `cancelOnOtherClick` | `true` | Block cancels if player clicks another input |
+
+> **Inherited Properties:** These properties (`RunTime`, `FailOnDamage`, `allowIndefiniteHold`, `cancelOnOtherClick`) are inherited from `ChargingInteraction`, which `WieldingInteraction` extends. See [Wielding Interactions](interactions.md#wielding-interactions-blockingguarding) for the full property list.
+
+> **In-Game Verification:** When testing blocking mechanics, use the debug stick items found in `Server/Item/Interactions/_Debug/` as reference implementations. The `Debug_Stick_Parry.json` demonstrates timed blocking with counter-attacks.
+
 ---
 
 ## Knockback System
