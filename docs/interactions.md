@@ -975,6 +975,80 @@ In this example, poison has twice the chance of being selected.
 
 ---
 
+### Replace
+
+**Package:** `config/none/ReplaceInteraction`
+
+Variable substitution for creating reusable interaction templates. Looks up a variable from the interaction context and executes its value, or falls back to a default.
+
+#### Structure
+
+```json
+{
+  "Type": "Replace",
+  "Var": "EffectName",
+  "DefaultValue": {
+    "Interactions": ["Fallback_Effect"]
+  },
+  "DefaultOk": true
+}
+```
+
+#### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Var` | string | Variable name to look up from context |
+| `DefaultValue` | object | Fallback interaction(s) if variable isn't set |
+| `DefaultOk` | boolean | If `true`, silently uses default when variable missing. If `false`, logs SEVERE error then uses default. |
+
+#### DefaultOk Behavior
+
+| `DefaultOk` | Variable Missing | Result |
+|-------------|------------------|--------|
+| `true` | Yes | Silently uses `DefaultValue` |
+| `false`/omitted | Yes | Logs SEVERE error, then uses `DefaultValue` |
+| either | No | Uses the variable's value |
+
+#### Example: Reusable Consumable Template
+
+Create a generic consume template that items can customize:
+
+**Consume_Template.json:**
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "Charging",
+      "FailOnDamage": true,
+      "Next": {
+        "2.0": {
+          "Type": "Serial",
+          "Interactions": [
+            {
+              "Type": "ModifyInventory",
+              "AdjustHeldItemQuantity": -1
+            },
+            {
+              "Type": "Replace",
+              "Var": "Effect",
+              "DefaultValue": {
+                "Interactions": ["No_Effect"]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+Items referencing this template provide their own `Effect` variable to inject custom behavior (healing, buffs, etc.) without duplicating the consume logic.
+
+---
+
 ## Entity Interactions
 
 ### SpawnPrefab
