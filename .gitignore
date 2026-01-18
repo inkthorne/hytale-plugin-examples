@@ -27,3 +27,6 @@ libs/HytaleServer.jar
 # Temporary files
 *.log
 *.tmp
+
+# Extracted/decompiled class files
+com/

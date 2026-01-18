@@ -2,6 +2,8 @@
 
 This document covers damage events, combat systems, and kill feed customization.
 
+> **See also:** For JSON-based combat configuration (damage interactions, effects, target selectors), see [interactions.md - Complete Interaction Type Reference](interactions.md#complete-interaction-type-reference).
+
 ## Damage Events (DamageEventSystem)
 
 Handle damage events when entities receive damage. Extend `DamageEventSystem` (not raw `EntityEventSystem`).
@@ -412,6 +414,8 @@ public class HitNotificationSystem extends DamageEventSystem {
 
 Damage interactions can grant stats to the attacker when they successfully hit an entity. This is configured via the `EntityStatsOnHit` property in damage interaction JSON files.
 
+> **See also:** [DamageEntity Interaction](interactions.md#damageentity) for the complete structure including damage effects and target selectors.
+
 **File locations:** `Server/Item/Interactions/Weapons/{WeaponType}/Primary/*_Damage.json`
 
 ### EntityStatsOnHit
@@ -471,6 +475,8 @@ This grants 1 signature energy to the attacker each time they land a hit.
 ## Blocking Mechanics (JSON)
 
 Blocking is implemented via the `Wielding` interaction type. See [interactions.md](interactions.md#wielding-interactions-blockingguarding) for full details.
+
+> **See also:** [ChangeStat Interaction](interactions.md#changestat-interaction) for granting stats on successful blocks, and [ApplyForce](interactions.md#applyforce) for knockback effects.
 
 ### How Blocking Reduces Damage
 
@@ -552,3 +558,124 @@ When stamina is depleted during a block, the `Failed` interactions trigger:
   ]
 }
 ```
+
+---
+
+## Knockback System
+
+Knockback is a temporary component-based system that applies velocity changes to entities when they take damage. The `KnockbackComponent` is added to entities during combat and automatically removed when the knockback effect completes.
+
+> **See also:** [ApplyForce Interaction](interactions.md#applyforce) for direct force application via JSON, and [Control Flow Interactions](interactions.md#control-flow-interactions) for combining knockback with other effects.
+
+### KnockbackComponent
+
+**Package:** `com.hypixel.hytale.server.core.modules.entity.damage`
+
+A temporary ECS component that manages knockback state on entities.
+
+#### Lifecycle
+
+1. **Added**: When an entity takes damage from an attack with a `Knockback` configuration
+2. **Active**: The `ApplyKnockback` system applies velocity each tick while `timer < duration`
+3. **Removed**: Automatically removed when `timer >= duration`
+
+#### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `velocity` | `Vector3d` | Direction and magnitude of knockback force |
+| `velocityType` | `ChangeVelocityType` | How velocity is applied (SET, ADD, etc.) |
+| `velocityConfig` | `VelocityConfig` | Additional velocity configuration |
+| `modifiers` | `DoubleList` | Reduction multipliers (armor, wielding, etc.) |
+| `duration` | `float` | Total knockback duration in seconds |
+| `timer` | `float` | Elapsed time since knockback started |
+
+### JSON Configuration
+
+Knockback is configured in damage interaction JSON files using the `Knockback` property.
+
+**File locations:** `Server/Item/Interactions/Weapons/{WeaponType}/Primary/*_Damage.json`
+
+#### Basic Knockback
+
+```json
+{
+  "Type": "DamageEntity",
+  "DamageParameters": {
+    "DamageAmount": 10,
+    "DamageCauseId": "Physical"
+  },
+  "Knockback": {
+    "Force": 0.5,
+    "RelativeX": -5,
+    "RelativeZ": -5,
+    "VelocityY": 5
+  }
+}
+```
+
+#### Knockback Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Force` | float | Base knockback strength multiplier |
+| `RelativeX` | float | Knockback in local X axis (relative to attacker facing) |
+| `RelativeZ` | float | Knockback in local Z axis (push away from attacker) |
+| `VelocityY` | float | Upward velocity component |
+| `Duration` | float | How long knockback lasts (optional) |
+
+### Knockback Types
+
+The knockback system supports multiple types through different `VelocityConfig` implementations:
+
+| Type | Description |
+|------|-------------|
+| `DirectionalKnockback` | Applies knockback in a fixed direction relative to the attacker |
+| `ForceKnockback` | Applies knockback based on force magnitude |
+| `PointKnockback` | Applies knockback away from a specific point (explosions) |
+
+### Knockback Resistance
+
+Multiple systems can reduce knockback effectiveness:
+
+#### Armor Reduction
+
+The `DamageSystems.ArmorKnockbackReduction` system reduces knockback based on equipped armor. Armor pieces with knockback resistance add reduction modifiers to the `KnockbackComponent.modifiers` list.
+
+#### Wielding Reduction
+
+The `DamageSystems.WieldingKnockbackReduction` system reduces knockback when blocking or wielding items. Shields and weapons can provide knockback resistance while held.
+
+#### Status Effects
+
+Certain status effects can modify knockback resistance, either increasing or decreasing the final knockback applied.
+
+### Related Systems
+
+| System | Description |
+|--------|-------------|
+| `KnockbackSystems.ApplyKnockback` | Main system that applies velocity and removes component when done |
+| `KnockbackSystems.ApplyPlayerKnockback` | Separate system for player-specific knockback handling |
+| `DamageSystems.ArmorKnockbackReduction` | Calculates armor-based knockback reduction |
+| `DamageSystems.WieldingKnockbackReduction` | Calculates wielding-based knockback reduction |
+
+### Applying Knockback via Code
+
+To apply knockback programmatically, add a `KnockbackComponent` to an entity:
+
+```java
+import com.hypixel.hytale.server.core.modules.entity.damage.KnockbackComponent;
+import org.joml.Vector3d;
+
+// In an ECS system with access to CommandBuffer
+KnockbackComponent knockback = new KnockbackComponent();
+knockback.velocity = new Vector3d(0, 5, -10);  // Up and backward
+knockback.duration = 0.5f;  // Half second duration
+knockback.timer = 0f;
+
+buffer.setComponent(entityRef, KnockbackComponent.getComponentType(), knockback);
+```
+
+> **Note:** Knockback applied via code bypasses the armor/wielding reduction systems unless you manually calculate and apply modifiers.
+
+> **See also:** For direct velocity manipulation without the component system, see [Knockback from Damage in entities.md](entities.md#example-knockback-from-damage).

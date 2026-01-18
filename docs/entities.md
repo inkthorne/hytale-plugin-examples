@@ -423,6 +423,8 @@ public void applyKnockback(Velocity velocity, Vector3d direction, double force) 
 }
 ```
 
+> **See also:** For the component-based knockback system with automatic duration management and resistance modifiers, see [KnockbackComponent in combat.md](combat.md#knockback-system).
+
 ---
 
 ## InteractionManager
