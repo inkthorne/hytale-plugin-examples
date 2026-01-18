@@ -175,3 +175,57 @@ Ref<EntityStore> target = context.getMeta(Interaction.TARGET_ENTITY);
 Vector4d hitLocation = context.getMeta(Interaction.HIT_LOCATION);
 Damage damage = context.getMeta(Interaction.DAMAGE);
 ```
+
+---
+
+## Attack Chain Timing
+
+Attack chains allow sequential attacks to flow together as combos. The timing between attacks is controlled by properties in the interaction configuration files.
+
+### Key Properties
+
+| Property | Location | Purpose |
+|----------|----------|---------|
+| `ChainingAllowance` | Chain JSON files | Time window (seconds) before chain resets |
+| `Cooldown` | Root interaction files | Minimum time between attacks |
+| `ClickQueuingTimeout` | Root interaction files | Input buffer for queuing next attack |
+
+### ChainingAllowance
+
+Defines how long (in seconds) the player has to execute the next attack before the chain breaks and resets.
+
+**File location:** `Server/Item/Interactions/Weapons/{WeaponType}/Primary/*_Chain.json`
+
+**Example:**
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 2,
+  "ChainId": "Sword_Swings",
+  "Next": [...]
+}
+```
+
+**Values by weapon:**
+| Weapon | ChainingAllowance |
+|--------|-------------------|
+| Sword | 2.0s |
+| Battleaxe | 2.9s |
+| Daggers | 1.2s |
+
+### Cooldown & Click Queuing
+
+Configured in Root Interaction files: `Server/Item/RootInteractions/Weapons/{WeaponType}/`
+
+```json
+{
+  "RequireNewClick": true,
+  "ClickQueuingTimeout": 0.2,
+  "Cooldown": { "Cooldown": 0.25 },
+  "Interactions": ["Weapon_Sword_Primary"]
+}
+```
+
+- **Cooldown**: Minimum delay between attacks (prevents spam)
+- **ClickQueuingTimeout**: Buffer window to queue next attack input
+- **RequireNewClick**: If true, must click again to chain (holding won't auto-chain)
