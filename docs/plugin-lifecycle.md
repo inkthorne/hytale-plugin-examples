@@ -179,6 +179,99 @@ List<PluginManifest> getSubPlugins() // Sub-plugin manifests
 
 ---
 
+## manifest.json
+
+Every plugin requires a `manifest.json` file in `src/main/resources/`.
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Group` | String | Plugin group/namespace (e.g., `"myplugin"`) |
+| `Name` | String | Plugin display name |
+| `Main` | String | Fully qualified main class name |
+
+### Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Version` | String | Semantic version (e.g., `"1.0.0"`) |
+| `Description` | String | Plugin description |
+| `Website` | String | Plugin website URL |
+| `Authors` | Array | List of author objects |
+| `IncludesAssetPack` | Boolean | Set to `true` if plugin contains assets (`.ui` files, textures, JSON definitions) |
+| `DisabledByDefault` | Boolean | Whether plugin starts disabled |
+| `Dependencies` | Object | Required plugin dependencies |
+| `OptionalDependencies` | Object | Optional plugin dependencies |
+| `LoadBefore` | Object | Plugins that should load after this one |
+| `ServerVersion` | String | Required server version range |
+| `SubPlugins` | Array | Nested sub-plugin manifests |
+
+### Minimal Example
+
+```json
+{
+  "Group": "myplugin",
+  "Name": "My Plugin",
+  "Main": "com.example.MyPlugin"
+}
+```
+
+### Full Example
+
+```json
+{
+  "Group": "myplugin",
+  "Name": "My Plugin",
+  "Version": "1.0.0",
+  "Description": "A sample plugin",
+  "Website": "https://example.com",
+  "Authors": [
+    { "Name": "Developer Name" }
+  ],
+  "Main": "com.example.MyPlugin",
+  "IncludesAssetPack": true,
+  "DisabledByDefault": false,
+  "Dependencies": {
+    "othergroup:otherplugin": ">=1.0.0"
+  },
+  "ServerVersion": ">=0.1.0"
+}
+```
+
+### Field Details
+
+#### IncludesAssetPack
+
+Set to `true` when your plugin contains:
+- `.ui` files (in `Common/UI/Custom/`)
+- Textures or images
+- JSON asset definitions
+
+Assets must be placed in `src/main/resources/` and will be packaged into the JAR.
+
+#### Dependencies Format
+
+Dependencies use `group:name` as keys with semver ranges as values:
+
+```json
+"Dependencies": {
+  "core:essentials": ">=1.0.0",
+  "utils:helper": "^2.0.0"
+}
+```
+
+#### Authors Format
+
+```json
+"Authors": [
+  { "Name": "Primary Author" },
+  { "Name": "Contributor" }
+]
+```
+
+---
+
 ## HytaleLogger
 **Package:** `com.hypixel.hytale.logger`
 
