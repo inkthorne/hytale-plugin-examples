@@ -9,10 +9,10 @@ Item definitions configure every item in Hytale, from weapons and armor to food,
 | [Weapons](items-weapons.md) | `items-weapons.md` | Swords, daggers, bows, shields, maces (108 items) |
 | [Tools](items-tools.md) | `items-tools.md` | Pickaxes, hatchets, shovels, farming tools (40+ items) |
 | [Consumables](items-consumables.md) | `items-consumables.md` | Food, potions, healing items (60+ items) |
+| [Blocks](items-blocks.md) | `items-blocks.md` | Furniture, lighting, doors, containers, benches (200+ items) |
 
 **Future documentation:**
 - `items-armor.md` - Armor sets (coming soon)
-- `items-placeable.md` - Furniture, blocks, containers (coming soon)
 - `items-resources.md` - Ingredients, ores, crops (coming soon)
 
 ---
