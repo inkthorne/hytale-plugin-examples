@@ -1416,16 +1416,327 @@ Used for stagger, stun, and other state-based effects.
 
 **Package:** `config/client/ChainingInteraction`
 
-Enables combo attack chains. See [Attack Chain Timing](#attack-chain-timing) above for details.
+Enables combo attack chains where players can input subsequent attacks within a timing window. This is the foundation for melee weapon combos, multi-hit abilities, and any sequence where attacks flow from one to the next. The system buffers player input during animations, allowing smooth combo execution.
+
+#### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"Chaining"` |
+| `ChainingAllowance` | float | Required | Time window (seconds) to input the next attack |
+| `Next` | array | Required | Sequence of interactions in the chain |
+| `ChainId` | string | - | Identifier for cross-interaction chain synchronization |
+| `Flags` | object | - | Named branches that can be triggered via ChainFlagInteraction |
+
+#### ChainingAllowance Timing
+
+The `ChainingAllowance` value determines how long the player has to input the next attack in the chain. This window opens during the current attack animation.
+
+**Recommended values by weapon type:**
+
+| Weapon Type | ChainingAllowance | Feel |
+|-------------|-------------------|------|
+| Fast tools (shears) | 0.5 | Very responsive |
+| Light weapons (daggers, sticks) | 0.725-0.93 | Quick combos |
+| Medium weapons (spears, staves) | 1.2-1.5 | Balanced timing |
+| Heavy weapons (swords, battleaxes) | 2.0-3.0 | Deliberate, weighty |
+| NPCs/AI | 10-15 | Effectively unlimited for AI timing |
+
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 1.5,
+  "Next": ["Spear_Thrust_1", "Spear_Thrust_2", "Spear_Thrust_3"]
+}
+```
+
+#### The Next Array System
+
+The `Next` property is an array defining the sequence of interactions. Each entry can be:
+
+1. **String reference** - Path to another interaction file
+2. **Inline interaction object** - Full interaction definition with optional `RunTime` and `Effects`
+3. **Nested chain** - Another Chaining, Charging, or Conditional interaction
+
+**Simple string references:**
 
 ```json
 {
   "Type": "Chaining",
   "ChainingAllowance": 2,
-  "ChainId": "Sword_Swings",
-  "Next": [...]
+  "Next": [
+    "Sword_Swing_Left",
+    "Sword_Swing_Right",
+    "Sword_Swing_Overhead"
+  ]
 }
 ```
+
+**Inline interactions with RunTime:**
+
+Each chain step can specify a `RunTime` to control animation duration:
+
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 1.2,
+  "Next": [
+    {
+      "RunTime": 0.8,
+      "Effects": {
+        "ItemAnimationId": "dagger_slash_1"
+      },
+      "Next": "Dagger_Damage_1"
+    },
+    {
+      "RunTime": 0.6,
+      "Effects": {
+        "ItemAnimationId": "dagger_slash_2"
+      },
+      "Next": "Dagger_Damage_2"
+    }
+  ]
+}
+```
+
+**Using Replace for variable substitution:**
+
+Chains often use Replace interactions to swap variables between steps:
+
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 2,
+  "Next": [
+    {
+      "Type": "Replace",
+      "Variable": "SwingDirection",
+      "Value": "Left",
+      "Next": "Sword_Swing"
+    },
+    {
+      "Type": "Replace",
+      "Variable": "SwingDirection",
+      "Value": "Right",
+      "Next": "Sword_Swing"
+    }
+  ]
+}
+```
+
+#### ChainId and Cross-Interaction Sync
+
+The `ChainId` property enables coordination between separate interaction chains (e.g., primary and secondary attacks). When multiple chains share the same `ChainId`, they share state and can trigger each other's `Flags` branches.
+
+**Primary attack chain:**
+
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 2,
+  "ChainId": "Sword_Combat",
+  "Next": ["Sword_Swing_1", "Sword_Swing_2", "Sword_Swing_3"],
+  "Flags": {
+    "Block_Counter": "Sword_Counter_Attack"
+  }
+}
+```
+
+**Secondary defense chain (same ChainId):**
+
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 3,
+  "ChainId": "Sword_Combat",
+  "Next": ["Sword_Block_Start"]
+}
+```
+
+With shared `ChainId`, a ChainFlagInteraction from the block can trigger the primary chain's `Block_Counter` flag.
+
+#### Flags System (Advanced)
+
+The `Flags` object defines named branches that can be triggered by ChainFlagInteraction. This enables complex combo systems where certain actions unlock special moves.
+
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 2,
+  "ChainId": "Advanced_Combo",
+  "Next": ["Attack_1", "Attack_2", "Attack_3"],
+  "Flags": {
+    "Perfect_Parry": "Riposte_Attack",
+    "Dodge_Cancel": "Dodge_Slash"
+  }
+}
+```
+
+A separate interaction can set these flags:
+
+```json
+{
+  "Type": "ChainFlag",
+  "ChainId": "Advanced_Combo",
+  "Flag": "Perfect_Parry"
+}
+```
+
+#### Related Chain Interaction Types
+
+**FirstClickInteraction** - Differentiates between tap and hold inputs:
+
+```json
+{
+  "Type": "FirstClick",
+  "Click": "Quick_Attack",
+  "Held": {
+    "Type": "Chaining",
+    "ChainingAllowance": 1.5,
+    "Next": ["Heavy_Combo_1", "Heavy_Combo_2"]
+  }
+}
+```
+
+**ChainFlagInteraction** - Sets a flag to trigger a Flags branch:
+
+```json
+{
+  "Type": "ChainFlag",
+  "ChainId": "Sword_Combat",
+  "Flag": "Counter_Ready"
+}
+```
+
+**CancelChainInteraction** - Cancels an active chain:
+
+```json
+{
+  "Type": "CancelChain",
+  "ChainId": "Sword_Combat"
+}
+```
+
+#### Complete Examples
+
+**Basic 3-Hit Combo:**
+
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 2,
+  "Next": [
+    "hytale:interactions/weapons/sword/swing_left",
+    "hytale:interactions/weapons/sword/swing_right",
+    "hytale:interactions/weapons/sword/swing_overhead"
+  ]
+}
+```
+
+**Dagger Combo with Effects:**
+
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 1.2,
+  "ChainId": "Dagger_Primary",
+  "Next": [
+    {
+      "RunTime": 0.5,
+      "Effects": {
+        "ItemAnimationId": "dagger_stab_1",
+        "WorldSoundEventId": "hytale:sounds/weapons/dagger_swoosh"
+      },
+      "Next": "Dagger_Damage_Light"
+    },
+    {
+      "RunTime": 0.5,
+      "Effects": {
+        "ItemAnimationId": "dagger_stab_2"
+      },
+      "Next": "Dagger_Damage_Light"
+    },
+    {
+      "RunTime": 0.7,
+      "Effects": {
+        "ItemAnimationId": "dagger_slash_heavy"
+      },
+      "Next": "Dagger_Damage_Heavy"
+    },
+    {
+      "RunTime": 0.6,
+      "Effects": {
+        "ItemAnimationId": "dagger_finisher"
+      },
+      "Next": "Dagger_Damage_Finisher"
+    }
+  ]
+}
+```
+
+**Click/Held Branching with Chains:**
+
+```json
+{
+  "Type": "FirstClick",
+  "Click": {
+    "Type": "Chaining",
+    "ChainingAllowance": 1.0,
+    "Next": ["Quick_Jab_1", "Quick_Jab_2"]
+  },
+  "Held": {
+    "Type": "Charging",
+    "Next": {
+      "0": "Charge_Cancel",
+      "1.0": {
+        "Type": "Chaining",
+        "ChainingAllowance": 2.0,
+        "Next": ["Heavy_Swing_1", "Heavy_Swing_2", "Heavy_Finisher"]
+      }
+    }
+  }
+}
+```
+
+**NPC Attack Pattern:**
+
+NPCs use high `ChainingAllowance` values since AI timing is less precise:
+
+```json
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 15,
+  "Next": [
+    {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "Delay", "Duration": 0.3 },
+        "NPC_Skeleton_Swing_1"
+      ]
+    },
+    {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "Delay", "Duration": 0.5 },
+        "NPC_Skeleton_Swing_2"
+      ]
+    }
+  ]
+}
+```
+
+#### Common Patterns
+
+| Pattern | Use Case | Key Properties |
+|---------|----------|----------------|
+| Simple combo | Basic melee weapons | `Next` array of string refs |
+| Replace chain | Single animation with directional variants | `Replace` + shared interaction |
+| Timed chain | Precise attack timing | `RunTime` on each step |
+| Branching chain | Different combos from tap vs hold | `FirstClick` wrapper |
+| Synced chains | Primary + secondary coordination | Shared `ChainId` |
+| Flag combos | Conditional special moves | `Flags` + `ChainFlag` |
+
+See also: [Attack Chain Timing](#attack-chain-timing) above for timing concepts, [ChargingInteraction](#charginginteraction) for charge-release mechanics.
 
 ---
 
