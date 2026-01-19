@@ -802,15 +802,191 @@ This grants 5 signature energy each time the player successfully blocks an attac
 
 **Package:** `config/server/InterruptInteraction`
 
-Cancels the current interaction chain on the target entity.
+Cancels the current interaction chain on the target entity. Used for stagger effects, crowd control, or cancelling enemy attacks mid-animation. Typically paired with [ApplyEffect](#applyeffectinteraction) (Stun) for full crowd control mechanics.
 
-### Structure
+### Core Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `Type` | string | Yes | Always `"Interrupt"` |
+| `Entity` | string | Yes | Target entity selector (typically `"Target"`) |
+| `ExcludedTag` | string | No | Tag that makes entities immune to interruption |
+
+### How Interruption Works
+
+When an InterruptInteraction executes:
+
+1. The interaction resolves the target entity using the `Entity` selector
+2. If `ExcludedTag` is specified, entities with that tag are skipped
+3. The target's `InteractionManager` component receives the interrupt signal
+4. All active interaction chains on the target are immediately cancelled
+
+This stops any ongoing:
+- Attack animations mid-swing
+- Charging abilities (bow draws, spell charges)
+- Combo sequences
+- Channel effects
+
+**Important:** Interrupt only cancels ongoing interactions—it does not prevent the target from starting new ones. For persistent crowd control, combine with status effects like Stun.
+
+### Entity Values
+
+| Value | Description |
+|-------|-------------|
+| `"Target"` | The entity being hit (most common for combat) |
+| `"Self"` | The entity performing the interaction |
+| `"Owner"` | The entity that owns the current item/projectile |
+
+### ExcludedTag System
+
+The `ExcludedTag` property allows certain entities to be immune to interruption:
 
 ```json
 {
   "Type": "Interrupt",
-  "Target": "Target"
+  "Entity": "Target",
+  "ExcludedTag": "Uninterruptable"
 }
 ```
 
-Used for stagger effects, crowd control, or cancelling enemy attacks.
+Common immunity tags:
+- `"Uninterruptable"` - Boss enemies or armored states
+- Custom tags for specific enemy types or phases
+
+Entities with the specified tag will not have their interactions cancelled, even when hit by the interrupt.
+
+### Complete Examples
+
+#### Basic Interrupt
+
+Minimal interrupt that cancels the target's current action:
+
+```json
+{
+  "Type": "Interrupt",
+  "Entity": "Target"
+}
+```
+
+#### Stun Bomb with Immunity Check
+
+From an area-effect stun bomb that grants immunity to prevent chain-stunning:
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "Selector",
+      "SelectorType": "AOECircle",
+      "Radius": 4,
+      "IncludeSelf": false,
+      "EntityCategory": "Creature",
+      "Interaction": {
+        "Type": "Condition",
+        "ConditionType": "Effect",
+        "Effect": "Immune",
+        "Invert": true,
+        "Next": {
+          "Type": "Serial",
+          "Interactions": [
+            {
+              "Type": "ChangeStat",
+              "Entity": "Target",
+              "StatType": "Effects",
+              "StatModifiers": { "Immune": 4.0 }
+            },
+            {
+              "Type": "Interrupt",
+              "Entity": "Target",
+              "ExcludedTag": "Uninterruptable"
+            },
+            {
+              "Type": "ApplyEffect",
+              "Entity": "Target",
+              "Effect": "Stun",
+              "Duration": 3.0
+            },
+            {
+              "Type": "DamageEntity",
+              "Entity": "Target",
+              "DamageType": "Physical",
+              "Amount": 10,
+              "Knockback": 5
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+This pattern:
+1. Selects all creatures in a 4-block radius
+2. Checks they don't already have Immunity (prevents chain-stunning)
+3. Grants 4 seconds of Immunity
+4. Interrupts their current action (unless Uninterruptable)
+5. Applies a 3-second Stun effect
+6. Deals damage with knockback
+
+#### Melee Stun Attack
+
+A weapon hit that interrupts and stuns on contact:
+
+```json
+{
+  "Type": "HitEntity",
+  "Interactions": [
+    {
+      "Type": "DamageEntity",
+      "Entity": "Target",
+      "DamageType": "Physical",
+      "Amount": 15
+    },
+    {
+      "Type": "Interrupt",
+      "Entity": "Target"
+    },
+    {
+      "Type": "ApplyEffect",
+      "Entity": "Target",
+      "Effect": "Stun",
+      "Duration": 1.5
+    }
+  ]
+}
+```
+
+### Common Patterns
+
+| Pattern | Use Case | Structure |
+|---------|----------|-----------|
+| Interrupt only | Cancel attacks without disabling movement | `Interrupt` alone |
+| Interrupt + Stun | Full crowd control (cancel + disable) | `Interrupt` → `ApplyEffect(Stun)` |
+| Conditional Interrupt | Respect boss immunity phases | `EffectCondition` → `Interrupt` |
+| AOE Interrupt | Crowd control multiple enemies | `Selector(AOE)` → `Interrupt` |
+
+### Interrupt vs Stun
+
+| Mechanic | Effect | Target Can Move | Target Can Start New Actions |
+|----------|--------|-----------------|------------------------------|
+| **Interrupt** | Cancels current action | Yes | Yes (immediately) |
+| **Stun** | Disables controls | No | No (until expires) |
+| **Both** | Full crowd control | No | No |
+
+Use Interrupt alone for light staggers (enemy can recover quickly). Use both for meaningful crowd control windows.
+
+### Technical Notes
+
+- Interrupt is processed server-side and takes effect immediately
+- The `InteractionManager` component on entities tracks active interaction chains
+- Interrupted chains call their cleanup/cancellation logic (animations stop cleanly)
+- Interrupt has no visual feedback by itself—pair with effects or animations for player feedback
+
+### Related Interactions
+
+- [ApplyEffectInteraction](#applyeffectinteraction) - Apply status effects like Stun
+- [ChainingInteraction](#chaininginteraction) - Create interruptible combo chains
+- [DamageEntityInteraction](#damageentityinteraction) - Deal damage alongside interrupt
+- [SelectorInteraction](#selectorinteraction) - Target multiple entities for AOE interrupts
