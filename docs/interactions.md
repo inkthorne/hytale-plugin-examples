@@ -1740,6 +1740,170 @@ See also: [Attack Chain Timing](#attack-chain-timing) above for timing concepts,
 
 ---
 
+### FirstClickInteraction
+
+**Package:** `config/client/FirstClickInteraction`
+
+Branches execution based on whether the player clicked (tapped) or held the input button. This enables interactions that differentiate between quick taps and sustained holds, such as quick attacks vs charged attacks, or single-use vs continuous tool actions.
+
+#### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"FirstClick"` |
+| `Click` | Interaction | - | Interaction to run if input was a click (tap) |
+| `Held` | Interaction | - | Interaction to run if input is being held down |
+
+Both `Click` and `Held` are optional but at least one should be specified. If neither is set, the interaction completes immediately with no effect.
+
+#### How Click vs Held Detection Works
+
+The interaction system tracks input state client-side. When FirstClickInteraction executes:
+
+1. **Click path** - Triggers when the player quickly pressed and released the input, or when still in the initial press frame
+2. **Held path** - Triggers when the player continues holding the input after the initial frame
+
+This detection integrates with the chain system - if FirstClickInteraction is part of a Chaining sequence, the "held" state refers to whether the player is still holding when that chain step begins.
+
+#### Basic Examples
+
+**Simple click vs hold:**
+
+```json
+{
+  "Type": "FirstClick",
+  "Click": {
+    "Type": "Simple",
+    "RunTime": 0.5,
+    "Next": "Quick_Attack"
+  },
+  "Held": {
+    "Type": "Charging",
+    "Next": {
+      "0": "Cancel",
+      "1.0": "Heavy_Attack"
+    }
+  }
+}
+```
+
+**Tool with animation on click:**
+
+From `Watering_Can_Use.json` - clicking plays the water animation then performs the action, while holding goes directly to continuous watering:
+
+```json
+{
+  "Type": "FirstClick",
+  "Click": {
+    "Type": "Simple",
+    "RunTime": 0.3,
+    "Effects": {
+      "ItemAnimationId": "Water"
+    },
+    "Next": "Watering_Can_Use"
+  },
+  "Held": "Watering_Can_Use"
+}
+```
+
+#### Nested in Chaining
+
+FirstClickInteraction can be used as chain steps to create combos that vary based on input timing. From `Debug_Combo_Primary.json`:
+
+```json
+{
+  "Type": "Chaining",
+  "ChainId": "Debug_Combo",
+  "ChainingAllowance": 0.8,
+  "Next": [
+    {
+      "Type": "SendMessage",
+      "Message": "First - Primary",
+      "RunTime": 0.5,
+      "Effects": {
+        "ItemAnimationId": "Swing_Right"
+      }
+    },
+    {
+      "Type": "FirstClick",
+      "Click": {
+        "Type": "SendMessage",
+        "Message": "Second click - Primary",
+        "RunTime": 0.5,
+        "Effects": {
+          "ItemAnimationId": "Swing_Left"
+        }
+      },
+      "Held": {
+        "Type": "SendMessage",
+        "Message": "Second held - Primary",
+        "RunTime": 0.5,
+        "Effects": {
+          "ItemAnimationId": "Hook_Left"
+        },
+        "Next": {
+          "Type": "ChainFlag",
+          "ChainId": "Debug_Combo",
+          "Flag": "Held_Second"
+        }
+      }
+    }
+  ],
+  "Flags": {
+    "Special_Second": {
+      "Type": "SendMessage",
+      "Message": "Flag hit!"
+    }
+  }
+}
+```
+
+In this pattern:
+- The first attack always plays `Swing_Right`
+- The second attack varies: click does `Swing_Left`, hold does `Hook_Left` and sets a flag
+- The held path sets a `ChainFlag` that can trigger special branches in other chains sharing the same `ChainId`
+
+#### Integration with ChainFlag
+
+The `Held` path commonly uses `ChainFlagInteraction` to communicate with other chains sharing the same `ChainId`. This enables mechanics like:
+- Hold during combo to unlock special finisher
+- Cross-hand coordination (primary attack held → secondary gains special move)
+
+```json
+{
+  "Type": "FirstClick",
+  "Click": "Normal_Combo_Step",
+  "Held": {
+    "Type": "Serial",
+    "Interactions": [
+      "Heavy_Combo_Step",
+      {
+        "Type": "ChainFlag",
+        "ChainId": "Weapon_Combat",
+        "Flag": "Heavy_Unlocked"
+      }
+    ]
+  }
+}
+```
+
+#### Common Patterns
+
+| Pattern | Click | Held | Use Case |
+|---------|-------|------|----------|
+| **Light/Heavy attack** | Quick strike | Charging interaction | Melee weapons with charge attacks |
+| **Single/Continuous** | Single action with animation | Direct action | Tools (watering can, spray) |
+| **Combo variant** | Normal combo step | Alternative step + flag | Branching combos |
+| **Instant/Aimed** | Hip-fire | Aim-down-sights mode | Ranged weapons |
+
+#### Related Interactions
+
+- [ChainingInteraction](#chaininginteraction) - FirstClick is often nested within chains
+- [ChargingInteraction](#charginginteraction) - `Held` path commonly leads to Charging
+- [ChainFlagInteraction](#related-chain-interaction-types) - Set flags from `Held` path for cross-chain coordination
+
+---
+
 ### ChargingInteraction
 
 **Package:** `config/client/ChargingInteraction`
