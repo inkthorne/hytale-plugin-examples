@@ -18,7 +18,11 @@ Quick reference for finding the right documentation file.
 | [permissions.md](permissions.md) | Covers permission checking for players and commands, plus permission-related events like group changes. |
 | [inventory.md](inventory.md) | Complete inventory management API including item stacks, containers, transactions, crafting recipes, and related events. |
 | [tasks.md](tasks.md) | Documents the task registration system for tracking async futures and scheduled tasks throughout plugin lifecycle. |
-| [ui.md](ui.md) | Comprehensive UI building system covering pages, windows, HUD management, UI DSL syntax, and interactive elements. |
+| [ui.md](ui.md) | UI system overview with quick start guide, DSL syntax summary, and navigation to detailed documentation. |
+| [ui-elements.md](ui-elements.md) | All UI element types: Group, Label, Button, TextButton, TextField, Slider, ProgressBar, ItemSlot, etc. |
+| [ui-styling.md](ui-styling.md) | UI styling and layout: Anchor system, LayoutMode, Padding, Backgrounds, Style properties, state-based styling. |
+| [ui-templates.md](ui-templates.md) | Advanced UI DSL: file imports, variables, spread operator, localization, element references, patterns. |
+| [ui-api.md](ui-api.md) | Server-side Java API: UICommandBuilder, UIEventBuilder, PageManager, WindowManager, HudManager, events. |
 | [blocks.md](blocks.md) | Covers the block system including block states, BlockType properties, block events (place/break/use/damage), and world access. |
 | [assets.md](assets.md) | Asset registry system for custom assets, asset stores, built-in asset access, and asset lifecycle events. |
 | [codecs.md](codecs.md) | Serialization system using codecs for data persistence and configuration loading, including RecordCodecBuilder patterns. |
@@ -122,7 +126,7 @@ JSON asset types used in Hytale's data-driven systems.
 [TaskRegistry](tasks.md), [TaskRegistration](tasks.md)
 
 **UI**
-[UICommandBuilder](ui.md), [WindowManager](ui.md), [PageManager](ui.md), [HudManager](ui.md), [HotbarManager](ui.md), [Window](ui.md), [WindowType](ui.md), [OpenWindow](ui.md), [Page](ui.md), [CustomUIPage](ui.md), [HudComponent](ui.md), [CustomUIEventBindingType](ui.md)
+[UICommandBuilder](ui-api.md), [UIEventBuilder](ui-api.md), [WindowManager](ui-api.md), [PageManager](ui-api.md), [HudManager](ui-api.md), [HotbarManager](ui-api.md), [Window](ui-api.md), [WindowType](ui-api.md), [OpenWindow](ui-api.md), [Page](ui-api.md), [CustomUIPage](ui-api.md), [HudComponent](ui-api.md), [CustomUIEventBindingType](ui-api.md)
 
 **Blocks**
 [BlockStateRegistry](blocks.md), [BlockStateRegistration](blocks.md), [BlockType](blocks.md), [BlockMaterial](blocks.md), [Rotation](blocks.md), [RotationTuple](blocks.md), [PlaceBlockEvent](blocks.md), [BreakBlockEvent](blocks.md), [DamageBlockEvent](blocks.md), [UseBlockEvent](blocks.md)
@@ -187,7 +191,11 @@ JSON asset types used in Hytale's data-driven systems.
 - permissions.md - Permission checks and permission events
 - inventory.md - Items, inventory, and crafting
 - tasks.md - Async scheduling
-- ui.md - Player UI
+- ui.md - Player UI (overview)
+- ui-elements.md - UI element types
+- ui-styling.md - UI layout and styling
+- ui-templates.md - UI variables and localization
+- ui-api.md - UI Java API
 - blocks.md - Block manipulation and block events
 - assets.md - Asset registry, models, and asset events
 - interactions.md - Interaction system (attacks, abilities)

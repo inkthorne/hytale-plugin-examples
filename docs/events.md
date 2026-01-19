@@ -10,7 +10,7 @@ This document covers the core event system. For specific event classes, see the 
 - **NPC/Sensor events** → [npc.md](npc.md)
 - **Adventure events** → [adventure.md](adventure.md) (includes DiscoverZoneEvent)
 - **Inventory events** → [inventory.md](inventory.md) (includes ItemContainerChangeEvent)
-- **UI events** → [ui.md](ui.md) (includes WindowCloseEvent)
+- **UI events** → [ui-api.md](ui-api.md) (includes WindowCloseEvent)
 - **Permission events** → [permissions.md](permissions.md)
 - **Prefab events** → [prefabs.md](prefabs.md)
 - **Lifecycle events** → [plugin-lifecycle.md](plugin-lifecycle.md)
