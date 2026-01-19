@@ -8,7 +8,7 @@ This is a complete reference for Hytale server plugin development containing:
 - **docs/**: Comprehensive API documentation (33 markdown files)
 - **examples/**: Standalone Gradle projects demonstrating different aspects of the plugin API
 
-Refer to `docs/overview.md` for guidance when implementing Java code for plugins.
+Refer to `docs/00-overview.md` for guidance when implementing Java code for plugins.
 
 ## Build Commands
 
