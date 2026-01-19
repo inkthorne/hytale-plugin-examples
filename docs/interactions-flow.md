@@ -499,9 +499,24 @@ Items or abilities calling this template provide their own `DamageAmount` and `E
 
 **Package:** `config/none/ParallelInteraction`
 
-Executes multiple interactions concurrently.
+Executes multiple interactions concurrently. Unlike [Serial](#serial) which waits for each interaction to complete before starting the next, Parallel starts all interactions at the same time. This is essential for separating independent concerns like damage logic and visual effects, allowing them to run simultaneously without blocking each other.
 
-### Structure
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"Parallel"` |
+| `Interactions` | array | Required | List of interactions to execute concurrently |
+
+### Interactions Array Format
+
+The `Interactions` property accepts an array where each entry can be:
+
+1. **Inline interaction object** - Full interaction definition
+2. **String reference** - Path to another interaction file
+3. **Mixed format** - Combination of both
+
+**Inline interaction objects:**
 
 ```json
 {
@@ -513,7 +528,400 @@ Executes multiple interactions concurrently.
 }
 ```
 
-All interactions start simultaneously.
+**String references:**
+
+```json
+{
+  "Type": "Parallel",
+  "Interactions": [
+    "Attack_Damage_Branch",
+    "Attack_Visual_Branch",
+    "Attack_Sound_Branch"
+  ]
+}
+```
+
+**Mixed format:**
+
+```json
+{
+  "Type": "Parallel",
+  "Interactions": [
+    "NPC_Attack_Damage",
+    { "Type": "Simple", "Effects": { "WorldSoundEventId": "attack_swoosh" } },
+    "NPC_Attack_Particles"
+  ]
+}
+```
+
+### Execution Behavior
+
+Parallel interactions use a **fork-based execution model** that provides true concurrency:
+
+1. **First interaction** executes synchronously on the main context
+2. **Remaining interactions** fork with duplicated contexts and run asynchronously
+3. **Parent completes immediately** after forking - it does not wait for child interactions
+
+**Key timing characteristic:** The total duration equals the duration of the **longest** interaction, not the sum. This is fundamentally different from Serial where total time = sum of all interactions.
+
+**Execution flow:**
+
+```
+ParallelInteraction.tick0()
+    │
+    ├─► Execute interactions[0] on main context (SYNC)
+    │
+    ├─► Fork interactions[1] with duplicate context (ASYNC)
+    │
+    ├─► Fork interactions[2] with duplicate context (ASYNC)
+    │
+    └─► Mark parent as Finished (returns immediately)
+        All forked interactions continue independently
+```
+
+**Important execution details:**
+
+- The parent Parallel interaction marks itself as `Finished` immediately after forking
+- Forked interactions continue running independently of the parent
+- There is no built-in mechanism to wait for all forks to complete
+- Changes made in one fork do **not** affect other forks (isolated contexts)
+
+### Context Behavior
+
+Understanding context duplication is critical for advanced Parallel usage:
+
+| Interaction | Context | Notes |
+|-------------|---------|-------|
+| First (`interactions[0]`) | Shared with parent | Changes affect the original context |
+| Subsequent (forked) | Duplicated copy | Changes are isolated to that fork |
+
+**Example implications:**
+
+```json
+{
+  "Type": "Parallel",
+  "Interactions": [
+    { "Type": "ModifyStat", "Stat": "Health", "Amount": -10 },
+    { "Type": "ModifyStat", "Stat": "Health", "Amount": -10 }
+  ]
+}
+```
+
+In this example:
+- First interaction modifies health on the main context (applies to entity)
+- Second interaction modifies health on a **duplicated** context
+- The entity only receives **one** 10-damage hit, not two
+
+For damage that must stack, use Serial instead or design your interactions to work independently.
+
+### Deep Nesting Patterns
+
+Parallel interactions can be nested within other control flow structures.
+
+**Parallel inside Serial (common pattern):**
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    { "Type": "ModifyStat", "Stat": "Stamina", "Amount": -20 },
+    {
+      "Type": "Parallel",
+      "Interactions": [
+        "Attack_Damage_Logic",
+        "Attack_Visual_Effects"
+      ]
+    },
+    { "Type": "ClearItemAnimation" }
+  ]
+}
+```
+
+This pattern ensures stamina is consumed first, then damage and visuals happen concurrently, then cleanup occurs after.
+
+**Parallel inside `Then`/`Else` blocks (Condition):**
+
+```json
+{
+  "Type": "StatsCondition",
+  "Stat": "Health",
+  "Operator": "LessThan",
+  "Value": 50,
+  "ValueType": "Percent",
+  "Then": {
+    "Type": "Parallel",
+    "Interactions": [
+      { "Type": "DamageEntity", "DamageParameters": { "DamageAmount": 50 } },
+      { "Type": "ApplyEffect", "EffectId": "hytale:bleeding", "Duration": 10 },
+      { "Type": "PlaySound", "SoundId": "critical_hit" }
+    ]
+  }
+}
+```
+
+**Parallel inside `Next` blocks (Charging):**
+
+```json
+{
+  "Type": "Charging",
+  "FailOnDamage": true,
+  "Next": {
+    "1.5": {
+      "Type": "Parallel",
+      "Interactions": [
+        { "Type": "DamageEntity", "DamageParameters": { "DamageAmount": 25 } },
+        {
+          "Type": "Simple",
+          "Effects": {
+            "WorldSoundEventId": "heavy_attack",
+            "TriggerAnimation": "Slam"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Complete Examples
+
+**Basic Multiple Effects:**
+
+Apply multiple status effects simultaneously:
+
+```json
+{
+  "Type": "Parallel",
+  "Interactions": [
+    { "Type": "ApplyEffect", "EffectId": "hytale:burning", "Duration": 5 },
+    { "Type": "ApplyEffect", "EffectId": "hytale:slow", "Duration": 5 },
+    { "Type": "PlaySound", "SoundId": "fire_ignite" }
+  ]
+}
+```
+
+All three effects start at the same instant rather than one after another.
+
+**NPC Melee Attack Pattern (Damage + Visuals Separation):**
+
+This pattern separates damage logic from visual effects, a common design in Hytale's NPC attacks:
+
+```json
+{
+  "Type": "Parallel",
+  "Interactions": [
+    {
+      "Type": "Serial",
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0.3
+        },
+        {
+          "Type": "DamageEntity",
+          "TargetSelector": {
+            "Type": "Horizontal",
+            "Range": 2.5,
+            "Angle": 90
+          },
+          "DamageParameters": {
+            "DamageAmount": 15,
+            "DamageCauseId": "Physical"
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Serial",
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0.8,
+          "Effects": {
+            "TriggerAnimation": "Attack_Swing",
+            "TrailEffectId": "weapon_trail"
+          }
+        },
+        {
+          "Type": "Simple",
+          "Effects": {
+            "WorldSoundEventId": "sword_whoosh"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Branch 1 (Damage):** Waits 0.3 seconds (wind-up), then applies damage to entities in a horizontal arc.
+
+**Branch 2 (Visuals):** Plays the full 0.8-second animation with a weapon trail, then plays the sound.
+
+This separation allows:
+- Independent timing control for damage window vs. animation duration
+- Easy modification of one aspect without affecting the other
+- Cleaner organization of concerns
+
+**AOE Ground Slam with Effects:**
+
+A powerful ground slam that combines damage with visual feedback:
+
+```json
+{
+  "Type": "Parallel",
+  "Interactions": [
+    {
+      "Type": "DamageEntity",
+      "TargetSelector": {
+        "Type": "AOECircle",
+        "Radius": 4.0,
+        "Center": "Self",
+        "IncludeSelf": false
+      },
+      "DamageParameters": {
+        "DamageAmount": 30,
+        "DamageCauseId": "Physical",
+        "KnockbackForce": 8.0
+      }
+    },
+    {
+      "Type": "Simple",
+      "Effects": {
+        "TriggerAnimation": "Stomp",
+        "WorldSoundEventId": "ground_slam",
+        "ParticleEffectId": "dust_explosion"
+      }
+    },
+    {
+      "Type": "ApplyEffect",
+      "TargetSelector": {
+        "Type": "AOECircle",
+        "Radius": 4.0,
+        "Center": "Self"
+      },
+      "EffectId": "hytale:stagger",
+      "Duration": 1.5
+    }
+  ]
+}
+```
+
+All three branches (damage, animation/particles, debuff) execute simultaneously.
+
+**Variable Replacement in Parallel:**
+
+Using [Replace](#replace) within Parallel for customizable attack templates:
+
+```json
+{
+  "Type": "Parallel",
+  "Interactions": [
+    {
+      "Type": "Replace",
+      "Var": "DamageBranch",
+      "DefaultOk": true,
+      "DefaultValue": {
+        "Interactions": ["Default_Damage"]
+      }
+    },
+    {
+      "Type": "Replace",
+      "Var": "EffectsBranch",
+      "DefaultOk": true,
+      "DefaultValue": {
+        "Interactions": ["Default_Effects"]
+      }
+    }
+  ]
+}
+```
+
+Items or abilities can provide custom `DamageBranch` and `EffectsBranch` values to inject specific behavior while sharing the parallel execution structure.
+
+**Projectile Impact with Multiple Effects:**
+
+When a projectile hits, apply damage, effects, and visuals simultaneously:
+
+```json
+{
+  "Type": "Parallel",
+  "Interactions": [
+    {
+      "Type": "DamageEntity",
+      "DamageParameters": {
+        "DamageAmount": 20,
+        "DamageCauseId": "Projectile"
+      }
+    },
+    { "Type": "ApplyEffect", "EffectId": "hytale:slow", "Duration": 3 },
+    { "Type": "ApplyEffect", "EffectId": "hytale:poison", "Duration": 5 },
+    {
+      "Type": "Simple",
+      "Effects": {
+        "ParticleEffectId": "poison_splash",
+        "WorldSoundEventId": "poison_impact"
+      }
+    }
+  ]
+}
+```
+
+### Error Handling
+
+Parallel execution has specific error handling behavior:
+
+| Scenario | Behavior |
+|----------|----------|
+| One branch fails | Other branches continue independently |
+| Parent interaction | Completes immediately regardless of fork outcomes |
+| Fork throws exception | Exception is isolated to that fork |
+| Missing referenced interaction | Only that branch fails to execute |
+
+**Important:** There is no built-in synchronization point for waiting on all forks to complete. If you need to ensure all parallel branches finish before continuing, you must design your interaction flow accordingly (e.g., using `RunTime` on a wrapping Simple interaction).
+
+### Common Patterns
+
+| Pattern | Description | Example Use |
+|---------|-------------|-------------|
+| **Damage + Visuals separation** | One branch for damage logic, another for effects | NPC attacks, weapon abilities |
+| **Multiple status effects** | Apply several effects at once | Elemental weapons, potions |
+| **AOE with feedback** | Damage selector + particles + sound | Ground slams, explosions |
+| **Template branches** | Replace variables for customizable forks | Reusable attack templates |
+| **Conditional parallel effects** | Parallel inside Then/Else blocks | Critical hit bonuses |
+
+### When to Use Parallel vs Serial
+
+| Aspect | Serial | Parallel |
+|--------|--------|----------|
+| **Execution order** | Sequential (1 → 2 → 3) | Simultaneous (1, 2, 3 all at once) |
+| **Timing** | Total time = sum of all interactions | Total time = longest interaction |
+| **Dependencies** | Each step can depend on previous | No ordering guarantees |
+| **Context** | Shared context throughout | First shares, rest get duplicates |
+| **Use case** | Multi-step abilities, state changes | Multiple simultaneous effects |
+| **Failure handling** | Subsequent steps still execute | All started regardless of failures |
+
+**When to use Parallel:**
+- Applying multiple status effects at once
+- Separating damage logic from visual effects
+- Playing multiple sounds/particles simultaneously
+- Independent effects that don't need ordering
+- Reducing total execution time (parallel = max duration, not sum)
+
+**When to use Serial:**
+- Stat changes that must happen before damage
+- Consuming items before applying effects
+- Animations that must play in sequence
+- Any ordered multi-step process
+- When effects must modify the same context
+
+### Related Interactions
+
+- [Serial](#serial) - Execute interactions sequentially instead of concurrently
+- [Condition](#condition) - Conditional branching (can contain Parallel in Then/Else)
+- [StatsCondition](#statscondition) - Stat-based branching (can contain Parallel in Then/Else)
+- [Replace](#replace) - Variable substitution for template branches
+- [Repeat](#repeat) - Execute interactions multiple times (can wrap Parallel)
 
 ---
 
