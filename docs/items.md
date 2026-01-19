@@ -32,6 +32,9 @@ All items support these core properties:
 | `Icon` | string | Path to inventory icon image |
 | `Model` | string | Path to 3D model file (`.blockymodel`) |
 | `Texture` | string | Path to texture file (`.png`) |
+| `Scale` | float | World render scale multiplier (default: 1.0) |
+| `PlayerAnimationsId` | string/object | Animation set for player when holding item |
+| `BlockType` | object | Block configuration when item is placed (see [Block Items](items-blocks.md)) |
 | `Tags` | object | Classification tags for filtering |
 | `MaxStack` | int | Maximum stack size (default: 1 for weapons/tools) |
 | `Consumable` | boolean | Whether the item is consumed on use |
@@ -69,6 +72,70 @@ Controls how the item renders in the inventory:
 | `Scale` | float | Size multiplier for icon rendering |
 | `Translation` | [x, y] | Pixel offset in icon space |
 | `Rotation` | [pitch, yaw, roll] | 3D rotation angles in degrees |
+
+### PlayerAnimationsId
+
+Controls which animation set the player uses when holding or using the item. Can be a string referencing a predefined animation set, or an object for custom overrides.
+
+**String format** (common values):
+
+| Category | Values |
+|----------|--------|
+| Generic | `Item`, `Block`, `Stick`, `Default` |
+| Weapons | `Sword`, `Daggers`, `Shield`, `Battleaxe`, `Bow`, `Mace`, `Crossbow` |
+| Tools | `Pickaxe`, `Hatchet`, `Shovel`, `Hoe`, `Hammer`, `Shears`, `WateringCan`, `Sickle` |
+
+```json
+{
+  "PlayerAnimationsId": "Sword"
+}
+```
+
+**Object format** for custom animation overrides:
+
+```json
+{
+  "PlayerAnimationsId": {
+    "Parent": "Sword",
+    "Animations": {
+      "Idle": "Custom_Sword_Idle",
+      "Walk": "Custom_Sword_Walk"
+    }
+  }
+}
+```
+
+### Scale
+
+World render scale multiplier when the item is held or dropped. This is separate from `IconProperties.Scale` (inventory icon) and `BlockType.CustomModelScale` (placed block model).
+
+```json
+{
+  "Scale": 1.2
+}
+```
+
+| Value | Effect |
+|-------|--------|
+| `1.0` | Default size |
+| `< 1.0` | Smaller than default |
+| `> 1.0` | Larger than default |
+
+### BlockType
+
+Configures block behavior when an item is placed in the world. This property transforms an item into a placeable block with optional interactions, containers, and crafting functionality.
+
+For complete documentation, see [Block Items](items-blocks.md).
+
+```json
+{
+  "BlockType": {
+    "Type": "Furniture",
+    "ModelId": "Chair_Wood",
+    "SubType": "Seat"
+  }
+}
+```
 
 ---
 
