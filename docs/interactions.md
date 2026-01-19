@@ -1433,34 +1433,257 @@ Enables combo attack chains. See [Attack Chain Timing](#attack-chain-timing) abo
 
 **Package:** `config/client/ChargingInteraction`
 
-Enables charged attacks that scale with hold duration.
+Enables charged attacks and abilities that scale with hold duration. Players hold the input to build charge, then release to trigger an interaction based on how long they charged. This is the foundation for bows, charged melee attacks, consumables, and casting mechanics.
+
+#### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"Charging"` |
+| `Next` | object | Required | Map of charge time thresholds to interactions |
+| `AllowIndefiniteHold` | boolean | `false` | If `true`, player can hold at max charge indefinitely |
+| `DisplayProgress` | boolean | `true` | Show charge progress indicator to player |
+| `Effects` | object | - | Animation, sound, and particle effects during charging |
+| `HorizontalSpeedMultiplier` | float | `1.0` | Movement speed while charging (0.0-1.0) |
+| `FailOnDamage` | boolean | `false` | Cancel charging if player takes damage |
+| `Failed` | object | - | Interaction to execute if charging fails/cancels |
+| `MouseSensitivityAdjustmentTarget` | float | - | Target sensitivity multiplier during charge |
+| `MouseSensitivityAdjustmentDuration` | float | - | Time to transition to target sensitivity |
+
+#### The Next Map System
+
+The `Next` property is a map where **keys are charge time thresholds** (in seconds as strings) and **values are interactions** to execute when released at or above that threshold. The system selects the highest threshold the player reached.
 
 ```json
 {
   "Type": "Charging",
-  "MinChargeTime": 0.5,
-  "MaxChargeTime": 2.0,
-  "ChargedInteraction": {
-    "Type": "DamageEntity",
-    "DamageParameters": {
-      "DamageAmount": 30
+  "Next": {
+    "0": { "Type": "Serial", "Comment": "Uncharged release" },
+    "0.5": { "Type": "Serial", "Comment": "Partial charge" },
+    "1.2": { "Type": "Serial", "Comment": "Full charge" }
+  }
+}
+```
+
+**Key patterns:**
+- `"0"` - Triggered on immediate release (no charge)
+- Numeric strings like `"0.5"`, `"1.2"` - Minimum charge time to trigger
+- Values can be inline interactions, string references, or `"Parent"` to chain back
+
+**Example with references:**
+
+```json
+{
+  "Type": "Charging",
+  "AllowIndefiniteHold": true,
+  "Next": {
+    "0": "hytale:interactions/weapons/bow_cancel",
+    "0.3": "hytale:interactions/weapons/bow_fire_weak",
+    "1.0": "hytale:interactions/weapons/bow_fire_full"
+  }
+}
+```
+
+#### Effects Configuration
+
+The `Effects` object configures visual and audio feedback during the charging phase:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ItemAnimationId` | string | Animation to play on held item during charge |
+| `ClearAnimationOnFinish` | boolean | Stop animation when charge completes/releases |
+| `WorldSoundEventId` | string | Sound event audible to all nearby players |
+| `LocalSoundEventId` | string | Sound event only the charging player hears |
+| `ClearSoundEventOnFinish` | boolean | Stop sound when charge completes/releases |
+| `Particles` | array | Particle effects during charging |
+
+**Particles array entry:**
+
+```json
+{
+  "Particles": [
+    {
+      "ParticleSystemId": "hytale:particles/charge_buildup",
+      "NodeId": "weapon_tip",
+      "Position": [0, 0, 0],
+      "Rotation": [0, 0, 0],
+      "Scale": [1, 1, 1]
     }
+  ]
+}
+```
+
+#### Complete Examples
+
+**Bow with Progressive Charge:**
+
+```json
+{
+  "Type": "Charging",
+  "AllowIndefiniteHold": true,
+  "DisplayProgress": true,
+  "HorizontalSpeedMultiplier": 0.6,
+  "MouseSensitivityAdjustmentTarget": 0.5,
+  "MouseSensitivityAdjustmentDuration": 0.3,
+  "Effects": {
+    "ItemAnimationId": "bow_draw",
+    "WorldSoundEventId": "hytale:sounds/weapons/bow_draw",
+    "ClearSoundEventOnFinish": true,
+    "Particles": [
+      {
+        "ParticleSystemId": "hytale:particles/bow_tension",
+        "NodeId": "string_center"
+      }
+    ]
   },
-  "PartialInteraction": {
-    "Type": "DamageEntity",
-    "DamageParameters": {
-      "DamageAmount": 10
+  "Next": {
+    "0": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ClearItemAnimation" }
+      ]
+    },
+    "0.5": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ConsumeAmmo", "AmmoType": "arrow" },
+        { "Type": "LaunchProjectile", "ProjectileId": "arrow", "Speed": 30 }
+      ]
+    },
+    "1.2": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ConsumeAmmo", "AmmoType": "arrow" },
+        { "Type": "LaunchProjectile", "ProjectileId": "arrow", "Speed": 60 }
+      ]
     }
   }
 }
 ```
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `MinChargeTime` | float | Minimum charge for partial effect |
-| `MaxChargeTime` | float | Time to reach full charge |
-| `ChargedInteraction` | object | Interaction at full charge |
-| `PartialInteraction` | object | Interaction if released early |
+**Charged Melee Attack with Stamina:**
+
+```json
+{
+  "Type": "Charging",
+  "AllowIndefiniteHold": false,
+  "DisplayProgress": true,
+  "HorizontalSpeedMultiplier": 0.4,
+  "Effects": {
+    "ItemAnimationId": "sword_charge",
+    "LocalSoundEventId": "hytale:sounds/weapons/charge_hum",
+    "ClearAnimationOnFinish": true,
+    "Particles": [
+      {
+        "ParticleSystemId": "hytale:particles/weapon_glow",
+        "NodeId": "blade_edge",
+        "Scale": [1.5, 1.5, 1.5]
+      }
+    ]
+  },
+  "Next": {
+    "0": { "Type": "Serial", "Comment": "Charge canceled" },
+    "0.8": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ConsumeStamina", "Amount": 20 },
+        { "Type": "PlayAnimation", "AnimationId": "sword_heavy_swing" },
+        {
+          "Type": "DamageEntity",
+          "DamageParameters": { "DamageAmount": 25, "DamageType": "melee" }
+        }
+      ]
+    },
+    "1.5": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ConsumeStamina", "Amount": 40 },
+        { "Type": "PlayAnimation", "AnimationId": "sword_power_swing" },
+        {
+          "Type": "DamageEntity",
+          "DamageParameters": { "DamageAmount": 50, "DamageType": "melee" }
+        }
+      ]
+    }
+  }
+}
+```
+
+**Consumable with Fail on Damage:**
+
+```json
+{
+  "Type": "Charging",
+  "AllowIndefiniteHold": false,
+  "DisplayProgress": true,
+  "FailOnDamage": true,
+  "HorizontalSpeedMultiplier": 0.3,
+  "Effects": {
+    "ItemAnimationId": "eat_food",
+    "LocalSoundEventId": "hytale:sounds/player/eating"
+  },
+  "Failed": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "PlaySound", "SoundId": "hytale:sounds/ui/action_canceled" }
+    ]
+  },
+  "Next": {
+    "0": { "Type": "Serial", "Comment": "Eating canceled" },
+    "2.0": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ConsumeItem", "Count": 1 },
+        { "Type": "ApplyStatusEffect", "EffectId": "satiated", "Duration": 120 }
+      ]
+    }
+  }
+}
+```
+
+**Charging into Chaining (Hybrid):**
+
+```json
+{
+  "Type": "Charging",
+  "AllowIndefiniteHold": true,
+  "DisplayProgress": false,
+  "Effects": {
+    "ItemAnimationId": "staff_channel",
+    "Particles": [
+      { "ParticleSystemId": "hytale:particles/magic_gather", "NodeId": "staff_orb" }
+    ]
+  },
+  "Next": {
+    "0": { "Type": "Serial" },
+    "0.6": {
+      "Type": "Chaining",
+      "ChainingAllowance": 1.5,
+      "ChainId": "staff_combo",
+      "Next": [
+        { "Type": "LaunchProjectile", "ProjectileId": "magic_bolt" },
+        { "Type": "LaunchProjectile", "ProjectileId": "magic_bolt_double" }
+      ]
+    }
+  }
+}
+```
+
+#### Common Patterns
+
+| Pattern | AllowIndefiniteHold | DisplayProgress | HorizontalSpeedMultiplier | Use Case |
+|---------|---------------------|-----------------|---------------------------|----------|
+| **Ranged Hold** | `true` | `true` | 0.5-0.7 | Bows, crossbows, aimed spells |
+| **Melee Power** | `false` | `true` | 0.3-0.5 | Heavy attacks, ground slams |
+| **Consumable** | `false` | `true` | 0.2-0.4 | Food, potions, bandages |
+| **Quick Charge** | `false` | `false` | 0.8-1.0 | Fast abilities, parries |
+
+#### Integration Notes
+
+- Combine with [SerialInteraction](#serialinteraction) to execute multiple effects on release
+- Use [ConditionalInteraction](#conditionalinteraction) within `Next` values for ammo/stamina checks
+- Chain into [ChainingInteraction](#chaininginteraction) for charge-then-combo patterns
+- Reference [Effects documentation](effects.md) for particle and sound configuration
 
 ---
 
