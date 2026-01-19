@@ -4,35 +4,35 @@ Quick reference for finding the right documentation file.
 
 ## Quick Reference Table
 
-| File | Description | Key Classes |
-|------|-------------|-------------|
-| [interactions.md](interactions.md) | Interaction system | Interaction, SimpleInteraction, SimpleInstantInteraction |
-| [plugin-lifecycle.md](plugin-lifecycle.md) | Plugin setup, lifecycle, and server events | JavaPlugin, PluginBase, PluginState, HytaleLogger |
-| [commands.md](commands.md) | Command creation and arguments | AbstractPlayerCommand, CommandContext |
-| [entities.md](entities.md) | Players, entities, stats, velocity, and entity lifecycle events | Player, PlayerRef, Velocity, EntityStatMap |
-| [player.md](player.md) | Player events and messaging | PlayerConnectEvent, PlayerInteractEvent, Message |
-| [world.md](world.md) | World access, world events, chunk events | World, WorldChunk, GameplayConfig, ClientFeature |
-| [events.md](events.md) | Core event system and patterns | EventRegistry, EventPriority, EntityEventSystem |
-| [components.md](components.md) | ECS architecture | Store, Ref, EntityStore, ChunkStore, TransformComponent |
-| [permissions.md](permissions.md) | Permission checks and events | PermissionHolder, PlayerGroupEvent |
-| [inventory.md](inventory.md) | Items, inventory, crafting, and inventory events | Inventory, ItemStack, CraftingRecipe, CraftRecipeEvent, DropItemEvent |
-| [tasks.md](tasks.md) | Async task scheduling | TaskRegistry, TaskRegistration |
-| [ui.md](ui.md) | Player UI management | UICommandBuilder, WindowManager, HudComponent, Page |
-| [blocks.md](blocks.md) | Block states and block events | BlockStateRegistry, BlockType, PlaceBlockEvent, BreakBlockEvent |
-| [assets.md](assets.md) | Asset registration and models | AssetRegistry, Model |
-| [codecs.md](codecs.md) | Serialization | Codec, RecordCodecBuilder |
-| [networking.md](networking.md) | Network serialization and protocol | NetworkSerializable, Direction, WaitForDataFrom |
-| [prefabs.md](prefabs.md) | Prefab loading, placement, and events | PrefabStore, BlockSelection, PrefabRotation |
-| [math.md](math.md) | Math library | Vector3d, Vector3l, Vector4d, Matrix4d, Quatf, Box |
-| [projectiles.md](projectiles.md) | Projectile spawning and physics | ProjectileModule, ProjectileConfig, StandardPhysicsProvider |
-| [collision.md](collision.md) | Collision detection and queries | CollisionModule, CollisionResult, CollisionDataArray |
-| [fluids.md](fluids.md) | Fluid types and properties | Fluid |
-| [combat.md](combat.md) | Damage system and kill feed | Damage, DamageEventSystem, KillFeedEvent |
-| [npc.md](npc.md) | NPC loading and AI sensors | AllNPCsLoadedEvent, BuilderInfo, SensorEvent |
-| [adventure.md](adventure.md) | Adventure features | DiscoverInstanceEvent, TreasureChestOpeningEvent |
-| [asset-editor.md](asset-editor.md) | Asset editor events | EditorClientEvent, AssetEditorSelectAssetEvent |
-| [i18n.md](i18n.md) | Localization events | GenerateDefaultLanguageEvent |
-| [singleplayer.md](singleplayer.md) | Singleplayer events | SingleplayerRequestAccessEvent |
+| File | Description |
+|------|-------------|
+| [interactions.md](interactions.md) | Comprehensive reference for entity interactions including combo systems, combat effects, control flow, and world manipulation. |
+| [plugin-lifecycle.md](plugin-lifecycle.md) | Documents the complete plugin lifecycle from initialization through shutdown, including setup phases, event registration, and logging. |
+| [commands.md](commands.md) | Details the command system for creating player commands with arguments, permissions, subcommands, and built-in argument types. |
+| [entities.md](entities.md) | Covers the entity system including Player and Entity classes, entity stats, velocity management, and interaction chains. |
+| [player.md](player.md) | Describes player-specific functionality including messaging, permissions, connect/disconnect events, and interaction events. |
+| [world.md](world.md) | Comprehensive world management API covering the World class, chunks, chunk tracking, configuration, and lifecycle events. |
+| [events.md](events.md) | Core event system documentation covering registration methods, event priorities, keyed vs non-keyed events, and ECS patterns. |
+| [components.md](components.md) | Entity Component System (ECS) documentation including Store, Ref, queries, CommandBuffer, and ticking systems. |
+| [permissions.md](permissions.md) | Covers permission checking for players and commands, plus permission-related events like group changes. |
+| [inventory.md](inventory.md) | Complete inventory management API including item stacks, containers, transactions, crafting recipes, and related events. |
+| [tasks.md](tasks.md) | Documents the task registration system for tracking async futures and scheduled tasks throughout plugin lifecycle. |
+| [ui.md](ui.md) | Comprehensive UI building system covering pages, windows, HUD management, UI DSL syntax, and interactive elements. |
+| [blocks.md](blocks.md) | Covers the block system including block states, BlockType properties, block events (place/break/use/damage), and world access. |
+| [assets.md](assets.md) | Asset registry system for custom assets, asset stores, built-in asset access, and asset lifecycle events. |
+| [codecs.md](codecs.md) | Serialization system using codecs for data persistence and configuration loading, including RecordCodecBuilder patterns. |
+| [networking.md](networking.md) | Network serialization types including NetworkSerializable interface, Direction rotation class, and sync modes. |
+| [prefabs.md](prefabs.md) | Prefab system for placing pre-defined block/entity selections including transformations, placement, and prefab events. |
+| [math.md](math.md) | Comprehensive math library with vectors (Vector3d/f/i/l), matrices, transforms, Box AABB, and utility methods. |
+| [projectiles.md](projectiles.md) | Projectile spawning and management including ProjectileConfig assets, physics simulation, and projectile components. |
+| [collision.md](collision.md) | Collision detection and querying system for block and character collisions, results, and material-based filtering. |
+| [fluids.md](fluids.md) | Fluid asset type documentation for water, lava, and other fluids with damage and interaction properties. |
+| [combat.md](combat.md) | Combat system covering damage events, damage causes, knockback mechanics, blocking/wielding, and kill feed customization. |
+| [npc.md](npc.md) | NPC loading events and metadata including BuilderInfo for loaded NPCs and sensor event systems for AI. |
+| [adventure.md](adventure.md) | Adventure gameplay features including instance discovery, zone discovery, treasure chest opening, and world map tracking. |
+| [asset-editor.md](asset-editor.md) | Asset editor events for button activation, asset creation, client disconnects, and autocomplete/dataset requests. |
+| [i18n.md](i18n.md) | Localization system with GenerateDefaultLanguageEvent for registering plugin translations during server startup. |
+| [singleplayer.md](singleplayer.md) | Singleplayer-specific functionality with SingleplayerRequestAccessEvent for handling local server access requests. |
 
 ## Class Lookup Index
 
