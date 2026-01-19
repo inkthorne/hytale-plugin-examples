@@ -8,9 +8,9 @@ Item definitions configure every item in Hytale, from weapons and armor to food,
 |----------|------|-------------|
 | [Weapons](items-weapons.md) | `items-weapons.md` | Swords, daggers, bows, shields, maces (108 items) |
 | [Tools](items-tools.md) | `items-tools.md` | Pickaxes, hatchets, shovels, farming tools (40+ items) |
+| [Consumables](items-consumables.md) | `items-consumables.md` | Food, potions, healing items (60+ items) |
 
 **Future documentation:**
-- `items-consumables.md` - Food, potions (coming soon)
 - `items-armor.md` - Armor sets (coming soon)
 - `items-placeable.md` - Furniture, blocks, containers (coming soon)
 - `items-resources.md` - Ingredients, ores, crops (coming soon)
@@ -544,3 +544,5 @@ Changes item appearance based on entity stats (e.g., signature ability ready):
 - [Interactions API](interactions.md) - Combat, effects, and item behaviors
 - [Effects & Stats](effects-stats.md) - Status effects and stat modifiers
 - [Weapons Reference](items-weapons.md) - All weapon templates and variants
+- [Tools Reference](items-tools.md) - Gathering and farming tools
+- [Consumables Reference](items-consumables.md) - Food and potions
