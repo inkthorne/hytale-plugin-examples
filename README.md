@@ -70,6 +70,13 @@ Demonstrates the UI system with:
 - Toggling HUD components
 - Loading `.ui` definition files
 
+### [examples/inventory/](./examples/inventory/)
+Demonstrates the inventory API with:
+- Adding items with transaction handling
+- Clearing inventory sections
+- Inspecting inventory contents
+- Sorting storage by name/type/rarity
+
 ## Requirements
 
 - Hytale installed (uses `HytaleServer.jar` from `%APPDATA%\Hytale`)

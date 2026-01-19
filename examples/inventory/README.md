@@ -4,7 +4,7 @@ Demonstrates the Hytale inventory API with commands for managing player items.
 
 ## Commands
 
-### `/give <item> [quantity]`
+### `/give <item> <quantity>`
 Add items to your inventory. Tries hotbar first, then storage.
 
 **Examples:**
@@ -13,11 +13,11 @@ Add items to your inventory. Tries hotbar first, then storage.
 
 **API demonstrated:** `ItemStack`, `ItemContainer.addItemStack()`, transaction handling
 
-### `/inv-clear [section]`
+### `/inv-clear <section>`
 Clear inventory sections.
 
 **Examples:**
-- `/inv-clear` - Clear entire inventory
+- `/inv-clear all` - Clear entire inventory
 - `/inv-clear hotbar` - Clear only hotbar
 - `/inv-clear storage` - Clear only storage
 - `/inv-clear armor` - Clear equipped armor
@@ -88,12 +88,12 @@ Player player = store.getComponent(ref, Player.getComponentType());
 Inventory inventory = player.getInventory();
 ```
 
-### Adding Items with Transaction Handling
+### Adding Items with Combined Container
 ```java
 ItemStack item = new ItemStack("hytale:apple", 10);
-ItemContainer hotbar = inventory.getHotbar();
-ItemStackTransaction result = hotbar.addItemStack(item);
-if (result.succeeded()) {
+CombinedItemContainer combined = inventory.getCombinedHotbarFirst();
+ItemStackTransaction result = combined.addItemStack(item);
+if (result.getRemainder() == null) {
     // All items added
 } else {
     ItemStack remainder = result.getRemainder();
