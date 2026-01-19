@@ -34,6 +34,7 @@ Quick reference for finding the right documentation file.
 | [asset-editor.md](asset-editor.md) | Asset editor events for button activation, asset creation, client disconnects, and autocomplete/dataset requests. |
 | [i18n.md](i18n.md) | Localization system with GenerateDefaultLanguageEvent for registering plugin translations during server startup. |
 | [singleplayer.md](singleplayer.md) | Singleplayer-specific functionality with SingleplayerRequestAccessEvent for handling local server access requests. |
+| [audio.md](audio.md) | Audio system documentation covering sound events, audio categories, ambience, reverb, EQ, and integration with other systems. |
 
 ## Asset Type Index
 
@@ -59,6 +60,9 @@ JSON asset types used in Hytale's data-driven systems.
 
 **Items - Crafting System**
 [Bench_WorkBench](items-crafting.md#bench_workbench), [Bench_Weapon](items-crafting.md#bench_weapon), [Bench_Armour](items-crafting.md#bench_armour), [Bench_Alchemy](items-crafting.md#bench_alchemy), [Bench_Furnace](items-crafting.md#bench_furnace), [Bench_Campfire](items-crafting.md#bench_campfire), [Bench_Salvage](items-crafting.md#bench_salvage), [Bench_Tannery](items-crafting.md#bench_tannery), [Bench_Armory](items-crafting.md#bench_armory)
+
+**Audio**
+[SoundEvents](audio.md#soundevents), [AudioCategories](audio.md#audiocategories), [AmbienceFX](audio.md#ambiencefx), [EQ](audio.md#eq-equalizer), [Reverb](audio.md#reverb), [ItemSounds](audio.md#itemsounds), [SoundSets](audio.md#soundsets)
 
 ---
 
@@ -167,6 +171,7 @@ JSON asset types used in Hytale's data-driven systems.
 - projectiles.md - Projectile spawning and physics
 - collision.md - Collision detection and queries
 - fluids.md - Fluid types and properties
+- audio.md - Sound events, ambience, and audio mixing
 - i18n.md - Localization events
 - singleplayer.md - Singleplayer events
 
