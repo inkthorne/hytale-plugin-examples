@@ -560,6 +560,80 @@ protected void execute(CommandContext ctx, Store<EntityStore> store,
 
 ---
 
+## Prefab File Format
+
+Prefabs are stored as `.prefab.json` files in the assets.
+
+### File Locations
+
+- `Server/Prefabs/` - Server-side prefabs
+- Asset pack `Prefabs/` directories - Custom prefabs from mods
+
+### JSON Schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `version` | int | Format version (current: 8) |
+| `blockIdVersion` | int | Block ID version |
+| `anchorX/Y/Z` | int | Placement origin point |
+| `blocks` | array | Array of block entries |
+
+### Block Entry Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `x`, `y`, `z` | int | Yes | Position relative to anchor |
+| `name` | string | Yes | Block type name |
+| `rotation` | int | No | Block rotation (0-3) |
+| `components` | object | No | ECS component data |
+
+### Example
+
+```json
+{
+  "version": 8,
+  "blockIdVersion": 0,
+  "anchorX": 0,
+  "anchorY": 0,
+  "anchorZ": 0,
+  "blocks": [
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "name": "Furniture_Goblin_Chest_Small",
+      "rotation": 1,
+      "components": {
+        "Components": {
+          "container": {
+            "Droplist": "Drop_Goblin_Thief",
+            "ItemContainer": { "Capacity": 18 }
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+### PrefabList Files
+
+`Server/PrefabList/*.json` files reference directories of prefabs for world generation:
+
+```json
+{
+  "Prefabs": [
+    {
+      "RootDirectory": "Asset",
+      "Path": "Trees/Oak/",
+      "Recursive": true
+    }
+  ]
+}
+```
+
+---
+
 ## Notes
 
 - BlockSelection is the actual prefab data structure - it contains blocks, fluids, and entities
