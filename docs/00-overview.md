@@ -18,11 +18,7 @@ Quick reference for finding the right documentation file.
 | [permissions.md](permissions.md) | Covers permission checking for players and commands, plus permission-related events like group changes. |
 | [inventory.md](inventory.md) | Complete inventory management API including item stacks, containers, transactions, crafting recipes, and related events. |
 | [tasks.md](tasks.md) | Documents the task registration system for tracking async futures and scheduled tasks throughout plugin lifecycle. |
-| [ui.md](ui.md) | UI system overview with quick start guide, DSL syntax summary, and navigation to detailed documentation. |
-| [ui-elements.md](ui-elements.md) | All UI element types: Group, Label, Button, TextButton, TextField, Slider, ProgressBar, ItemSlot, etc. |
-| [ui-styling.md](ui-styling.md) | UI styling and layout: Anchor system, LayoutMode, Padding, Backgrounds, Style properties, state-based styling. |
-| [ui-templates.md](ui-templates.md) | Advanced UI DSL: file imports, variables, spread operator, localization, element references, patterns. |
-| [ui-api.md](ui-api.md) | Server-side Java API: UICommandBuilder, UIEventBuilder, PageManager, WindowManager, HudManager, events. |
+| [ui.md](ui.md) | UI system covering pages, windows, HUD, DSL syntax, elements, styling, and Java API. |
 | [blocks.md](blocks.md) | Covers the block system including block states, BlockType properties, block events (place/break/use/damage), and world access. |
 | [assets.md](assets.md) | Asset registry system for custom assets, asset stores, built-in asset access, and asset lifecycle events. |
 | [codecs.md](codecs.md) | Serialization system using codecs for data persistence and configuration loading, including RecordCodecBuilder patterns. |
@@ -191,11 +187,7 @@ JSON asset types used in Hytale's data-driven systems.
 - permissions.md - Permission checks and permission events
 - inventory.md - Items, inventory, and crafting
 - tasks.md - Async scheduling
-- ui.md - Player UI (overview)
-- ui-elements.md - UI element types
-- ui-styling.md - UI layout and styling
-- ui-templates.md - UI variables and localization
-- ui-api.md - UI Java API
+- ui.md - Player UI
 - blocks.md - Block manipulation and block events
 - assets.md - Asset registry, models, and asset events
 - interactions.md - Interaction system (attacks, abilities)
