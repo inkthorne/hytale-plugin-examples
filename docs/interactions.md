@@ -84,27 +84,218 @@ static boolean failed(InteractionState state)
 ---
 
 ## SimpleInteraction
+
 **Package:** `com.hypixel.hytale.server.core.modules.interaction.interaction.config`
 
-A basic interaction with synchronization support.
+**Class hierarchy:** `SimpleInteraction` → `Interaction`
 
-**Extends:** `Interaction`
+**Protocol class:** `com.hypixel.hytale.protocol.SimpleInteraction` (handles client-server synchronization)
+
+A fundamental building block interaction that does nothing other than provide base interaction features. Despite its simplicity, it's one of the most versatile interaction types, used for delays, triggering animations, playing sounds, and controlling flow between other interactions.
+
+### Purpose
+
+SimpleInteraction serves as:
+- **Delay mechanism** - Creates timed pauses between interactions via `RunTime`
+- **Animation trigger** - Plays item/player animations via `Effects.ItemAnimationId`
+- **Audio controller** - Plays sounds via `Effects.WorldSoundEventId` and `Effects.LocalSoundEventId`
+- **Visual effects** - Spawns particles and trails via `Effects.Particles` and `Effects.Trails`
+- **Flow control** - Chains interactions via `Next` and handles failures via `Failed`
+- **No-op placeholder** - Acts as an empty interaction when no action is needed
+
+### Inherited Properties (from Interaction)
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `RunTime` | float | `0` | Duration in seconds before completing |
+| `Effects` | InteractionEffects | - | Visual and audio effects configuration |
+| `HorizontalSpeedMultiplier` | float | `1.0` | Movement speed modifier during interaction (0.0-1.0) |
+| `ViewDistance` | double | - | View distance modifier |
+| `CancelOnItemChange` | boolean | `false` | Cancel if held item changes |
+| `Settings` | Map<GameMode, InteractionSettings> | - | Per-gamemode settings |
+| `Rules` | InteractionRules | - | Interaction rules |
+| `Camera` | InteractionCameraSettings | - | Camera settings during interaction |
+
+### SimpleInteraction-Specific Properties
+
+| Property | Type | Default | Validator | Description |
+|----------|------|---------|-----------|-------------|
+| `Next` | string/object | - | Late validator (VALIDATOR_CACHE) | Interaction(s) to run when this interaction succeeds |
+| `Failed` | string/object | - | Late validator (VALIDATOR_CACHE) | Interaction(s) to run when this interaction fails |
+
+### Effects Configuration
+
+The `Effects` object supports these properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ItemAnimationId` | string | Animation to play on the held item |
+| `ItemPlayerAnimationsId` | string | Player animation set ID |
+| `WorldSoundEventId` | string | Sound audible to all nearby players |
+| `LocalSoundEventId` | string | Sound only the executing player hears |
+| `OnFinishLocalSoundEventId` | string | Sound played when interaction finishes |
+| `ClearAnimationOnFinish` | boolean | Stop animation when interaction ends |
+| `ClearSoundEventOnFinish` | boolean | Stop sound when interaction ends |
+| `WaitForAnimationToFinish` | boolean | Wait for animation before completing |
+| `Particles` | array | Particles attached to model bones |
+| `FirstPersonParticles` | array | Particles for first-person view |
+| `Trails` | array | Weapon trail effects |
+| `CameraEffectId` | string | Camera effect (shake, zoom, etc.) |
+| `MovementEffects` | object | Movement modification effects |
+| `StartDelay` | float | Delay before effects begin |
+
+### WaitForDataFrom Enum
+
+Controls client-server synchronization behavior (accessible via `getWaitForDataFrom()`):
+
+| Value | Description |
+|-------|-------------|
+| `Client` | Wait for data from the client |
+| `Server` | Wait for data from the server |
+| `None` | No synchronization needed (default for SimpleInteraction) |
 
 ### Key Methods
-```java
-// Data synchronization
-WaitForDataFrom getWaitForDataFrom()   // Client/Server/None
-boolean needsRemoteSync()              // Whether to sync across network
 
-// Execution
+```java
+// Synchronization
+WaitForDataFrom getWaitForDataFrom()   // Returns None by default
+boolean needsRemoteSync()              // True if Next or Failed need sync
+
+// Execution flow
 void compile(OperationsBuilder builder)
 boolean walk(Collector collector, InteractionContext context)
 ```
 
-### Codec
-```java
-public static final BuilderCodec<SimpleInteraction> CODEC;
+### Complete Examples
+
+**Basic delay:**
+
+```json
+{
+  "Type": "Simple",
+  "RunTime": 0.2,
+  "$Comment": "Delay before next consume cycle can start to prevent sound overlap"
+}
 ```
+
+**Animation trigger with sound:**
+
+```json
+{
+  "Type": "Simple",
+  "RunTime": 0.177,
+  "Effects": {
+    "ItemAnimationId": "SwingDown",
+    "WorldSoundEventId": "SFX_Light_Melee_T2_Swing"
+  }
+}
+```
+
+**Trail effects for weapons:**
+
+```json
+{
+  "Type": "Simple",
+  "RunTime": 0.177,
+  "Effects": {
+    "Trails": [
+      {
+        "PositionOffset": { "X": 0.4, "Y": -0.2, "Z": 0 },
+        "RotationOffset": { "Pitch": 0, "Roll": 90, "Yaw": 0 },
+        "TargetNodeName": "Handle",
+        "TrailId": "Small_Default"
+      }
+    ],
+    "WorldSoundEventId": "SFX_Light_Melee_T2_Swing"
+  }
+}
+```
+
+**Flow control with Next:**
+
+```json
+{
+  "Type": "Simple",
+  "Next": {
+    "Type": "UseBlock",
+    "Failed": "Block_Attack"
+  }
+}
+```
+
+**Local sound for player feedback:**
+
+```json
+{
+  "Type": "Simple",
+  "RunTime": 0,
+  "Effects": {
+    "LocalSoundEventId": "SFX_Consume_Bread_Local",
+    "ClearSoundEventOnFinish": true
+  }
+}
+```
+
+**Empty no-op (failure handler):**
+
+```json
+{
+  "Type": "Charging",
+  "FailOnDamage": true,
+  "Next": { "4.0": "..." },
+  "Failed": {
+    "Type": "Simple"
+  }
+}
+```
+
+**Prepare delay before combat:**
+
+```json
+{
+  "Type": "Simple",
+  "Effects": {
+    "ItemAnimationId": "SwingDown"
+  },
+  "$Comment": "Prepare Delay",
+  "RunTime": 0.244,
+  "Next": {
+    "Type": "Parallel",
+    "Interactions": [
+      { "Interactions": ["Axe_Swing_Down_Damage"] },
+      { "Interactions": ["Axe_Swing_Down_Effect"] }
+    ]
+  }
+}
+```
+
+### Common Patterns
+
+| Pattern | Use Case | Key Properties |
+|---------|----------|----------------|
+| **Delay** | Pause between chain steps | `RunTime` only |
+| **Animation trigger** | Play weapon/item animation | `Effects.ItemAnimationId` |
+| **Sound effect** | Audio feedback | `Effects.WorldSoundEventId`, `Effects.LocalSoundEventId` |
+| **Visual effect** | Trails, particles | `Effects.Trails`, `Effects.Particles` |
+| **Flow control** | Chain to next interaction | `Next` |
+| **No-op** | Empty failure handler | Empty `{"Type": "Simple"}` |
+| **Prepare phase** | Wind-up before attack | `RunTime` + `Effects.ItemAnimationId` |
+
+### Technical Notes
+
+- **Default behavior** - Without `Next` or `Failed`, the interaction completes immediately after `RunTime` elapses
+- **Sync behavior** - `getWaitForDataFrom()` returns `None`, meaning SimpleInteraction doesn't inherently require client-server sync. However, if `Next` or `Failed` reference interactions that need sync, `needsRemoteSync()` returns true.
+- **Tick behavior** - On each tick, if state is `Failed` and labels exist, jumps to the failure label (index 0)
+- **Protocol** - Serializes `next` and `failed` as integer indices referencing the interaction asset map
+- **Inheritance** - `SimpleInstantInteraction` extends this class for instant (no duration) interactions
+
+### Related Interactions
+
+- [Interaction](#interaction) - Base class providing inherited properties
+- [SimpleInstantInteraction](#simpleinstantinteraction) - Abstract subclass for instant interactions
+- [Serial](#serial) - Often used to chain multiple SimpleInteractions
+- [Parallel](#parallel) - Execute SimpleInteractions concurrently
+- [ChargingInteraction](#charginginteraction) - Uses SimpleInteraction for `Failed` handlers
 
 ---
 
