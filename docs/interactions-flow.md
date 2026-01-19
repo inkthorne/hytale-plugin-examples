@@ -13,6 +13,8 @@
 | [EffectCondition](#effectcondition) | Branch based on active status effects |
 | [BlockCondition](#blockcondition) | Branch based on block type/state/tag |
 | [CooldownCondition](#cooldowncondition) | Branch based on cooldown completion |
+| [TriggerCooldown](#triggercooldown) | Start a cooldown timer |
+| [ResetCooldown](#resetcooldown) | Reset a cooldown timer |
 | [MovementCondition](#movementcondition) | Direction-based input branching |
 | [DestroyCondition](#destroycondition) | Check if block is destroyable |
 | [PlacementCountCondition](#placementcountcondition) | Branch based on block placement count |
@@ -1719,93 +1721,350 @@ Branch based on whether a cooldown has completed. Checks if the specified cooldo
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Type` | string | Required | Always `"CooldownCondition"` |
-| `Cooldown` | string | Required | Cooldown identifier to check |
-| `Then` | interaction | `null` | Interaction when cooldown is ready |
-| `Else` | interaction | `null` | Interaction when cooldown is active |
+| `Id` | string | Required | Cooldown identifier to check |
+| `Next` | interaction | `null` | Interaction when cooldown is ready |
+| `Failed` | interaction | `null` | Interaction when cooldown is active |
+
+### Execution Flow
+
+```
+CooldownCondition
+    │
+    ▼
+┌─────────────────────────┐
+│ Check cooldown by Id    │
+└─────────────────────────┘
+    │
+    ├─► Cooldown elapsed (ready) ──► Execute Next
+    │
+    └─► Cooldown active ──► Execute Failed
+```
 
 ### Execution Behavior
 
 CooldownCondition checks if the specified cooldown timer has expired:
 
-- **Then**: Executed when cooldown has elapsed (ability is ready)
-- **Else**: Executed when cooldown is still active (ability on cooldown)
+- **Next**: Executed when cooldown has elapsed (ability is ready)
+- **Failed**: Executed when cooldown is still active (ability on cooldown)
+
+Cooldowns are typically started using [TriggerCooldown](#triggercooldown) and can be reset using [ResetCooldown](#resetcooldown).
 
 ### Examples
 
-**Basic Ability Cooldown:**
+**NPC Poison Attack (from Spider.json):**
+
+Check if poison cooldown has elapsed before applying poison effect:
 
 ```json
 {
   "Type": "CooldownCondition",
-  "Cooldown": "dash_ability",
-  "Then": {
+  "Id": "Spider_Poison",
+  "Next": {
     "Type": "Serial",
     "Interactions": [
-      "Execute_Dash",
-      { "Type": "StartCooldown", "Cooldown": "dash_ability", "Duration": 5.0 }
+      {
+        "Type": "TriggerCooldown",
+        "Cooldown": {
+          "Id": "Spider_Poison",
+          "Cooldown": 8
+        }
+      },
+      {
+        "Type": "ApplyEffect",
+        "EffectId": "hytale:poison",
+        "Duration": 4
+      },
+      {
+        "Type": "DamageEntity",
+        "DamageParameters": { "DamageAmount": 5 }
+      }
     ]
   },
-  "Else": {
-    "Type": "SendMessage",
-    "Message": "Dash is on cooldown!"
+  "Failed": {
+    "Type": "DamageEntity",
+    "DamageParameters": { "DamageAmount": 5 }
   }
 }
 ```
 
-**Ultimate Ability Check:**
+**Boss Special Attack (from Snapdragon.json):**
+
+Cooldown-gated fire breath attack:
 
 ```json
 {
   "Type": "CooldownCondition",
-  "Cooldown": "ultimate_ability",
-  "Then": {
-    "Type": "StatsCondition",
-    "Stat": "SignatureEnergy",
-    "Operator": "GreaterOrEqual",
-    "Value": 100,
-    "Then": {
-      "Type": "Serial",
-      "Interactions": [
-        { "Type": "ModifyStat", "Stat": "SignatureEnergy", "Amount": -100 },
-        "Execute_Ultimate",
-        { "Type": "StartCooldown", "Cooldown": "ultimate_ability", "Duration": 60.0 }
-      ]
-    },
-    "Else": { "Type": "SendMessage", "Message": "Not enough energy!" }
+  "Id": "Snapdragon_FireBreath",
+  "Next": {
+    "Type": "Serial",
+    "Interactions": [
+      {
+        "Type": "TriggerCooldown",
+        "Cooldown": {
+          "Id": "Snapdragon_FireBreath",
+          "Cooldown": 12
+        }
+      },
+      "Snapdragon_FireBreath_Execute"
+    ]
   },
-  "Else": {
-    "Type": "Simple",
-    "Effects": { "WorldSoundEventId": "ability_not_ready" }
-  }
+  "Failed": "Snapdragon_BasicAttack"
 }
 ```
 
-**Item Use Cooldown:**
+**Conditional Damage Bonus:**
+
+Apply bonus damage only when cooldown is ready:
 
 ```json
 {
   "Type": "CooldownCondition",
-  "Cooldown": "health_potion",
-  "Then": {
+  "Id": "critical_strike",
+  "Next": {
     "Type": "Serial",
     "Interactions": [
-      { "Type": "ModifyStat", "Stat": "Health", "Amount": 50 },
-      { "Type": "ModifyInventory", "AdjustHeldItemQuantity": -1 },
-      { "Type": "StartCooldown", "Cooldown": "health_potion", "Duration": 30.0 },
-      { "Type": "Simple", "Effects": { "WorldSoundEventId": "potion_drink" } }
+      {
+        "Type": "DamageEntity",
+        "DamageParameters": { "DamageAmount": 25 }
+      },
+      {
+        "Type": "TriggerCooldown",
+        "Cooldown": {
+          "Id": "critical_strike",
+          "Cooldown": 5
+        }
+      }
     ]
   },
-  "Else": {
-    "Type": "SendMessage",
-    "Message": "Potion on cooldown!"
+  "Failed": {
+    "Type": "DamageEntity",
+    "DamageParameters": { "DamageAmount": 10 }
   }
 }
 ```
 
 ### Related Interactions
 
+- [TriggerCooldown](#triggercooldown) - Start a cooldown timer
+- [ResetCooldown](#resetcooldown) - Reset a cooldown timer
 - [Condition](#condition) - Base conditional branching
 - [StatsCondition](#statscondition) - Resource-based gating
+
+---
+
+## TriggerCooldown
+
+**Package:** `config/client/TriggerCooldownInteraction`
+
+Start a cooldown timer. Used to initiate time-gated abilities that can later be checked with [CooldownCondition](#cooldowncondition).
+
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"TriggerCooldown"` |
+| `Cooldown` | object | Required | [InteractionCooldown](#interactioncooldown-configuration) configuration |
+
+### InteractionCooldown Configuration
+
+The `Cooldown` property uses the InteractionCooldown configuration object:
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Id` | string | `null` | Cooldown identifier (used to check with CooldownCondition) |
+| `Cooldown` | float | Required | Duration in seconds |
+| `ClickBypass` | boolean | `false` | If true, clicking bypasses the cooldown |
+| `Charges` | float[] | `null` | Array of charge times for charged abilities |
+
+### Examples
+
+**Basic Cooldown Start:**
+
+```json
+{
+  "Type": "TriggerCooldown",
+  "Cooldown": {
+    "Id": "ability_dash",
+    "Cooldown": 5
+  }
+}
+```
+
+**NPC Attack Cooldown (from Spider.json):**
+
+```json
+{
+  "Type": "TriggerCooldown",
+  "Cooldown": {
+    "Id": "Spider_Poison",
+    "Cooldown": 8
+  }
+}
+```
+
+**Cooldown with Click Bypass (from RootInteractions):**
+
+Used in block interactions where clicking can bypass the wait:
+
+```json
+{
+  "Type": "TriggerCooldown",
+  "Cooldown": {
+    "Id": "BlockInteraction_Creative",
+    "Cooldown": 0.0,
+    "ClickBypass": true
+  }
+}
+```
+
+**Cooldown without Id:**
+
+Anonymous cooldown (cannot be checked with CooldownCondition):
+
+```json
+{
+  "Type": "TriggerCooldown",
+  "Cooldown": {
+    "Cooldown": 1.5
+  }
+}
+```
+
+### Usage Pattern
+
+TriggerCooldown is typically used inside the `Next` branch of a CooldownCondition:
+
+```json
+{
+  "Type": "CooldownCondition",
+  "Id": "my_ability",
+  "Next": {
+    "Type": "Serial",
+    "Interactions": [
+      {
+        "Type": "TriggerCooldown",
+        "Cooldown": {
+          "Id": "my_ability",
+          "Cooldown": 10
+        }
+      },
+      "Execute_Ability"
+    ]
+  },
+  "Failed": "Ability_NotReady_Feedback"
+}
+```
+
+### Related Interactions
+
+- [CooldownCondition](#cooldowncondition) - Check if cooldown has elapsed
+- [ResetCooldown](#resetcooldown) - Reset a cooldown timer
+
+---
+
+## ResetCooldown
+
+**Package:** `config/client/ResetCooldownInteraction`
+
+Reset a cooldown timer, making it immediately ready. Used to cancel active cooldowns or refresh ability availability.
+
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"ResetCooldown"` |
+| `Cooldown` | object | Required | [InteractionCooldown](#interactioncooldown-configuration) configuration |
+
+### Examples
+
+**Reset Named Cooldown:**
+
+```json
+{
+  "Type": "ResetCooldown",
+  "Cooldown": {
+    "Id": "ability_dash",
+    "Cooldown": 0
+  }
+}
+```
+
+**Reset on Parry (from Debug_Stick_Parry.json):**
+
+Successful parry resets attack cooldown:
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    "Parry_Success_Effects",
+    {
+      "Type": "ResetCooldown",
+      "Cooldown": {
+        "Id": "attack_cooldown",
+        "Cooldown": 0
+      }
+    }
+  ]
+}
+```
+
+**Reset Anonymous Cooldown (from Bomb_Throw.json):**
+
+```json
+{
+  "Type": "ResetCooldown",
+  "Cooldown": {
+    "Cooldown": 1
+  }
+}
+```
+
+### Usage Patterns
+
+**Reset on Kill:**
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "DamageEntity",
+      "DamageParameters": { "DamageAmount": 100, "Lethal": true }
+    },
+    {
+      "Type": "ResetCooldown",
+      "Cooldown": {
+        "Id": "execute_ability",
+        "Cooldown": 0
+      }
+    }
+  ]
+}
+```
+
+**Emergency Reset Consumable:**
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    { "Type": "ModifyInventory", "AdjustHeldItemQuantity": -1 },
+    {
+      "Type": "ResetCooldown",
+      "Cooldown": {
+        "Id": "ultimate_ability",
+        "Cooldown": 0
+      }
+    }
+  ]
+}
+```
+
+### Related Interactions
+
+- [CooldownCondition](#cooldowncondition) - Check if cooldown has elapsed
+- [TriggerCooldown](#triggercooldown) - Start a cooldown timer
 
 ---
 
