@@ -1914,14 +1914,47 @@ When the player uses secondary attack, it immediately sets `Special_Second`. The
 
 **Package:** `config/none/CancelChainInteraction`
 
+**Class hierarchy:** `CancelChainInteraction` → `SimpleInstantInteraction` → `SimpleInteraction` → `Interaction`
+
+**Protocol class:** `CancelChainInteractionProtocol` (handles client-server synchronization)
+
 Cancels and resets an active chain's state, returning it to the beginning. This is used to break combos early, reset chain state after special moves, or clear chain flags without waiting for the `ChainingAllowance` timeout.
 
 #### Core Properties
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `Type` | string | Required | Always `"CancelChain"` |
-| `ChainId` | string | Required | Target chain identifier to cancel/reset |
+| Property | Type | Default | Validator | Description |
+|----------|------|---------|-----------|-------------|
+| `Type` | string | Required | - | Always `"CancelChain"` |
+| `ChainId` | string | Required | `nonNull` | Target chain identifier to cancel/reset |
+
+The `ChainId` validator ensures the property cannot be null or empty - every CancelChainInteraction must specify which chain to cancel.
+
+#### How Chain Cancellation Works
+
+When `CancelChainInteraction` executes, the following steps occur internally:
+
+1. **Entity lookup** - Gets the entity from the `InteractionContext`
+2. **Component access** - Retrieves the entity's `ChainingInteraction.Data` component which stores all active chain states
+3. **Chain state removal** - Removes the entry for the specified `ChainId` from the component's `namedMap`
+4. **Flag clearing** - Any flags set on that chain via `ChainFlagInteraction` are also cleared
+
+**Effect:** The next time the player triggers an interaction using that `ChainId`, the chain starts from the beginning (index 0 of the `Next` array) instead of continuing from where it left off.
+
+```
+Before CancelChain:
+┌─────────────────────────────────────────────┐
+│ Chain State for "Sword_Primary"             │
+│   currentIndex: 2                           │
+│   flagIndex: 1 (Counter flag set)           │
+│   timeRemaining: 1.5s                       │
+└─────────────────────────────────────────────┘
+
+After CancelChain:
+┌─────────────────────────────────────────────┐
+│ Chain State for "Sword_Primary"             │
+│   (entry removed - chain resets on next use)│
+└─────────────────────────────────────────────┘
+```
 
 #### When to Use CancelChain
 
@@ -2015,6 +2048,34 @@ When the `Counter` flag triggers, it executes the counter attack and then resets
 
 Dodging cancels any active combo chain, letting the player reset their attack pattern.
 
+**Mode switch reset:**
+
+When a weapon has multiple modes (e.g., one-handed vs two-handed grip), switching modes should reset any active combo:
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "CancelChain",
+      "ChainId": "Sword_Primary"
+    },
+    {
+      "Type": "CancelChain",
+      "ChainId": "Sword_Secondary"
+    },
+    {
+      "Type": "Replace",
+      "Variable": "GripMode",
+      "Value": "TwoHanded",
+      "Next": "Switch_Grip_Animation"
+    }
+  ]
+}
+```
+
+This pattern cancels both primary and secondary attack chains before switching to the new grip mode.
+
 #### Common Patterns
 
 | Pattern | Use Case | Implementation |
@@ -2023,11 +2084,23 @@ Dodging cancels any active combo chain, letting the player reset their attack pa
 | **Special move reset** | Flag-triggered moves reset chain | CancelChain in Flags target |
 | **Defensive reset** | Blocking/dodging resets combo | CancelChain in block/dodge interaction |
 | **Mode switch** | Switching weapon modes resets combos | CancelChain when switching |
+| **Timeout prevention** | Force immediate reset without waiting | CancelChain instead of relying on `ChainingAllowance` expiry |
+
+#### Technical Notes
+
+- **Empty `firstRun()`** - The `CancelChainInteraction` class has an empty `firstRun()` method. All cancellation logic executes in `simulateFirstRun()`, which runs on both client and server.
+
+- **Client/server sync** - The `CancelChainInteractionProtocol` class handles network synchronization. When a cancel occurs on the client, it's replicated to the server to ensure both sides have consistent chain state.
+
+- **Clears flags too** - Canceling a chain also clears any flags set via `ChainFlagInteraction`. If you need to preserve flags while resetting position, you would need a custom solution.
+
+- **No partial reset** - There's no built-in way to reset a chain to a specific index. CancelChain always fully removes the chain state, causing it to restart from index 0.
 
 #### Related Interactions
 
 - [ChainingInteraction](#chaininginteraction) - The chain type that CancelChain resets
 - [ChainFlagInteraction](#chainflaginteraction) - Often used together (flag triggers special, then cancel resets)
+- [FirstClickInteraction](#firstclickinteraction) - Common parent for charged attacks that trigger CancelChain
 
 ---
 
