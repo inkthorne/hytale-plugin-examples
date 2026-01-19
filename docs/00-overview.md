@@ -1,4 +1,4 @@
-# Hytale API Documentation Overview
+# Hytale Plugin & Asset Reference
 
 Quick reference for finding the right documentation file.
 
@@ -34,219 +34,109 @@ Quick reference for finding the right documentation file.
 | [i18n.md](i18n.md) | Localization system with GenerateDefaultLanguageEvent for registering plugin translations during server startup. |
 | [singleplayer.md](singleplayer.md) | Singleplayer-specific functionality with SingleplayerRequestAccessEvent for handling local server access requests. |
 
-## Class Lookup Index
+## Asset Type Index
 
-```
-# Core Plugin
-JavaPlugin, PluginBase           → plugin-lifecycle.md
-BootEvent, ShutdownEvent         → plugin-lifecycle.md
-PrepareUniverseEvent             → plugin-lifecycle.md
-PluginSetupEvent                 → plugin-lifecycle.md
-PluginState                      → plugin-lifecycle.md
-PluginIdentifier, PluginManifest → plugin-lifecycle.md
-HytaleLogger                     → plugin-lifecycle.md
+JSON asset types used in Hytale's data-driven systems.
 
-# Commands
-AbstractPlayerCommand            → commands.md
-AbstractWorldCommand             → commands.md
-AbstractTargetPlayerCommand      → commands.md
-CommandContext                   → commands.md
-CommandSender                    → commands.md
-CommandOwner                     → commands.md
-CommandRegistration              → commands.md
-ArgumentType, SingleArgumentType → commands.md
-ArgTypes                         → commands.md
+**Interactions - Combo Systems**
+[ChainingInteraction](interactions-combo.md#chaininginteraction), [FirstClickInteraction](interactions-combo.md#firstclickinteraction), [ChargingInteraction](interactions-combo.md#charginginteraction), [ChainFlagInteraction](interactions-combo.md#chainflaginteraction), [CancelChainInteraction](interactions-combo.md#cancelchaininteraction)
 
-# Entities
-PlayerRef, Player                → entities.md
-Velocity, EntityStatMap          → entities.md
-StatModifiersManager             → entities.md
-EntityEvent, EntityRemoveEvent   → entities.md
-DropItemEvent, SwitchActiveSlotEvent → inventory.md
-InteractivelyPickupItemEvent     → inventory.md
-LivingEntityInventoryChangeEvent → inventory.md
-InteractionManager               → entities.md (also referenced in interactions.md)
+**Interactions - Combat & Effects**
+[SimpleInteraction](interactions-combat.md#simpleinteraction), [DamageEntity](interactions-combat.md#damageentity), [ApplyForce](interactions-combat.md#applyforce), [ApplyEffect](interactions-combat.md#applyeffect), [ClearEntityEffect](interactions-combat.md#clearentityeffect), [ChangeStat](interactions-combat.md#changestat), [InterruptInteraction](interactions-combat.md#interruptinteraction)
 
-# Player Events & Messaging
-PlayerConnectEvent               → player.md
-PlayerDisconnectEvent            → player.md
-PlayerInteractEvent              → player.md
-InteractionType                  → player.md
-Message, FormattedMessage        → player.md
-GameMode                         → player.md
-ChangeGameModeEvent              → player.md
-CraftRecipeEvent                 → inventory.md
-HiddenPlayersManager             → player.md
+**Interactions - Control Flow**
+[Serial](interactions-flow.md#serial), [Parallel](interactions-flow.md#parallel), [Condition](interactions-flow.md#condition), [StatsCondition](interactions-flow.md#statscondition), [EffectCondition](interactions-flow.md#effectcondition), [BlockCondition](interactions-flow.md#blockcondition), [CooldownCondition](interactions-flow.md#cooldowncondition), [MovementCondition](interactions-flow.md#movementcondition), [DestroyCondition](interactions-flow.md#destroycondition), [PlacementCountCondition](interactions-flow.md#placementcountcondition), [Repeat](interactions-flow.md#repeat), [Select](interactions-flow.md#select), [Replace](interactions-flow.md#replace)
 
-# World & Chunks
-World                            → world.md
-WorldChunk                       → world.md
-ChunkTracker, ChunkVisibility    → world.md
-ChunkFlag                        → world.md
-WorldEvent, AddWorldEvent        → world.md
-ChunkEvent, ChunkSaveEvent       → world.md
-MoonPhaseChangeEvent             → world.md
-GameplayConfig                   → world.md
-WorldConfig, DeathConfig         → world.md
-ClientFeature                    → world.md
+**Interactions - Target Selectors**
+[AOECircle](interactions-flow.md#aoecircleselector), [AOECylinder](interactions-flow.md#aoecylinderselector), [Raycast](interactions-flow.md#raycastselector), [Stab](interactions-flow.md#stabselector), [Horizontal](interactions-flow.md#horizontalselector)
 
-# Event System
-EventRegistry                    → events.md
-EventRegistration                → events.md
-EventPriority                    → events.md
-EntityEventSystem                → events.md
-IBaseEvent, IEvent, IAsyncEvent  → events.md
-ICancellable                     → events.md
-EcsEvent, CancellableEcsEvent    → events.md
-ICancellableEcsEvent             → events.md
+**Interactions - Entity & World**
+[SpawnPrefab](interactions-world.md#spawnprefab), [RemoveEntity](interactions-world.md#removeentity), [LaunchProjectile](interactions-world.md#launchprojectile), [SendMessage](interactions-world.md#sendmessage), [RunRootInteraction](interactions-world.md#runrootinteraction), [OpenPage](interactions-world.md#ui-interactions), [OpenCustomUI](interactions-world.md#ui-interactions), [EquipItem](interactions-world.md#inventory-interactions), [ModifyInventory](interactions-world.md#inventory-interactions), [BreakBlock](interactions-world.md#block-interactions), [PlaceBlock](interactions-world.md#block-interactions), [ChangeState](interactions-world.md#changestate), [LaunchPadInteraction](interactions-world.md#launchpadinteraction), [WieldingInteraction](interactions-world.md#wieldinginteraction)
 
-# ECS
-Store, Ref, Component            → components.md
-Query, CommandBuffer             → components.md
-EntityStore, ChunkStore          → components.md
-ComponentRegistry                → components.md
-TransformComponent               → components.md
-Holder, Archetype                → components.md
-EntityTickingSystem              → components.md
+---
 
-# Permissions
-PermissionHolder                 → permissions.md
-PlayerGroupEvent                 → permissions.md
-PlayerPermissionChangeEvent      → permissions.md
+## Java Class Index
 
-# Inventory & Crafting
-Inventory, ItemStack, Item       → inventory.md
-ItemContainer, CombinedItemContainer → inventory.md
-SmartMoveType, SortType          → inventory.md
-FilterType, FilterActionType, SlotFilter → inventory.md
-ActionType, ItemStackTransaction → inventory.md
-CraftingRecipe                   → inventory.md
-MaterialQuantity, ResourceQuantity → inventory.md
-BenchRequirement, BenchType      → inventory.md
+**Core Plugin**
+[JavaPlugin](plugin-lifecycle.md), [PluginBase](plugin-lifecycle.md), [BootEvent](plugin-lifecycle.md), [ShutdownEvent](plugin-lifecycle.md), [PrepareUniverseEvent](plugin-lifecycle.md), [PluginSetupEvent](plugin-lifecycle.md), [PluginState](plugin-lifecycle.md), [PluginIdentifier](plugin-lifecycle.md), [PluginManifest](plugin-lifecycle.md), [HytaleLogger](plugin-lifecycle.md)
 
-# Tasks
-TaskRegistry, TaskRegistration   → tasks.md
+**Commands**
+[AbstractPlayerCommand](commands.md), [AbstractWorldCommand](commands.md), [AbstractTargetPlayerCommand](commands.md), [CommandContext](commands.md), [CommandSender](commands.md), [CommandOwner](commands.md), [CommandRegistration](commands.md), [ArgumentType](commands.md), [SingleArgumentType](commands.md), [ArgTypes](commands.md)
 
-# UI
-UICommandBuilder                 → ui.md
-WindowManager                    → ui.md
-PageManager, HudManager          → ui.md
-HotbarManager                    → ui.md
-Window, WindowType, OpenWindow   → ui.md
-Page, CustomUIPage               → ui.md
-HudComponent                     → ui.md
-CustomUIEventBindingType         → ui.md
+**Entities**
+[PlayerRef](entities.md), [Player](entities.md), [Velocity](entities.md), [EntityStatMap](entities.md), [StatModifiersManager](entities.md), [EntityEvent](entities.md), [EntityRemoveEvent](entities.md), [InteractionManager](entities.md)
 
-# Blocks
-BlockStateRegistry               → blocks.md
-BlockStateRegistration           → blocks.md
-BlockType                        → blocks.md
-BlockMaterial                    → blocks.md
-Rotation, RotationTuple          → blocks.md
-PlaceBlockEvent, BreakBlockEvent → blocks.md
-DamageBlockEvent, UseBlockEvent  → blocks.md
+**Player Events & Messaging**
+[PlayerConnectEvent](player.md), [PlayerDisconnectEvent](player.md), [PlayerInteractEvent](player.md), [InteractionType](player.md), [Message](player.md), [FormattedMessage](player.md), [GameMode](player.md), [ChangeGameModeEvent](player.md), [HiddenPlayersManager](player.md)
 
-# Assets
-AssetRegistry                    → assets.md
-Model, ModelAsset                → assets.md
+**World & Chunks**
+[World](world.md), [WorldChunk](world.md), [ChunkTracker](world.md), [ChunkVisibility](world.md), [ChunkFlag](world.md), [WorldEvent](world.md), [AddWorldEvent](world.md), [ChunkEvent](world.md), [ChunkSaveEvent](world.md), [ChunkPreLoadProcessEvent](world.md), [MoonPhaseChangeEvent](world.md), [GameplayConfig](world.md), [WorldConfig](world.md), [DeathConfig](world.md), [ClientFeature](world.md)
 
-# Interactions
-Interaction                      → interactions.md
-SimpleInteraction                → interactions.md
-SimpleInstantInteraction         → interactions.md
+**Event System**
+[EventRegistry](events.md), [EventRegistration](events.md), [EventPriority](events.md), [EntityEventSystem](events.md), [IBaseEvent](events.md), [IEvent](events.md), [IAsyncEvent](events.md), [ICancellable](events.md), [EcsEvent](events.md), [CancellableEcsEvent](events.md), [ICancellableEcsEvent](events.md)
 
-# Networking
-NetworkSerializable              → networking.md
-Direction                        → networking.md
-WaitForDataFrom                  → networking.md
+**ECS**
+[Store](components.md), [Ref](components.md), [Component](components.md), [Query](components.md), [CommandBuffer](components.md), [EntityStore](components.md), [ChunkStore](components.md), [ComponentRegistry](components.md), [TransformComponent](components.md), [Holder](components.md), [Archetype](components.md), [EntityTickingSystem](components.md)
 
-# Prefabs
-PrefabStore, BlockSelection      → prefabs.md
-PrefabRotation, PrefabEntry      → prefabs.md
-PrefabWeights                    → prefabs.md
-PrefabPasteEvent                 → prefabs.md
-PrefabPlaceEntityEvent           → prefabs.md
+**Permissions**
+[PermissionHolder](permissions.md), [PlayerGroupEvent](permissions.md), [PlayerPermissionChangeEvent](permissions.md)
 
-# Math
-Vector3d, Vector3f, Vector3i, Vector3l → math.md
-Vector2d, Vector2i, Vector4d     → math.md
-Matrix4d, Mat4f, Quatf           → math.md
-Transform, Box, Axis, MathUtil   → math.md
+**Inventory & Crafting**
+[Inventory](inventory.md), [ItemStack](inventory.md), [Item](inventory.md), [ItemContainer](inventory.md), [CombinedItemContainer](inventory.md), [SmartMoveType](inventory.md), [SortType](inventory.md), [FilterType](inventory.md), [FilterActionType](inventory.md), [SlotFilter](inventory.md), [ActionType](inventory.md), [ItemStackTransaction](inventory.md), [CraftingRecipe](inventory.md), [MaterialQuantity](inventory.md), [ResourceQuantity](inventory.md), [BenchRequirement](inventory.md), [BenchType](inventory.md), [DropItemEvent](inventory.md), [SwitchActiveSlotEvent](inventory.md), [InteractivelyPickupItemEvent](inventory.md), [LivingEntityInventoryChangeEvent](inventory.md), [CraftRecipeEvent](inventory.md)
 
-# Codecs
-Codec, RecordCodecBuilder        → codecs.md
+**Tasks**
+[TaskRegistry](tasks.md), [TaskRegistration](tasks.md)
 
-# Projectiles
-ProjectileModule, ProjectileConfig → projectiles.md
-PhysicsConfig, StandardPhysicsConfig → projectiles.md
-ImpactConsumer, BounceConsumer   → projectiles.md
-StandardPhysicsProvider          → projectiles.md
-PredictedProjectile              → projectiles.md
-BallisticData, BallisticDataProvider → projectiles.md
-ProjectileInteraction            → projectiles.md
+**UI**
+[UICommandBuilder](ui.md), [WindowManager](ui.md), [PageManager](ui.md), [HudManager](ui.md), [HotbarManager](ui.md), [Window](ui.md), [WindowType](ui.md), [OpenWindow](ui.md), [Page](ui.md), [CustomUIPage](ui.md), [HudComponent](ui.md), [CustomUIEventBindingType](ui.md)
 
-# Collision
-CollisionModule, CollisionResult → collision.md
-BlockCollisionData, CollisionConfig → collision.md
-CollisionFilter, CollisionMaterial → collision.md
-BasicCollisionData, BoxCollisionData → collision.md
-IBlockCollisionEvaluator         → collision.md
-BoxBlockIntersectionEvaluator    → collision.md
-CollisionModuleConfig            → collision.md
-CollisionDataArray               → collision.md
-CollisionResultComponent         → collision.md
+**Blocks**
+[BlockStateRegistry](blocks.md), [BlockStateRegistration](blocks.md), [BlockType](blocks.md), [BlockMaterial](blocks.md), [Rotation](blocks.md), [RotationTuple](blocks.md), [PlaceBlockEvent](blocks.md), [BreakBlockEvent](blocks.md), [DamageBlockEvent](blocks.md), [UseBlockEvent](blocks.md)
 
-# Fluids
-Fluid                            → fluids.md
+**Assets**
+[AssetRegistry](assets.md), [Model](assets.md), [ModelAsset](assets.md), [AssetPackRegisterEvent](assets.md), [AssetPackUnregisterEvent](assets.md), [LoadAssetEvent](assets.md), [GenerateSchemaEvent](assets.md), [CommonAssetMonitorEvent](assets.md), [SendCommonAssetsEvent](assets.md), [PathEvent](assets.md)
 
-# Combat
-Damage, DamageEventSystem        → combat.md
-Damage.Source, Damage.EntitySource → combat.md
-DamageDataComponent              → combat.md
-DamageCause                      → combat.md
-KillFeedEvent                    → combat.md
+**Interactions**
+[Interaction](interactions.md), [SimpleInteraction](interactions.md), [SimpleInstantInteraction](interactions.md)
 
-# NPCs
-AllNPCsLoadedEvent               → npc.md
-LoadedNPCEvent, BuilderInfo      → npc.md
-SensorEvent, SensorEntityEvent   → npc.md
-EventSearchType                  → npc.md
+**Networking**
+[NetworkSerializable](networking.md), [Direction](networking.md), [WaitForDataFrom](networking.md)
 
-# Adventure
-DiscoverInstanceEvent            → adventure.md
-DiscoverZoneEvent                → adventure.md
-TreasureChestOpeningEvent        → adventure.md
-InstanceDiscoveryConfig          → adventure.md
-WorldMapTracker                  → adventure.md
-ZoneDiscoveryInfo                → adventure.md
+**Prefabs**
+[PrefabStore](prefabs.md), [BlockSelection](prefabs.md), [PrefabRotation](prefabs.md), [PrefabEntry](prefabs.md), [PrefabWeights](prefabs.md), [PrefabPasteEvent](prefabs.md), [PrefabPlaceEntityEvent](prefabs.md)
 
-# Asset Events
-AssetPackRegisterEvent           → assets.md
-AssetPackUnregisterEvent         → assets.md
-LoadAssetEvent                   → assets.md
-GenerateSchemaEvent              → assets.md
-CommonAssetMonitorEvent          → assets.md
-SendCommonAssetsEvent            → assets.md
-PathEvent                        → assets.md
+**Math**
+[Vector3d](math.md), [Vector3f](math.md), [Vector3i](math.md), [Vector3l](math.md), [Vector2d](math.md), [Vector2i](math.md), [Vector4d](math.md), [Matrix4d](math.md), [Mat4f](math.md), [Quatf](math.md), [Transform](math.md), [Box](math.md), [Axis](math.md), [MathUtil](math.md)
 
-# Asset Editor
-EditorClientEvent                → asset-editor.md
-AssetEditorActivateButtonEvent   → asset-editor.md
-AssetEditorAssetCreatedEvent     → asset-editor.md
-AssetEditorClientDisconnectEvent → asset-editor.md
-AssetEditorSelectAssetEvent      → asset-editor.md
-AssetEditorFetchAutoCompleteDataEvent → asset-editor.md
-AssetEditorRequestDataSetEvent   → asset-editor.md
+**Codecs**
+[Codec](codecs.md), [RecordCodecBuilder](codecs.md)
 
-# Localization
-GenerateDefaultLanguageEvent     → i18n.md
+**Projectiles**
+[ProjectileModule](projectiles.md), [ProjectileConfig](projectiles.md), [PhysicsConfig](projectiles.md), [StandardPhysicsConfig](projectiles.md), [ImpactConsumer](projectiles.md), [BounceConsumer](projectiles.md), [StandardPhysicsProvider](projectiles.md), [PredictedProjectile](projectiles.md), [BallisticData](projectiles.md), [BallisticDataProvider](projectiles.md), [ProjectileInteraction](projectiles.md)
 
-# Singleplayer
-SingleplayerRequestAccessEvent   → singleplayer.md
+**Collision**
+[CollisionModule](collision.md), [CollisionResult](collision.md), [BlockCollisionData](collision.md), [CollisionConfig](collision.md), [CollisionFilter](collision.md), [CollisionMaterial](collision.md), [BasicCollisionData](collision.md), [BoxCollisionData](collision.md), [IBlockCollisionEvaluator](collision.md), [BoxBlockIntersectionEvaluator](collision.md), [CollisionModuleConfig](collision.md), [CollisionDataArray](collision.md), [CollisionResultComponent](collision.md)
 
-# Chunk Events
-ChunkPreLoadProcessEvent         → world.md
-```
+**Fluids**
+[Fluid](fluids.md)
+
+**Combat**
+[Damage](combat.md), [DamageEventSystem](combat.md), [Damage.Source](combat.md), [Damage.EntitySource](combat.md), [DamageDataComponent](combat.md), [DamageCause](combat.md), [KillFeedEvent](combat.md)
+
+**NPCs**
+[AllNPCsLoadedEvent](npc.md), [LoadedNPCEvent](npc.md), [BuilderInfo](npc.md), [SensorEvent](npc.md), [SensorEntityEvent](npc.md), [EventSearchType](npc.md)
+
+**Adventure**
+[DiscoverInstanceEvent](adventure.md), [DiscoverZoneEvent](adventure.md), [TreasureChestOpeningEvent](adventure.md), [InstanceDiscoveryConfig](adventure.md), [WorldMapTracker](adventure.md), [ZoneDiscoveryInfo](adventure.md)
+
+**Asset Editor**
+[EditorClientEvent](asset-editor.md), [AssetEditorActivateButtonEvent](asset-editor.md), [AssetEditorAssetCreatedEvent](asset-editor.md), [AssetEditorClientDisconnectEvent](asset-editor.md), [AssetEditorSelectAssetEvent](asset-editor.md), [AssetEditorFetchAutoCompleteDataEvent](asset-editor.md), [AssetEditorRequestDataSetEvent](asset-editor.md)
+
+**Localization**
+[GenerateDefaultLanguageEvent](i18n.md)
+
+**Singleplayer**
+[SingleplayerRequestAccessEvent](singleplayer.md)
 
 ## Topic Groups
 
