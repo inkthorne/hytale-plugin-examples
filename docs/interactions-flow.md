@@ -383,22 +383,26 @@ A charged ability that fires multiple projectiles in sequence:
         { "Type": "ConsumeAmmo", "AmmoType": "arrow", "Count": 5 },
         {
           "Type": "Repeat",
-          "Count": 5,
-          "Interval": 0.1,
-          "Interaction": {
-            "Type": "Serial",
+          "Repeat": 5,
+          "RunTime": 0.1,
+          "ForkInteractions": {
             "Interactions": [
               {
-                "Type": "LaunchProjectile",
-                "ProjectileId": "arrow",
-                "Speed": 45,
-                "SpreadAngle": 15
-              },
-              {
-                "Type": "Simple",
-                "Effects": {
-                  "WorldSoundEventId": "hytale:sounds/weapons/bow_release"
-                }
+                "Type": "Serial",
+                "Interactions": [
+                  {
+                    "Type": "LaunchProjectile",
+                    "ProjectileId": "arrow",
+                    "Speed": 45,
+                    "SpreadAngle": 15
+                  },
+                  {
+                    "Type": "Simple",
+                    "Effects": {
+                      "WorldSoundEventId": "hytale:sounds/weapons/bow_release"
+                    }
+                  }
+                ]
               }
             ]
           }
@@ -2169,18 +2173,26 @@ Check if player has placed at least 4 blocks:
 
 **Package:** `config/none/RepeatInteraction`
 
-Loop execution of interactions.
+Loop execution of interactions with timing control and optional interruption.
 
 ### Structure
 
 ```json
 {
   "Type": "Repeat",
-  "Count": 3,
-  "Interval": 0.5,
-  "Interaction": {
-    "Type": "DamageEntity",
-    "DamageParameters": { "DamageAmount": 5 }
+  "Repeat": 3,
+  "RunTime": 0.5,
+  "ForkInteractions": {
+    "Interactions": [
+      {
+        "Type": "DamageEntity",
+        "DamageParameters": { "DamageAmount": 5 }
+      }
+    ]
+  },
+  "Next": {
+    "Type": "SendMessage",
+    "Message": "Repeat complete"
   }
 }
 ```
@@ -2189,9 +2201,74 @@ Loop execution of interactions.
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `Count` | int | Number of repetitions |
-| `Interval` | float | Delay between repetitions (seconds) |
-| `Interaction` | object | Interaction to repeat |
+| `Repeat` | int | Number of repetitions. Use `-1` for indefinite looping until interrupted |
+| `RunTime` | float | Duration of each iteration in seconds |
+| `ForkInteractions` | object | Contains `Interactions` array to execute each iteration |
+| `Next` | interaction | Interaction to execute after all repetitions complete |
+| `HorizontalSpeedMultiplier` | float | Movement speed modifier during repeat (e.g., `0.6` for 60% speed) |
+| `Rules` | object | Contains `InterruptedBy` array for early termination |
+| `Failed` | interaction | Handler when repeat cannot continue or is interrupted |
+
+### Examples
+
+**Whirlwind Attack (speed-modified combat loop):**
+
+```json
+{
+  "Type": "Repeat",
+  "Repeat": 10,
+  "HorizontalSpeedMultiplier": 0.6,
+  "ForkInteractions": {
+    "Interactions": [
+      "Whirlwind_Spin_Effect",
+      "Whirlwind_Damage_Selector"
+    ]
+  }
+}
+```
+
+**Interruptible Reload (indefinite loop):**
+
+```json
+{
+  "Type": "Repeat",
+  "Repeat": -1,
+  "Rules": {
+    "InterruptedBy": ["Primary", "Secondary"]
+  },
+  "ForkInteractions": {
+    "Interactions": [
+      { "Type": "AddStat", "StatId": "Ammo", "Amount": 1 }
+    ]
+  },
+  "Failed": {
+    "Type": "SendMessage",
+    "Message": "Reload interrupted"
+  }
+}
+```
+
+**Rapid Strikes (timed iterations):**
+
+```json
+{
+  "Type": "Repeat",
+  "Repeat": 4,
+  "RunTime": 0.138,
+  "ForkInteractions": {
+    "Interactions": [
+      "Stab_Left",
+      "Stab_Right"
+    ]
+  }
+}
+```
+
+### Notes
+
+- Without the `Repeat` property specified, acts as a single fork that waits for completion
+- Can be nested within other flow interactions for complex multi-level repetition patterns
+- `Rules.InterruptedBy` accepts input names like `"Primary"`, `"Secondary"` to allow player input to break the loop
 
 ---
 
