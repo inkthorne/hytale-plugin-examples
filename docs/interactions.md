@@ -4,17 +4,41 @@
 
 ## Quick Navigation
 
-| Section | Description |
-|---------|-------------|
-| [Quick Start](#quick-start) | Get animations working in 5 minutes |
-| [Animations & Effects](#animations--effects) | Sounds, particles, trails, camera |
-| [Combat](#combat-interactions) | Damage, forces, status effects |
-| [Combo Systems](#combo-systems) | Chains, charging, input branching |
-| [Control Flow](#control-flow) | Serial, parallel, conditions, loops |
-| [Targeting](#target-selectors) | AOE, raycast, sweep selectors |
-| [Entity & World](#entity--world) | Spawning, inventory, blocks, UI |
-| [Wielding & Blocking](#wielding--blocking) | Guard mechanics, angled blocking |
-| [Reference](#reference) | Full property tables, class hierarchy |
+| Interaction | Description |
+|-------------|-------------|
+| [SimpleInteraction](#simpleinteraction) | Delays, animations, sounds, and flow control |
+| [DamageEntity](#damageentity) | Deal damage with effects, knockback, and stat grants |
+| [ApplyForce](#applyforce) | Apply physics forces for knockback and launches |
+| [ApplyEffect](#applyeffect) | Apply status effects (buffs, debuffs, DoT) |
+| [ClearEntityEffect](#clearentityeffect) | Remove status effects from entities |
+| [ChangeStat](#changestat) | Modify health, stamina, signature energy |
+| [InterruptInteraction](#interruptinteraction) | Cancel an entity's current interaction chain |
+| [ChainingInteraction](#chaininginteraction) | Sequential combo chains with timing windows |
+| [FirstClickInteraction](#firstclickinteraction) | Branch based on tap vs hold input |
+| [ChargingInteraction](#charginginteraction) | Charge-and-release mechanics |
+| [ChainFlagInteraction](#chainflaginteraction) | Set flags for cross-chain communication |
+| [CancelChainInteraction](#cancelchaininteraction) | Reset chain state to beginning |
+| [Serial](#serial) | Execute interactions sequentially |
+| [Parallel](#parallel) | Execute interactions concurrently |
+| [Condition](#condition) | Conditional branching |
+| [StatsCondition](#statscondition) | Branch based on entity stat values |
+| [EffectCondition](#effectcondition) | Branch based on active status effects |
+| [Repeat](#repeat) | Loop execution of interactions |
+| [Select](#select) | Random weighted selection |
+| [Replace](#replace) | Variable substitution for templates |
+| [Target Selectors](#target-selectors) | AOE, raycast, and sweep targeting |
+| [SpawnPrefab](#spawnprefab) | Spawn entities at locations |
+| [RemoveEntity](#removeentity) | Despawn entities from the world |
+| [LaunchProjectile](#launchprojectile) | Fire projectiles |
+| [SendMessage](#sendmessage) | Send chat messages to players |
+| [RunRootInteraction](#runrootinteraction) | Dynamically execute another root interaction |
+| [OpenPage / OpenCustomUI](#ui-interactions) | Open UI pages |
+| [EquipItem / ModifyInventory](#inventory-interactions) | Manage inventory and equipment |
+| [BreakBlock / PlaceBlock](#block-interactions) | Break or place blocks |
+| [ChangeState](#changestate) | Change entity state machine state |
+| [LaunchPadInteraction](#launchpadinteraction) | Launch pad physics |
+| [WieldingInteraction](#wieldinginteraction) | Blocking and guarding mechanics |
+| [Reference](#reference) | Class hierarchy, Java API, meta keys |
 
 ---
 
@@ -81,9 +105,7 @@ Interactions are actions entities can perform. Start with `SimpleInteraction` fo
 
 ---
 
-## Animations & Effects
-
-### SimpleInteraction
+## SimpleInteraction
 
 **Package:** `com.hypixel.hytale.server.core.modules.interaction.interaction.config`
 
@@ -93,7 +115,7 @@ Interactions are actions entities can perform. Start with `SimpleInteraction` fo
 
 A fundamental building block interaction that does nothing other than provide base interaction features. Despite its simplicity, it's one of the most versatile interaction types, used for delays, triggering animations, playing sounds, and controlling flow between other interactions.
 
-#### Purpose
+### Purpose
 
 SimpleInteraction serves as:
 - **Delay mechanism** - Creates timed pauses between interactions via `RunTime`
@@ -103,7 +125,7 @@ SimpleInteraction serves as:
 - **Flow control** - Chains interactions via `Next` and handles failures via `Failed`
 - **No-op placeholder** - Acts as an empty interaction when no action is needed
 
-#### Inherited Properties (from Interaction)
+### Inherited Properties (from Interaction)
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
@@ -116,7 +138,7 @@ SimpleInteraction serves as:
 | `Rules` | InteractionRules | - | Interaction rules |
 | `Camera` | InteractionCameraSettings | - | Camera settings during interaction |
 
-#### SimpleInteraction-Specific Properties
+### SimpleInteraction-Specific Properties
 
 | Property | Type | Default | Validator | Description |
 |----------|------|---------|-----------|-------------|
@@ -310,19 +332,17 @@ boolean walk(Collector collector, InteractionContext context)
 - [SimpleInstantInteraction](#simpleinstantinteraction) - Abstract subclass for instant interactions
 - [Serial](#serial) - Often used to chain multiple SimpleInteractions
 - [Parallel](#parallel) - Execute SimpleInteractions concurrently
-- [ChargingInteraction](#charged-attacks-charginginteraction) - Uses SimpleInteraction for `Failed` handlers
+- [ChargingInteraction](#charginginteraction) - Uses SimpleInteraction for `Failed` handlers
 
 ---
 
-## Combat Interactions
-
-### DamageEntity
+## DamageEntity
 
 **Package:** `config/server/DamageEntityInteraction`
 
 The core interaction for dealing damage to entities. Supports damage calculation, effects, knockback, and stat modifications.
 
-#### Basic Structure
+### Basic Structure
 
 ```json
 {
@@ -334,7 +354,7 @@ The core interaction for dealing damage to entities. Supports damage calculation
 }
 ```
 
-#### Full Structure with All Options
+### Full Structure with All Options
 
 ```json
 {
@@ -378,7 +398,7 @@ The core interaction for dealing damage to entities. Supports damage calculation
 }
 ```
 
-#### DamageParameters Properties
+### DamageParameters Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -386,7 +406,7 @@ The core interaction for dealing damage to entities. Supports damage calculation
 | `DamageCauseId` | string | Damage type (Physical, Magical, Fire, etc.) |
 | `DamageCalculator` | object | Optional custom damage calculation |
 
-#### DamageEffects Properties
+### DamageEffects Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -399,7 +419,7 @@ The core interaction for dealing damage to entities. Supports damage calculation
 | `StaminaDrainMultiplier` | float | Multiplier for stamina drain on hit |
 | `Knockback` | object | Knockback configuration (see [Knockback System](combat.md#knockback-system)) |
 
-#### EntityStatsOnHit
+### EntityStatsOnHit
 
 Grants stats to the attacker on successful hit:
 
@@ -412,13 +432,13 @@ Grants stats to the attacker on successful hit:
 
 ---
 
-### ApplyForce
+## ApplyForce
 
 **Package:** `config/client/ApplyForceInteraction`
 
 Applies physics force to entities, used for knockback, launches, and movement effects.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -429,7 +449,7 @@ Applies physics force to entities, used for knockback, launches, and movement ef
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -438,7 +458,7 @@ Applies physics force to entities, used for knockback, launches, and movement ef
 | `RelativeToFacing` | boolean | If true, force is relative to entity facing direction |
 | `Duration` | float | Duration for continuous forces |
 
-#### Example: Launch Pad Effect
+### Example: Launch Pad Effect
 
 ```json
 {
@@ -451,13 +471,13 @@ Applies physics force to entities, used for knockback, launches, and movement ef
 
 ---
 
-### ApplyEffect
+## ApplyEffect
 
 **Package:** `config/none/ApplyEffectInteraction`
 
 Applies status effects to entities (buffs, debuffs, damage over time, etc.).
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -469,7 +489,7 @@ Applies status effects to entities (buffs, debuffs, damage over time, etc.).
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -479,7 +499,7 @@ Applies status effects to entities (buffs, debuffs, damage over time, etc.).
 | `Target` | string | `Self`, `Target`, or `AOE` |
 | `ShowParticles` | boolean | Whether to show effect particles |
 
-#### Example: Apply Burning Effect on Hit
+### Example: Apply Burning Effect on Hit
 
 ```json
 {
@@ -505,13 +525,13 @@ Applies status effects to entities (buffs, debuffs, damage over time, etc.).
 
 ---
 
-### ClearEntityEffect
+## ClearEntityEffect
 
 **Package:** `config/server/ClearEntityEffectInteraction`
 
 Removes status effects from entities.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -521,7 +541,7 @@ Removes status effects from entities.
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -529,7 +549,7 @@ Removes status effects from entities.
 | `Target` | string | `Self` or `Target` |
 | `EffectCategory` | string | Remove all effects of a category (optional) |
 
-#### Example: Cleanse Potion
+### Example: Cleanse Potion
 
 ```json
 {
@@ -541,15 +561,15 @@ Removes status effects from entities.
 
 ---
 
-### ChangeStat
+## ChangeStat
 
-The `ChangeStat` interaction modifies entity stats like health, stamina, or signature energy.
+Modifies entity stats like health, stamina, or signature energy.
 
 **Example locations:**
 - `Server/Entity/Effects/Potion/*_Regen.json`
 - Used in `BlockedInteractions` for granting stats on block
 
-#### Basic Structure
+### Basic Structure
 
 ```json
 {
@@ -561,7 +581,7 @@ The `ChangeStat` interaction modifies entity stats like health, stamina, or sign
 }
 ```
 
-#### StatModifiers
+### StatModifiers
 
 A map of stat names to modification values:
 
@@ -579,7 +599,7 @@ A map of stat names to modification values:
 - `Health` - Entity health
 - `Mana` - Magic resource (if applicable)
 
-#### Behaviour Options
+### Behaviour Options
 
 Control how the stat is modified:
 
@@ -598,7 +618,7 @@ Control how the stat is modified:
 | `Add` | Add value to current stat (default) |
 | `Set` | Set stat to exact value |
 
-#### ValueType Options
+### ValueType Options
 
 Control whether the value is absolute or percentage-based:
 
@@ -617,7 +637,7 @@ Control whether the value is absolute or percentage-based:
 | (default) | Absolute value |
 | `Percent` | Percentage of max stat |
 
-#### Example: Grant Signature Energy on Block
+### Example: Grant Signature Energy on Block
 
 Combine `Wielding` with `BlockedInteractions` and `ChangeStat`:
 
@@ -649,13 +669,13 @@ This grants 5 signature energy each time the player successfully blocks an attac
 
 ---
 
-### InterruptInteraction
+## InterruptInteraction
 
 **Package:** `config/server/InterruptInteraction`
 
 Cancels the current interaction chain on the target entity.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -668,21 +688,21 @@ Used for stagger effects, crowd control, or cancelling enemy attacks.
 
 ---
 
-## Combo Systems
+## ChainingInteraction
 
-Combo systems enable sequential attacks, charged abilities, and input-based branching. This section covers how to build melee combos, charge attacks, and responsive input handling.
+**Package:** `config/client/ChainingInteraction`
 
-### Overview: How Combos Work
+Enables combo attack chains where players can input subsequent attacks within a timing window. This is the foundation for melee weapon combos, multi-hit abilities, and any sequence where attacks flow from one to the next. The system buffers player input during animations, allowing smooth combo execution.
 
-Hytale's combo system uses several interaction types together:
+### Core Properties
 
-| Type | Purpose |
-|------|---------|
-| `Chaining` | Sequential attack chains with timing windows |
-| `FirstClick` | Branch based on tap vs hold input |
-| `Charging` | Charge-and-release mechanics |
-| `ChainFlag` | Cross-chain communication |
-| `CancelChain` | Reset chain state |
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"Chaining"` |
+| `ChainingAllowance` | float | Required | Time window (seconds) to input the next attack |
+| `Next` | array | Required | Sequence of interactions in the chain |
+| `ChainId` | string | - | Identifier for cross-interaction chain synchronization |
+| `Flags` | object | - | Named branches that can be triggered via ChainFlagInteraction |
 
 ### Attack Chain Timing
 
@@ -736,25 +756,7 @@ Configured in Root Interaction files: `Server/Item/RootInteractions/Weapons/{Wea
 - **ClickQueuingTimeout**: Buffer window to queue next attack input
 - **RequireNewClick**: If true, must click again to chain (holding won't auto-chain)
 
----
-
-### ChainingInteraction
-
-**Package:** `config/client/ChainingInteraction`
-
-Enables combo attack chains where players can input subsequent attacks within a timing window. This is the foundation for melee weapon combos, multi-hit abilities, and any sequence where attacks flow from one to the next. The system buffers player input during animations, allowing smooth combo execution.
-
-#### Core Properties
-
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `Type` | string | Required | Always `"Chaining"` |
-| `ChainingAllowance` | float | Required | Time window (seconds) to input the next attack |
-| `Next` | array | Required | Sequence of interactions in the chain |
-| `ChainId` | string | - | Identifier for cross-interaction chain synchronization |
-| `Flags` | object | - | Named branches that can be triggered via ChainFlagInteraction |
-
-#### ChainingAllowance Timing
+### ChainingAllowance Timing
 
 The `ChainingAllowance` value determines how long the player has to input the next attack in the chain. This window opens during the current attack animation.
 
@@ -776,7 +778,7 @@ The `ChainingAllowance` value determines how long the player has to input the ne
 }
 ```
 
-#### The Next Array System
+### The Next Array System
 
 The `Next` property is an array defining the sequence of interactions. Each entry can be:
 
@@ -850,7 +852,7 @@ Chains often use Replace interactions to swap variables between steps:
 }
 ```
 
-#### ChainId and Cross-Interaction Sync
+### ChainId and Cross-Interaction Sync
 
 The `ChainId` property enables coordination between separate interaction chains (e.g., primary and secondary attacks). When multiple chains share the same `ChainId`, they share state and can trigger each other's `Flags` branches.
 
@@ -881,7 +883,7 @@ The `ChainId` property enables coordination between separate interaction chains 
 
 With shared `ChainId`, a ChainFlagInteraction from the block can trigger the primary chain's `Block_Counter` flag.
 
-#### Flags System (Advanced)
+### Flags System (Advanced)
 
 The `Flags` object defines named branches that can be triggered by ChainFlagInteraction. This enables complex combo systems where certain actions unlock special moves.
 
@@ -908,42 +910,7 @@ A separate interaction can set these flags:
 }
 ```
 
-#### Related Chain Interaction Types
-
-**[FirstClickInteraction](#click-vs-hold-firstclickinteraction)** - Differentiates between tap and hold inputs:
-
-```json
-{
-  "Type": "FirstClick",
-  "Click": "Quick_Attack",
-  "Held": {
-    "Type": "Chaining",
-    "ChainingAllowance": 1.5,
-    "Next": ["Heavy_Combo_1", "Heavy_Combo_2"]
-  }
-}
-```
-
-**[ChainFlagInteraction](#chainflaginteraction)** - Sets a flag to trigger a Flags branch. See full documentation below.
-
-```json
-{
-  "Type": "ChainFlag",
-  "ChainId": "Sword_Combat",
-  "Flag": "Counter_Ready"
-}
-```
-
-**[CancelChainInteraction](#cancelchaininteraction)** - Cancels/resets an active chain. See full documentation below.
-
-```json
-{
-  "Type": "CancelChain",
-  "ChainId": "Sword_Combat"
-}
-```
-
-#### Complete Examples
+### Complete Examples
 
 **Basic 3-Hit Combo:**
 
@@ -1051,7 +1018,7 @@ NPCs use high `ChainingAllowance` values since AI timing is less precise:
 }
 ```
 
-#### Common Patterns
+### Common Patterns
 
 | Pattern | Use Case | Key Properties |
 |---------|----------|----------------|
@@ -1062,17 +1029,22 @@ NPCs use high `ChainingAllowance` values since AI timing is less precise:
 | Synced chains | Primary + secondary coordination | Shared `ChainId` |
 | Flag combos | Conditional special moves | `Flags` + `ChainFlag` |
 
-See also: [ChargingInteraction](#charged-attacks-charginginteraction) for charge-release mechanics.
+### Related Interactions
+
+- [ChargingInteraction](#charginginteraction) - For charge-release mechanics
+- [FirstClickInteraction](#firstclickinteraction) - Differentiates between tap and hold inputs
+- [ChainFlagInteraction](#chainflaginteraction) - Sets a flag to trigger a Flags branch
+- [CancelChainInteraction](#cancelchaininteraction) - Cancels/resets an active chain
 
 ---
 
-### Click vs Hold (FirstClickInteraction)
+## FirstClickInteraction
 
 **Package:** `config/client/FirstClickInteraction`
 
 Branches execution based on whether the player clicked (tapped) or held the input button. This enables interactions that differentiate between quick taps and sustained holds, such as quick attacks vs charged attacks, or single-use vs continuous tool actions.
 
-#### Core Properties
+### Core Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
@@ -1082,7 +1054,7 @@ Branches execution based on whether the player clicked (tapped) or held the inpu
 
 Both `Click` and `Held` are optional but at least one should be specified. If neither is set, the interaction completes immediately with no effect.
 
-#### How Click vs Held Detection Works
+### How Click vs Held Detection Works
 
 The interaction system tracks input state client-side. When FirstClickInteraction executes:
 
@@ -1091,7 +1063,7 @@ The interaction system tracks input state client-side. When FirstClickInteractio
 
 This detection integrates with the chain system - if FirstClickInteraction is part of a Chaining sequence, the "held" state refers to whether the player is still holding when that chain step begins.
 
-#### Basic Examples
+### Basic Examples
 
 **Simple click vs hold:**
 
@@ -1132,7 +1104,7 @@ From `Watering_Can_Use.json` - clicking plays the water animation then performs 
 }
 ```
 
-#### Nested in Chaining
+### Nested in Chaining
 
 FirstClickInteraction can be used as chain steps to create combos that vary based on input timing. From `Debug_Combo_Primary.json`:
 
@@ -1189,7 +1161,7 @@ In this pattern:
 - The second attack varies: click does `Swing_Left`, hold does `Hook_Left` and sets a flag
 - The held path sets a `ChainFlag` that can trigger special branches in other chains sharing the same `ChainId`
 
-#### Integration with ChainFlag
+### Integration with ChainFlag
 
 The `Held` path commonly uses `ChainFlagInteraction` to communicate with other chains sharing the same `ChainId`. This enables mechanics like:
 - Hold during combo to unlock special finisher
@@ -1213,7 +1185,7 @@ The `Held` path commonly uses `ChainFlagInteraction` to communicate with other c
 }
 ```
 
-#### Common Patterns
+### Common Patterns
 
 | Pattern | Click | Held | Use Case |
 |---------|-------|------|----------|
@@ -1222,21 +1194,21 @@ The `Held` path commonly uses `ChainFlagInteraction` to communicate with other c
 | **Combo variant** | Normal combo step | Alternative step + flag | Branching combos |
 | **Instant/Aimed** | Hip-fire | Aim-down-sights mode | Ranged weapons |
 
-#### Related Interactions
+### Related Interactions
 
 - [ChainingInteraction](#chaininginteraction) - FirstClick is often nested within chains
-- [ChargingInteraction](#charged-attacks-charginginteraction) - `Held` path commonly leads to Charging
+- [ChargingInteraction](#charginginteraction) - `Held` path commonly leads to Charging
 - [ChainFlagInteraction](#chainflaginteraction) - Set flags from `Held` path for cross-chain coordination
 
 ---
 
-### Charged Attacks (ChargingInteraction)
+## ChargingInteraction
 
 **Package:** `config/client/ChargingInteraction`
 
 Enables charged attacks and abilities that scale with hold duration. Players hold the input to build charge, then release to trigger an interaction based on how long they charged. This is the foundation for bows, charged melee attacks, consumables, and casting mechanics.
 
-#### Core Properties
+### Core Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
@@ -1251,7 +1223,7 @@ Enables charged attacks and abilities that scale with hold duration. Players hol
 | `MouseSensitivityAdjustmentTarget` | float | - | Target sensitivity multiplier during charge |
 | `MouseSensitivityAdjustmentDuration` | float | - | Time to transition to target sensitivity |
 
-#### The Next Map System
+### The Next Map System
 
 The `Next` property is a map where **keys are charge time thresholds** (in seconds as strings) and **values are interactions** to execute when released at or above that threshold. The system selects the highest threshold the player reached.
 
@@ -1285,7 +1257,7 @@ The `Next` property is a map where **keys are charge time thresholds** (in secon
 }
 ```
 
-#### Effects Configuration
+### Effects Configuration
 
 The `Effects` object configures visual and audio feedback during the charging phase:
 
@@ -1314,7 +1286,7 @@ The `Effects` object configures visual and audio feedback during the charging ph
 }
 ```
 
-#### Complete Examples
+### Complete Examples
 
 **Bow with Progressive Charge:**
 
@@ -1470,7 +1442,7 @@ The `Effects` object configures visual and audio feedback during the charging ph
 }
 ```
 
-#### Common Patterns
+### Common Patterns
 
 | Pattern | AllowIndefiniteHold | DisplayProgress | HorizontalSpeedMultiplier | Use Case |
 |---------|---------------------|-----------------|---------------------------|----------|
@@ -1479,7 +1451,7 @@ The `Effects` object configures visual and audio feedback during the charging ph
 | **Consumable** | `false` | `true` | 0.2-0.4 | Food, potions, bandages |
 | **Quick Charge** | `false` | `false` | 0.8-1.0 | Fast abilities, parries |
 
-#### Integration Notes
+### Integration Notes
 
 - Combine with [Serial](#serial) to execute multiple effects on release
 - Use [Condition](#condition) within `Next` values for ammo/stamina checks
@@ -1487,13 +1459,13 @@ The `Effects` object configures visual and audio feedback during the charging ph
 
 ---
 
-### ChainFlagInteraction
+## ChainFlagInteraction
 
 **Package:** `config/none/ChainFlagInteraction`
 
 Sets a flag on a chain that a [ChainingInteraction](#chaininginteraction) can use to jump to an alternative execution path. This enables cross-chain communication where one interaction (like a successful block or special input) can trigger a special move in another chain sharing the same `ChainId`.
 
-#### Core Properties
+### Core Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
@@ -1501,7 +1473,7 @@ Sets a flag on a chain that a [ChainingInteraction](#chaininginteraction) can us
 | `ChainId` | string | Required | Target chain identifier to set the flag on |
 | `Flag` | string | Required | Flag name matching a key in the target chain's `Flags` map |
 
-#### How Flag Triggering Works
+### How Flag Triggering Works
 
 When `ChainFlagInteraction` executes:
 
@@ -1513,7 +1485,7 @@ When `ChainFlagInteraction` executes:
 
 This allows interactions to "inject" behavior into an ongoing chain without interrupting it directly.
 
-#### Cross-Chain Communication
+### Cross-Chain Communication
 
 Multiple chains can share the same `ChainId`, enabling coordination between primary and secondary attack chains:
 
@@ -1558,7 +1530,7 @@ Multiple chains can share the same `ChainId`, enabling coordination between prim
 
 When the player successfully blocks (secondary), it sets `Counter_Ready` on the shared chain. The next time the player uses primary attack, instead of continuing the normal combo, the chain jumps to `Sword_Counter_Attack`.
 
-#### Complete Examples
+### Complete Examples
 
 **Debug combo with flag from held input:**
 
@@ -1634,7 +1606,7 @@ From `Debug_Combo_Secondary.json` - secondary attack sets a flag on the primary 
 
 When the player uses secondary attack, it immediately sets `Special_Second`. The next primary attack will jump to the flag target instead of the normal combo.
 
-#### Common Patterns
+### Common Patterns
 
 | Pattern | Use Case | Example |
 |---------|----------|---------|
@@ -1643,15 +1615,15 @@ When the player uses secondary attack, it immediately sets `Special_Second`. The
 | **Primary/Secondary sync** | Secondary attack modifies primary behavior | Secondary sets flag, primary checks it next tick |
 | **Parry window** | Perfect timing unlocks powerful response | Parry interaction sets `Perfect_Parry` flag |
 
-#### Related Interactions
+### Related Interactions
 
 - [ChainingInteraction](#chaininginteraction) - Defines the `Flags` map that ChainFlag targets
 - [CancelChainInteraction](#cancelchaininteraction) - Resets chain state (clears flags)
-- [FirstClickInteraction](#click-vs-hold-firstclickinteraction) - Often used to trigger flags on held input
+- [FirstClickInteraction](#firstclickinteraction) - Often used to trigger flags on held input
 
 ---
 
-### CancelChainInteraction
+## CancelChainInteraction
 
 **Package:** `config/none/CancelChainInteraction`
 
@@ -1661,7 +1633,7 @@ When the player uses secondary attack, it immediately sets `Special_Second`. The
 
 Cancels and resets an active chain's state, returning it to the beginning. This is used to break combos early, reset chain state after special moves, or clear chain flags without waiting for the `ChainingAllowance` timeout.
 
-#### Core Properties
+### Core Properties
 
 | Property | Type | Default | Validator | Description |
 |----------|------|---------|-----------|-------------|
@@ -1670,7 +1642,7 @@ Cancels and resets an active chain's state, returning it to the beginning. This 
 
 The `ChainId` validator ensures the property cannot be null or empty - every CancelChainInteraction must specify which chain to cancel.
 
-#### How Chain Cancellation Works
+### How Chain Cancellation Works
 
 When `CancelChainInteraction` executes, the following steps occur internally:
 
@@ -1697,14 +1669,14 @@ After CancelChain:
 └─────────────────────────────────────────────┘
 ```
 
-#### When to Use CancelChain
+### When to Use CancelChain
 
 - **After charged attacks** - Reset combo after a charged heavy attack so the next attack starts fresh
 - **On special move execution** - Clear chain state when a flagged special move triggers
 - **Manual combo reset** - Allow players to reset their combo with a specific action (dodge, block)
 - **Timeout override** - Force-reset a chain before its `ChainingAllowance` would naturally expire
 
-#### Complete Examples
+### Complete Examples
 
 **Reset combo after charged attack:**
 
@@ -1817,7 +1789,7 @@ When a weapon has multiple modes (e.g., one-handed vs two-handed grip), switchin
 
 This pattern cancels both primary and secondary attack chains before switching to the new grip mode.
 
-#### Common Patterns
+### Common Patterns
 
 | Pattern | Use Case | Implementation |
 |---------|----------|----------------|
@@ -1827,7 +1799,7 @@ This pattern cancels both primary and secondary attack chains before switching t
 | **Mode switch** | Switching weapon modes resets combos | CancelChain when switching |
 | **Timeout prevention** | Force immediate reset without waiting | CancelChain instead of relying on `ChainingAllowance` expiry |
 
-#### Technical Notes
+### Technical Notes
 
 - **Empty `firstRun()`** - The `CancelChainInteraction` class has an empty `firstRun()` method. All cancellation logic executes in `simulateFirstRun()`, which runs on both client and server.
 
@@ -1837,25 +1809,21 @@ This pattern cancels both primary and secondary attack chains before switching t
 
 - **No partial reset** - There's no built-in way to reset a chain to a specific index. CancelChain always fully removes the chain state, causing it to restart from index 0.
 
-#### Related Interactions
+### Related Interactions
 
 - [ChainingInteraction](#chaininginteraction) - The chain type that CancelChain resets
 - [ChainFlagInteraction](#chainflaginteraction) - Often used together (flag triggers special, then cancel resets)
-- [FirstClickInteraction](#click-vs-hold-firstclickinteraction) - Common parent for charged attacks that trigger CancelChain
+- [FirstClickInteraction](#firstclickinteraction) - Common parent for charged attacks that trigger CancelChain
 
 ---
 
-## Control Flow
-
-Control flow interactions manage execution order and branching.
-
-### Serial
+## Serial
 
 **Package:** `config/none/SerialInteraction`
 
 Executes interactions sequentially, one after another.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -1871,13 +1839,13 @@ Each interaction completes before the next begins.
 
 ---
 
-### Parallel
+## Parallel
 
 **Package:** `config/none/ParallelInteraction`
 
 Executes multiple interactions concurrently.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -1893,13 +1861,13 @@ All interactions start simultaneously.
 
 ---
 
-### Condition
+## Condition
 
 **Package:** `config/none/ConditionInteraction`
 
 Conditional branching based on various conditions.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -1919,7 +1887,7 @@ Conditional branching based on various conditions.
 }
 ```
 
-#### Condition Types
+### Condition Types
 
 | Type | Description | Parameters |
 |------|-------------|------------|
@@ -1931,13 +1899,13 @@ Conditional branching based on various conditions.
 
 ---
 
-### StatsCondition
+## StatsCondition
 
 **Package:** `config/none/StatsConditionInteraction`
 
 Branch based on entity stat values.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -1957,7 +1925,7 @@ Branch based on entity stat values.
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -1966,7 +1934,7 @@ Branch based on entity stat values.
 | `Value` | float | Value to compare against |
 | `ValueType` | string | `Absolute` or `Percent` (of max) |
 
-#### Example: Execute Low Health Enemies
+### Example: Execute Low Health Enemies
 
 ```json
 {
@@ -1993,13 +1961,13 @@ Branch based on entity stat values.
 
 ---
 
-### EffectCondition
+## EffectCondition
 
 **Package:** `config/none/EffectConditionInteraction`
 
 Branch based on active status effects.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -2020,13 +1988,13 @@ Branch based on active status effects.
 
 ---
 
-### Repeat
+## Repeat
 
 **Package:** `config/none/RepeatInteraction`
 
 Loop execution of interactions.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -2040,7 +2008,7 @@ Loop execution of interactions.
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -2050,13 +2018,13 @@ Loop execution of interactions.
 
 ---
 
-### Select
+## Select
 
 **Package:** `config/none/SelectInteraction`
 
 Random selection from multiple interactions.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -2078,7 +2046,7 @@ Random selection from multiple interactions.
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -2089,13 +2057,13 @@ In this example, poison has twice the chance of being selected.
 
 ---
 
-### Replace
+## Replace
 
 **Package:** `config/none/ReplaceInteraction`
 
 Variable substitution for creating reusable interaction templates. Looks up a variable from the interaction context and executes its value, or falls back to a default.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -2108,7 +2076,7 @@ Variable substitution for creating reusable interaction templates. Looks up a va
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -2116,7 +2084,7 @@ Variable substitution for creating reusable interaction templates. Looks up a va
 | `DefaultValue` | object | Fallback interaction(s) if variable isn't set |
 | `DefaultOk` | boolean | If `true`, silently uses default when variable missing. If `false`, logs SEVERE error then uses default. |
 
-#### DefaultOk Behavior
+### DefaultOk Behavior
 
 | `DefaultOk` | Variable Missing | Result |
 |-------------|------------------|--------|
@@ -2124,7 +2092,7 @@ Variable substitution for creating reusable interaction templates. Looks up a va
 | `false`/omitted | Yes | Logs SEVERE error, then uses `DefaultValue` |
 | either | No | Uses the variable's value |
 
-#### Example: Reusable Consumable Template
+### Example: Reusable Consumable Template
 
 Create a generic consume template that items can customize:
 
@@ -2167,7 +2135,7 @@ Items referencing this template provide their own `Effect` variable to inject cu
 
 Target selectors determine which entities are affected by an interaction. Used in `DamageEntity` and other targeting interactions.
 
-### Target Selector Overview
+### Overview
 
 | Selector | Shape | Use Case |
 |----------|-------|----------|
@@ -2198,8 +2166,6 @@ Selects entities within a circular area on the horizontal plane.
 | `MaxTargets` | int | Maximum entities to select |
 | `IncludeSelf` | boolean | Whether to include the caster |
 
----
-
 ### AOECylinderSelector
 
 Selects entities within a cylindrical volume.
@@ -2218,8 +2184,6 @@ Selects entities within a cylindrical volume.
 | `Radius` | float | Cylinder radius |
 | `Height` | float | Cylinder height |
 | `Center` | string | Center position reference |
-
----
 
 ### RaycastSelector
 
@@ -2240,8 +2204,6 @@ Selects entities along a line trace.
 | `Width` | float | Ray thickness (0 = line) |
 | `Pierce` | boolean | Continue through entities |
 
----
-
 ### StabSelector
 
 Selects entities in a stab attack shape (narrow cone).
@@ -2255,8 +2217,6 @@ Selects entities in a stab attack shape (narrow cone).
 ```
 
 Used for thrusting weapons like spears and rapiers.
-
----
 
 ### HorizontalSelector
 
@@ -2281,15 +2241,13 @@ Used for slashing weapons like swords and axes.
 
 ---
 
-## Entity & World
-
-### SpawnPrefab
+## SpawnPrefab
 
 **Package:** `config/server/SpawnPrefabInteraction`
 
 Spawns entities at specified locations.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -2301,7 +2259,7 @@ Spawns entities at specified locations.
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -2312,7 +2270,7 @@ Spawns entities at specified locations.
 | `SpawnVelocity` | [x, y, z] | Initial velocity for spawned entity |
 | `InheritVelocity` | boolean | Inherit spawner's velocity |
 
-#### Example: Summon Minions on Ability
+### Example: Summon Minions on Ability
 
 ```json
 {
@@ -2326,13 +2284,13 @@ Spawns entities at specified locations.
 
 ---
 
-### RemoveEntity
+## RemoveEntity
 
 **Package:** `config/none/RemoveEntityInteraction`
 
 Despawns/removes entities from the world.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -2342,7 +2300,7 @@ Despawns/removes entities from the world.
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -2351,13 +2309,13 @@ Despawns/removes entities from the world.
 
 ---
 
-### LaunchProjectile
+## LaunchProjectile
 
 **Package:** `config/server/LaunchProjectileInteraction`
 
 Fires projectiles from an entity.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -2369,7 +2327,7 @@ Fires projectiles from an entity.
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -2385,13 +2343,13 @@ See [projectiles.md](projectiles.md) for more projectile details.
 
 ---
 
-### SendMessage
+## SendMessage
 
 **Package:** `config/none/SendMessageInteraction`
 
 Sends chat messages to players.
 
-#### Structure
+### Structure
 
 ```json
 {
@@ -2402,7 +2360,7 @@ Sends chat messages to players.
 }
 ```
 
-#### Properties
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -2412,7 +2370,7 @@ Sends chat messages to players.
 
 ---
 
-### RunRootInteraction
+## RunRootInteraction
 
 **Package:** `config/none/RunRootInteraction`
 
@@ -2422,7 +2380,7 @@ Sends chat messages to players.
 
 Dynamically executes another RootInteraction by its string ID. This acts as a redirect/delegation mechanism, allowing one interaction to programmatically invoke a completely different root interaction defined elsewhere. Unlike inline interactions or string references within a chain, RunRootInteraction explicitly triggers a full root interaction with its own cooldowns, settings, and interaction chain.
 
-#### Core Properties
+### Core Properties
 
 | Property | Type | Default | Validator | Description |
 |----------|------|---------|-----------|-------------|
@@ -2433,7 +2391,7 @@ The `RootInteraction` validator ensures:
 1. The property cannot be null or empty (`nonNull`)
 2. The ID must reference a valid RootInteraction asset (late validation against `RootInteraction.VALIDATOR_CACHE`)
 
-#### How RunRoot Works
+### How RunRoot Works
 
 When `RunRootInteraction` executes, the following steps occur internally:
 
@@ -2461,7 +2419,7 @@ RunRootInteraction executes:
 
 **Key behavior:** The referenced root interaction executes with its own configuration (cooldowns, settings, rules). This is different from simply referencing an interaction by string ID within a chain, which would use the parent chain's configuration.
 
-#### When to Use RunRoot
+### When to Use RunRoot
 
 - **Mode/stance switching** - Switch between different combat modes that have separate root interaction configurations
 - **NPC behavior delegation** - AI systems that need to trigger player-style root interactions
@@ -2469,7 +2427,7 @@ RunRootInteraction executes:
 - **Fallback behavior** - When a condition fails, delegate to a different root interaction entirely
 - **Cross-item interactions** - Allow one item's interaction to invoke another item's root interaction pattern
 
-#### Complete Examples
+### Complete Examples
 
 **Basic usage - trigger dodge from ability:**
 
@@ -2578,7 +2536,7 @@ NPC randomly selects between attack and block behaviors, each with their own roo
 
 On the third combo hit, holding switches to the guard root interaction instead of continuing the attack.
 
-#### Common Patterns
+### Common Patterns
 
 | Pattern | Use Case | Implementation |
 |---------|----------|----------------|
@@ -2588,7 +2546,7 @@ On the third combo hit, holding switches to the guard root interaction instead o
 | **Combo branch** | Final hit branches to different root | Chaining → FirstClick → RunRoot |
 | **Fallback action** | Default behavior when main fails | Condition Else → RunRoot |
 
-#### Technical Notes
+### Technical Notes
 
 - **Instant execution** - RunRootInteraction extends `SimpleInstantInteraction`, meaning it executes immediately with no duration. The target root interaction then manages its own timing.
 
@@ -2600,7 +2558,7 @@ On the third combo hit, holding switches to the guard root interaction instead o
 
 - **Unknown handling** - If the RootInteraction ID doesn't exist, `getRootInteractionOrUnknown()` returns an "unknown" placeholder rather than crashing, though the late validator should catch this at asset load time.
 
-#### Related Interactions
+### Related Interactions
 
 - [Root Interaction Configuration](#root-interaction-configuration) - The target type that RunRoot invokes
 - [Replace](#replace) - Alternative for variable-based interaction substitution within the same chain
@@ -2609,9 +2567,9 @@ On the third combo hit, holding switches to the guard root interaction instead o
 
 ---
 
-### UI Interactions
+## UI Interactions
 
-#### OpenPage
+### OpenPage
 
 **Package:** `config/server/OpenPageInteraction`
 
@@ -2624,9 +2582,7 @@ Opens a built-in UI page.
 }
 ```
 
----
-
-#### OpenCustomUI
+### OpenCustomUI
 
 **Package:** `config/server/OpenCustomUIInteraction`
 
@@ -2643,9 +2599,9 @@ See [ui.md](ui.md) for custom UI details.
 
 ---
 
-### Inventory Interactions
+## Inventory Interactions
 
-#### EquipItem
+### EquipItem
 
 **Package:** `config/server/EquipItemInteraction`
 
@@ -2659,9 +2615,7 @@ Equips an item to an equipment slot.
 }
 ```
 
----
-
-#### ModifyInventory
+### ModifyInventory
 
 **Package:** `config/server/ModifyInventoryInteraction`
 
@@ -2685,9 +2639,9 @@ Adds or removes items from inventory.
 
 ---
 
-### Block Interactions
+## Block Interactions
 
-#### BreakBlock
+### BreakBlock
 
 **Package:** `config/client/BreakBlockInteraction`
 
@@ -2701,9 +2655,7 @@ Breaks a block at the target location.
 }
 ```
 
----
-
-#### PlaceBlock
+### PlaceBlock
 
 **Package:** `config/client/PlaceBlockInteraction`
 
@@ -2719,9 +2671,7 @@ Places a block at the target location.
 
 ---
 
-### State Interactions
-
-#### ChangeState
+## ChangeState
 
 **Package:** `config/client/ChangeStateInteraction`
 
@@ -2739,9 +2689,7 @@ Used for stagger, stun, and other state-based effects.
 
 ---
 
-### Physics Interactions
-
-#### LaunchPadInteraction
+## LaunchPadInteraction
 
 **Package:** `config/server/LaunchPadInteraction`
 
@@ -2757,7 +2705,7 @@ Specialized launch pad physics for bouncing entities.
 
 ---
 
-## Wielding & Blocking
+## WieldingInteraction
 
 The `Wielding` interaction type enables blocking and guarding mechanics for shields and weapons.
 
