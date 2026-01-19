@@ -38,6 +38,7 @@ All items support these core properties:
 | `Tags` | object | Classification tags for filtering |
 | `MaxStack` | int | Maximum stack size (default: 1 for weapons/tools) |
 | `Consumable` | boolean | Whether the item is consumed on use |
+| `Utility` | object | Utility slot configuration for equippable items |
 | `MaxDurability` | int | Maximum durability points |
 | `DurabilityLossOnHit` | float | Durability lost per use |
 
@@ -136,6 +137,20 @@ For complete documentation, see [Block Items](items-blocks.md).
   }
 }
 ```
+
+### Utility
+
+Configures items that can be equipped in the player's utility slot. Utility items provide passive effects or special abilities when equipped.
+
+```json
+{
+  "Utility": {
+    "Slot": "Accessory"
+  }
+}
+```
+
+The utility slot is accessed via `UtilitySlotSelector` in the HUD and managed through the inventory's `getUtility()` container. See [Inventory API](inventory.md) for programmatic access.
 
 ---
 
