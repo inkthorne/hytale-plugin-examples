@@ -2,7 +2,7 @@
 
 This document covers damage events, combat systems, and kill feed customization.
 
-> **See also:** For JSON-based combat configuration (damage interactions, effects, target selectors), see [interactions.md - Complete Interaction Type Reference](interactions.md#complete-interaction-type-reference).
+> **See also:** For JSON-based combat configuration (damage interactions, effects, target selectors), see [Interactions API Reference](interactions.md#reference).
 
 ## Damage Events (DamageEventSystem)
 
@@ -414,7 +414,7 @@ public class HitNotificationSystem extends DamageEventSystem {
 
 Damage interactions can grant stats to the attacker when they successfully hit an entity. This is configured via the `EntityStatsOnHit` property in damage interaction JSON files.
 
-> **See also:** [DamageEntity Interaction](interactions.md#damageentity) for the complete structure including damage effects and target selectors.
+> **See also:** [DamageEntity Interaction](interactions-combat.md#damageentity) for the complete structure including damage effects and target selectors.
 
 **File locations:** `Server/Item/Interactions/Weapons/{WeaponType}/Primary/*_Damage.json`
 
@@ -474,9 +474,9 @@ This grants 1 signature energy to the attacker each time they land a hit.
 
 ## Blocking Mechanics (JSON)
 
-Blocking is implemented via the `Wielding` interaction type. See [interactions.md](interactions.md#wielding-interactions-blockingguarding) for full details.
+Blocking is implemented via the `Wielding` interaction type. See [WieldingInteraction](interactions-world.md#wieldinginteraction) for full details.
 
-> **See also:** [ChangeStat Interaction](interactions.md#changestat-interaction) for granting stats on successful blocks, and [ApplyForce](interactions.md#applyforce) for knockback effects.
+> **See also:** [ChangeStat Interaction](interactions-combat.md#changestat) for granting stats on successful blocks, and [ApplyForce](interactions-combat.md#applyforce) for knockback effects.
 
 ### How Blocking Reduces Damage
 
@@ -664,7 +664,7 @@ For a simple click-to-block mechanic (single click activates block for a fixed d
 | `allowIndefiniteHold` | `false` | Block ends when `RunTime` expires, cannot be extended by holding |
 | `cancelOnOtherClick` | `true` | Block cancels if player clicks another input |
 
-> **Inherited Properties:** These properties (`RunTime`, `FailOnDamage`, `allowIndefiniteHold`, `cancelOnOtherClick`) are inherited from `ChargingInteraction`, which `WieldingInteraction` extends. See [Wielding Interactions](interactions.md#wielding-interactions-blockingguarding) for the full property list.
+> **Inherited Properties:** These properties (`RunTime`, `FailOnDamage`, `allowIndefiniteHold`, `cancelOnOtherClick`) are inherited from `ChargingInteraction`, which `WieldingInteraction` extends. See [WieldingInteraction](interactions-world.md#wieldinginteraction) for the full property list.
 
 > **In-Game Verification:** When testing blocking mechanics, use the debug stick items found in `Server/Item/Interactions/_Debug/` as reference implementations. The `Debug_Stick_Parry.json` demonstrates timed blocking with counter-attacks.
 
@@ -674,7 +674,7 @@ For a simple click-to-block mechanic (single click activates block for a fixed d
 
 Knockback is a temporary component-based system that applies velocity changes to entities when they take damage. The `KnockbackComponent` is added to entities during combat and automatically removed when the knockback effect completes.
 
-> **See also:** [ApplyForce Interaction](interactions.md#applyforce) for direct force application via JSON, and [Control Flow Interactions](interactions.md#control-flow-interactions) for combining knockback with other effects.
+> **See also:** [ApplyForce Interaction](interactions-combat.md#applyforce) for direct force application via JSON, and [Control Flow Interactions](interactions-flow.md) for combining knockback with other effects.
 
 ### KnockbackComponent
 
