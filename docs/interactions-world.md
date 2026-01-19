@@ -163,7 +163,7 @@ Dynamically executes another RootInteraction by its string ID. This acts as a re
 
 | Property | Type | Default | Validator | Description |
 |----------|------|---------|-----------|-------------|
-| `Type` | string | Required | - | Always `"RunRoot"` |
+| `Type` | string | Required | - | Always `"RunRootInteraction"` |
 | `RootInteraction` | string | Required | `nonNull`, late validator | ID of the root interaction to execute |
 
 The `RootInteraction` validator ensures:
@@ -220,7 +220,7 @@ RunRootInteraction executes:
       "Duration": 0.5
     },
     {
-      "Type": "RunRoot",
+      "Type": "RunRootInteraction",
       "RootInteraction": "Dodge"
     }
   ]
@@ -246,7 +246,7 @@ This grants brief invulnerability, then executes the Dodge root interaction with
         "StatModifiers": { "SignatureEnergy": -100 }
       },
       {
-        "Type": "RunRoot",
+        "Type": "RunRootInteraction",
         "RootInteraction": "Root_Weapon_Sword_Signature_Vortexstrike"
       }
     ]
@@ -269,14 +269,14 @@ When signature energy is full, consumes it and switches to the signature ability
     {
       "Weight": 3,
       "Interaction": {
-        "Type": "RunRoot",
+        "Type": "RunRootInteraction",
         "RootInteraction": "Root_NPC_Attack_Melee"
       }
     },
     {
       "Weight": 1,
       "Interaction": {
-        "Type": "RunRoot",
+        "Type": "RunRootInteraction",
         "RootInteraction": "Root_NPC_Shield_Block"
       }
     }
@@ -303,7 +303,7 @@ NPC randomly selects between attack and block behaviors, each with their own roo
         "Type": "Serial",
         "Interactions": [
           {
-            "Type": "RunRoot",
+            "Type": "RunRootInteraction",
             "RootInteraction": "Root_Weapon_Sword_Secondary_Guard"
           }
         ]
