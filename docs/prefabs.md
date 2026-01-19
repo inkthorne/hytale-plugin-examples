@@ -2,6 +2,16 @@
 
 Prefabs are pre-defined block/entity selections that can be loaded and placed into the world. They allow consistent structure creation with blocks, fluids, and entities.
 
+## Quick Navigation
+
+| Category | File | Description |
+|----------|------|-------------|
+| [Categories Reference](prefabs-categories.md) | `prefabs-categories.md` | Trees, Rocks, NPCs, Dungeons (2,455+ files) |
+| [File Format](#prefab-file-format) | Below | JSON schema, blocks, fluids, entities |
+| [Java API](#prefabstore) | Below | PrefabStore, BlockSelection, Events |
+
+---
+
 ## Class Hierarchy
 ```
 PrefabStore                    (central storage and loading)
@@ -562,32 +572,166 @@ protected void execute(CommandContext ctx, Store<EntityStore> store,
 
 ## Prefab File Format
 
-Prefabs are stored as `.prefab.json` files in the assets.
+Prefabs are stored as `.prefab.json` files (or compressed `.prefab.json.lpf` files) in the assets.
 
 ### File Locations
 
-- `Server/Prefabs/` - Server-side prefabs
-- Asset pack `Prefabs/` directories - Custom prefabs from mods
+| Location | Path | Description |
+|----------|------|-------------|
+| **Asset Prefabs** | `Assets.zip > Prefabs/` | World generation prefabs (trees, rocks, structures) |
+| **Server Prefabs** | `Server/Prefabs/` | Server-side prefabs for plugins |
+| **World Gen Prefabs** | `Assets.zip > Prefabs/` | Referenced by world generation |
+| **Asset Pack Prefabs** | `{AssetPack}/Prefabs/` | Custom prefabs from mods |
 
-### JSON Schema
+**Compression:** Most asset prefabs use `.prefab.json.lpf` compression (LZ4 frame format). The game automatically handles decompression when loading.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `version` | int | Format version (current: 8) |
-| `blockIdVersion` | int | Block ID version |
-| `anchorX/Y/Z` | int | Placement origin point |
-| `blocks` | array | Array of block entries |
+### Root Schema (Version 8)
 
-### Block Entry Fields
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `version` | int | Yes | - | Format version (current: 8) |
+| `blockIdVersion` | int | No | 0 | Block ID version for compatibility |
+| `anchorX` | int | No | 0 | Anchor X position (placement origin) |
+| `anchorY` | int | No | 0 | Anchor Y position (placement origin) |
+| `anchorZ` | int | No | 0 | Anchor Z position (placement origin) |
+| `blocks` | array | No | [] | Array of block entries |
+| `fluids` | array | No | [] | Array of fluid entries |
+| `entities` | array | No | [] | Array of entity entries |
+
+### Block Entry Properties
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `x` | int | Yes | - | X position relative to anchor |
+| `y` | int | Yes | - | Y position relative to anchor |
+| `z` | int | Yes | - | Z position relative to anchor |
+| `name` | string | Yes | - | Block type name (e.g., `"Stone"`, `"Furniture_Chair_Wood"`) |
+| `rotation` | int | No | 0 | Block rotation (0=North, 1=East, 2=South, 3=West) |
+| `filler` | int | No | 0 | Filler value for multi-block structures |
+| `supportValue` | int | No | 0 | Structural support value |
+| `components` | object | No | null | ECS component overrides |
+
+**Rotation Values:**
+
+| Value | Direction | Degrees |
+|-------|-----------|---------|
+| 0 | North | 0° |
+| 1 | East | 90° clockwise |
+| 2 | South | 180° |
+| 3 | West | 270° clockwise |
+
+### Components Structure
+
+Block components allow attaching ECS data to placed blocks. The most common use is configuring containers with loot tables.
+
+```json
+{
+  "components": {
+    "Components": {
+      "container": {
+        "Droplist": "Prefabs/Zone1/Chest_Common",
+        "ItemContainer": { "Capacity": 18 }
+      }
+    }
+  }
+}
+```
+
+**Container Component Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Droplist` | string | Drop file reference (see [Drop System](drops.md)) |
+| `ItemContainer` | object | Container configuration |
+| `ItemContainer.Capacity` | int | Number of inventory slots |
+
+**Example: Chest with Zone-Based Loot:**
+
+```json
+{
+  "components": {
+    "Components": {
+      "container": {
+        "Droplist": "Prefabs/Zone2/Chest_Rare",
+        "ItemContainer": { "Capacity": 27 }
+      }
+    }
+  }
+}
+```
+
+### Fluid Entry Properties
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `x`, `y`, `z` | int | Yes | Position relative to anchor |
-| `name` | string | Yes | Block type name |
-| `rotation` | int | No | Block rotation (0-3) |
-| `components` | object | No | ECS component data |
+| `x` | int | Yes | X position relative to anchor |
+| `y` | int | Yes | Y position relative to anchor |
+| `z` | int | Yes | Z position relative to anchor |
+| `name` | string | Yes | Fluid type name (e.g., `"Water"`, `"Lava"`) |
+| `level` | int | No | Fluid level (0-15, 15 = full block) |
 
-### Example
+**Example: Water Pool Prefab:**
+
+```json
+{
+  "version": 8,
+  "anchorX": 0,
+  "anchorY": 0,
+  "anchorZ": 0,
+  "fluids": [
+    { "x": 0, "y": 0, "z": 0, "name": "Water", "level": 15 },
+    { "x": 1, "y": 0, "z": 0, "name": "Water", "level": 15 },
+    { "x": 0, "y": 0, "z": 1, "name": "Water", "level": 15 },
+    { "x": 1, "y": 0, "z": 1, "name": "Water", "level": 15 }
+  ]
+}
+```
+
+### Entity Entry Properties
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `x` | float | Yes | X position relative to anchor |
+| `y` | float | Yes | Y position relative to anchor |
+| `z` | float | Yes | Z position relative to anchor |
+| `type` | string | Yes | Entity prefab ID |
+| `components` | object | No | Component overrides for the entity |
+
+**Example: Prefab with Spawned NPC:**
+
+```json
+{
+  "version": 8,
+  "anchorX": 0,
+  "anchorY": 0,
+  "anchorZ": 0,
+  "blocks": [
+    { "x": 0, "y": 0, "z": 0, "name": "Stone_Brick" }
+  ],
+  "entities": [
+    { "x": 0.5, "y": 1.0, "z": 0.5, "type": "Npc_Kweebec_Villager" }
+  ]
+}
+```
+
+### Complete Examples
+
+**Simple Single-Block Prefab:**
+
+```json
+{
+  "version": 8,
+  "blockIdVersion": 0,
+  "anchorX": 0,
+  "anchorY": 0,
+  "anchorZ": 0,
+  "blocks": [
+    { "x": 0, "y": 0, "z": 0, "name": "Stone" }
+  ]
+}
+```
+
+**Container with Loot Table:**
 
 ```json
 {
@@ -606,7 +750,7 @@ Prefabs are stored as `.prefab.json` files in the assets.
       "components": {
         "Components": {
           "container": {
-            "Droplist": "Drop_Goblin_Thief",
+            "Droplist": "Prefabs/Zone1/Chest_Uncommon",
             "ItemContainer": { "Capacity": 18 }
           }
         }
@@ -616,9 +760,33 @@ Prefabs are stored as `.prefab.json` files in the assets.
 }
 ```
 
+**Multi-Block Building with Rotations:**
+
+```json
+{
+  "version": 8,
+  "blockIdVersion": 0,
+  "anchorX": 1,
+  "anchorY": 0,
+  "anchorZ": 1,
+  "blocks": [
+    { "x": 0, "y": 0, "z": 0, "name": "Stone_Brick" },
+    { "x": 1, "y": 0, "z": 0, "name": "Stone_Brick" },
+    { "x": 2, "y": 0, "z": 0, "name": "Stone_Brick" },
+    { "x": 0, "y": 0, "z": 1, "name": "Stone_Brick" },
+    { "x": 2, "y": 0, "z": 1, "name": "Stone_Brick" },
+    { "x": 0, "y": 0, "z": 2, "name": "Stone_Brick" },
+    { "x": 1, "y": 0, "z": 2, "name": "Stone_Brick" },
+    { "x": 2, "y": 0, "z": 2, "name": "Stone_Brick" },
+    { "x": 1, "y": 0, "z": 0, "name": "Furniture_Door_Wood", "rotation": 0 },
+    { "x": 1, "y": 1, "z": 0, "name": "Furniture_Door_Wood_Top", "rotation": 0 }
+  ]
+}
+```
+
 ### PrefabList Files
 
-`Server/PrefabList/*.json` files reference directories of prefabs for world generation:
+`Server/PrefabList/*.json` files reference directories of prefabs for world generation. They allow grouping related prefabs for procedural placement.
 
 ```json
 {
@@ -632,6 +800,117 @@ Prefabs are stored as `.prefab.json` files in the assets.
 }
 ```
 
+| Property | Type | Description |
+|----------|------|-------------|
+| `RootDirectory` | string | `"Asset"` for asset prefabs, `"Server"` for server prefabs |
+| `Path` | string | Relative path to prefab directory |
+| `Recursive` | boolean | Include subdirectories |
+
+**Example: Multi-Source PrefabList:**
+
+```json
+{
+  "Prefabs": [
+    {
+      "RootDirectory": "Asset",
+      "Path": "Rock_Formations/Rocks/Stone/",
+      "Recursive": true
+    },
+    {
+      "RootDirectory": "Asset",
+      "Path": "Rock_Formations/Pillars/",
+      "Recursive": false
+    }
+  ]
+}
+```
+
+---
+
+## Integration Points
+
+Prefabs integrate with several other systems in Hytale.
+
+### Drop System Integration
+
+Container blocks in prefabs can reference drop files to populate loot:
+
+```json
+{
+  "components": {
+    "Components": {
+      "container": {
+        "Droplist": "Prefabs/Zone1/Chest_Rare"
+      }
+    }
+  }
+}
+```
+
+The `Droplist` property references files in `Server/Drops/`. When the container is opened, items are generated according to the drop file's weighted random selection.
+
+> **See also:** [Drop System](drops.md) for loot table configuration
+
+### Interaction System Integration
+
+The `SpawnPrefab` interaction can spawn entity prefabs during combat or ability execution:
+
+```json
+{
+  "Type": "SpawnPrefab",
+  "PrefabId": "hytale:skeleton",
+  "Position": "Self",
+  "Count": 3,
+  "Offset": [0, 0, 2]
+}
+```
+
+> **See also:** [SpawnPrefab Interaction](interactions-world.md#spawnprefab)
+
+### Event Handling
+
+Prefab operations fire events that can be handled by plugin systems:
+
+| Event | Description | Cancellable |
+|-------|-------------|-------------|
+| `PrefabPasteEvent` | Prefab being pasted into world | Yes |
+| `PrefabPlaceEntityEvent` | Entity placed from prefab | No |
+
+```java
+public class PrefabPasteSystem extends EntityEventSystem<EntityStore, PrefabPasteEvent> {
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk,
+                       Store<EntityStore> store, CommandBuffer<EntityStore> buffer,
+                       PrefabPasteEvent event) {
+        if (event.isPasteStart()) {
+            // Prefab paste starting
+        }
+    }
+}
+```
+
+> **See also:** [Prefab Events](#prefab-events) for full event documentation
+
+### World Generation Integration
+
+World generation uses prefabs for placing structures, trees, and rock formations. PrefabList files group related prefabs:
+
+```json
+{
+  "Prefabs": [
+    {
+      "RootDirectory": "Asset",
+      "Path": "Trees/Oak/",
+      "Recursive": true
+    }
+  ]
+}
+```
+
+The world generator selects prefabs from these lists based on biome rules and placement constraints.
+
+> **See also:** [Prefab Categories](prefabs-categories.md) for the full taxonomy of world generation prefabs
+
 ---
 
 ## Notes
@@ -642,3 +921,13 @@ Prefabs are stored as `.prefab.json` files in the assets.
 - Rotations create new BlockSelection instances (immutable pattern)
 - Prefab files are typically stored in the server's prefabs directory
 - PrefabWeights allows weighted random selection for variety in procedural generation
+
+---
+
+## Related Documentation
+
+- [Prefab Categories](prefabs-categories.md) - Full taxonomy of all 2,455+ prefab files
+- [Drop System](drops.md) - Loot table configuration for containers
+- [SpawnPrefab Interaction](interactions-world.md#spawnprefab) - Spawning prefabs via interactions
+- [World API](world.md) - World and chunk operations
+- [Block System](blocks.md) - Block types and properties
