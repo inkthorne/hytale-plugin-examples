@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 This is a complete reference for Hytale server plugin development containing:
-- **docs/**: Comprehensive API documentation (28 markdown files)
+- **docs/**: Comprehensive API documentation (33 markdown files)
 - **examples/**: Standalone Gradle projects demonstrating different aspects of the plugin API
 
 Refer to `docs/overview.md` for guidance when implementing Java code for plugins.

@@ -4,13 +4,58 @@ A reference for Hytale server plugin development with documentation and working 
 
 ## Documentation
 
-The [docs/](./docs/) directory contains comprehensive documentation for the Hytale Plugin API:
+The [docs/](./docs/) directory contains comprehensive API documentation:
 
-- [Overview](./docs/overview.md) - Plugin API overview
-- [Commands](./docs/commands.md) - Command system and argument types
-- [UI](./docs/ui.md) - Custom UI pages and HUD management
-- [Events](./docs/events.md) - Event handling and listeners
-- And more...
+### Getting Started
+- [Overview](./docs/overview.md) - Quick reference and navigation
+- [Plugin Lifecycle](./docs/plugin-lifecycle.md) - Setup, lifecycle, and server events
+- [Permissions](./docs/permissions.md) - Permission system
+
+### Core Systems
+- [Components](./docs/components.md) - Entity Component System (ECS)
+- [Codecs](./docs/codecs.md) - Serialization and data persistence
+- [Networking](./docs/networking.md) - Network protocols
+- [Math](./docs/math.md) - Vectors, matrices, shapes
+
+### Commands & UI
+- [Commands](./docs/commands.md) - Command system and arguments
+- [UI](./docs/ui.md) - Custom UI pages and HUD
+- [i18n](./docs/i18n.md) - Localization
+
+### World & Environment
+- [World](./docs/world.md) - World management
+- [Blocks](./docs/blocks.md) - Block states and custom blocks
+- [Fluids](./docs/fluids.md) - Fluid systems
+- [Prefabs](./docs/prefabs.md) - Structure templates
+- [Collision](./docs/collision.md) - Collision queries
+
+### Entities
+- [Entities](./docs/entities.md) - Entity hierarchy
+- [Player](./docs/player.md) - Player API
+- [NPC](./docs/npc.md) - NPC and AI systems
+- [Projectiles](./docs/projectiles.md) - Projectile configuration
+
+### Combat & Effects
+- [Combat](./docs/combat.md) - Damage and kill feed
+- [Effects & Stats](./docs/effects-stats.md) - Status effects and stats
+
+### Interactions
+- [Interactions](./docs/interactions.md) - Interactions API overview
+- [Flow Control](./docs/interactions-flow.md) - Serial, Parallel, Condition
+- [Combo System](./docs/interactions-combo.md) - Chaining and charging
+- [World Interactions](./docs/interactions-world.md) - Spawning and positioning
+- [Combat Interactions](./docs/interactions-combat.md) - Damage and forces
+
+### Assets & Events
+- [Assets](./docs/assets.md) - Asset registry
+- [Asset Editor](./docs/asset-editor.md) - Editor events
+- [Events](./docs/events.md) - Event system overview
+- [Adventure](./docs/adventure.md) - Adventure gameplay events
+- [Singleplayer](./docs/singleplayer.md) - Singleplayer events
+
+### Utilities
+- [Inventory](./docs/inventory.md) - Inventory management
+- [Tasks](./docs/tasks.md) - Async task scheduling
 
 ## Examples
 
