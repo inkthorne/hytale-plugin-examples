@@ -57,6 +57,9 @@ JSON asset types used in Hytale's data-driven systems.
 **Items - Weapon Templates**
 [Template_Weapon_Sword](items-weapons.md#template_weapon_sword), [Template_Weapon_Daggers](items-weapons.md#template_weapon_daggers), [Template_Weapon_Shield](items-weapons.md#template_weapon_shield), [Template_Weapon_Battleaxe](items-weapons.md#template_weapon_battleaxe), [Template_Weapon_Shortbow](items-weapons.md#template_weapon_shortbow), [Template_Weapon_Mace](items-weapons.md#template_weapon_mace), [Template_Weapon_Crossbow](items-weapons.md#template_weapon_crossbow)
 
+**Items - Crafting System**
+[Bench_WorkBench](items-crafting.md#bench_workbench), [Bench_Weapon](items-crafting.md#bench_weapon), [Bench_Armour](items-crafting.md#bench_armour), [Bench_Alchemy](items-crafting.md#bench_alchemy), [Bench_Furnace](items-crafting.md#bench_furnace), [Bench_Campfire](items-crafting.md#bench_campfire), [Bench_Salvage](items-crafting.md#bench_salvage), [Bench_Tannery](items-crafting.md#bench_tannery), [Bench_Armory](items-crafting.md#bench_armory)
+
 ---
 
 ## Java Class Index
