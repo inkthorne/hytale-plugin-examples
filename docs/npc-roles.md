@@ -2,7 +2,7 @@
 
 This document covers NPC role asset definitions, including templates, variants, behaviors, and spawning configurations. These assets are found in `Assets.zip` under `Server/NPC/`.
 
-> **See also:** [NPC API](npc.md) for plugin events and sensor systems
+> **See also:** [NPC API](npc.md) for plugin events and sensor systems, [Drop System](drops.md) for NPC loot tables
 
 ---
 
@@ -140,7 +140,7 @@ Use `Compute` for runtime-evaluated expressions:
 |----------|------|-------------|
 | `Appearance` | String | Visual model path |
 | `MaxHealth` | Number | Maximum health points |
-| `DropList` | String | Loot table reference |
+| `DropList` | String | Loot table reference (see [Drop System](drops.md)) |
 | `NameTranslationKey` | String | Localization key for NPC name |
 | `Scale` | Number | Size multiplier |
 

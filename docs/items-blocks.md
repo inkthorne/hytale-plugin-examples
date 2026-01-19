@@ -1,6 +1,8 @@
 # Block Items
 
 > Part of the [Items API](items.md). For common item properties, see [Items Reference](items.md#common-properties).
+>
+> **See also:** [Drop System](drops.md) for container loot tables
 
 ## Quick Navigation
 
@@ -635,7 +637,7 @@ For storage blocks:
 | Property | Type | Description |
 |----------|------|-------------|
 | `Capacity` | int | Number of inventory slots |
-| `Droplist` | string | What drops when destroyed |
+| `Droplist` | string | What drops when destroyed (see [Drop System](drops.md)) |
 
 ---
 
@@ -1406,6 +1408,7 @@ This interaction is assigned to the `Secondary` slot for most placeable items.
 
 - [Items Reference](items.md) - Common properties and systems
 - [Blocks API](blocks.md) - BlockType class and events
+- [Drop System](drops.md) - Loot tables for containers and blocks
 - [Interactions API](interactions.md) - Block interactions
 - [Entity & World Interactions](interactions-world.md) - PlaceBlock, BreakBlock
 - [Tools Reference](items-tools.md) - Block-breaking tools

@@ -30,6 +30,8 @@ Quick reference for finding the right documentation file.
 | [fluids.md](fluids.md) | Fluid asset type documentation for water, lava, and other fluids with damage and interaction properties. |
 | [combat.md](combat.md) | Combat system covering damage events, damage causes, knockback mechanics, blocking/wielding, and kill feed customization. |
 | [npc.md](npc.md) | NPC loading events and metadata including BuilderInfo for loaded NPCs and sensor event systems for AI. |
+| [npc-roles.md](npc-roles.md) | NPC role asset definitions including templates, variants, behaviors, attitudes, and spawning configurations. |
+| [drops.md](drops.md) | Drop/loot table system for blocks, NPCs, containers, and prefabs with weighted selection and modular composition. |
 | [adventure.md](adventure.md) | Adventure gameplay features including instance discovery, zone discovery, treasure chest opening, and world map tracking. |
 | [asset-editor.md](asset-editor.md) | Asset editor events for button activation, asset creation, client disconnects, and autocomplete/dataset requests. |
 | [i18n.md](i18n.md) | Localization system with GenerateDefaultLanguageEvent for registering plugin translations during server startup. |
@@ -184,6 +186,8 @@ JSON asset types used in Hytale's data-driven systems.
 **Combat & NPCs** - Combat and AI systems
 - combat.md - Damage system, damage events, kill feed
 - npc.md - NPC loading, AI sensors
+- npc-roles.md - NPC role definitions, behaviors, spawning
+- drops.md - Loot tables for NPCs, blocks, containers
 
 **Adventure** - Adventure gameplay features
 - adventure.md - Instance discovery, treasure chests
