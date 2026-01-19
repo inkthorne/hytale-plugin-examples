@@ -10,6 +10,7 @@ Item definitions configure every item in Hytale, from weapons and armor to food,
 | [Tools](items-tools.md) | `items-tools.md` | Pickaxes, hatchets, shovels, farming tools (40+ items) |
 | [Consumables](items-consumables.md) | `items-consumables.md` | Food, potions, healing items (60+ items) |
 | [Blocks](items-blocks.md) | `items-blocks.md` | Furniture, lighting, doors, containers, benches (200+ items) |
+| [Block System](blocks.md) | `blocks.md` | Block rendering, hitboxes, sounds, particles, fluids |
 | [Crafting](items-crafting.md) | `items-crafting.md` | Crafting benches, recipes, processing, tier system |
 
 **Future documentation:**
@@ -34,7 +35,7 @@ All items support these core properties:
 | `Texture` | string | Path to texture file (`.png`) |
 | `Scale` | float | World render scale multiplier (default: 1.0) |
 | `PlayerAnimationsId` | string/object | Animation set for player when holding item |
-| `BlockType` | object | Block configuration when item is placed (see [Block Items](items-blocks.md)) |
+| `BlockType` | object | Block configuration when item is placed (see [Block Items](items-blocks.md) and [Block System](blocks.md)) |
 | `Tags` | object | Classification tags for filtering |
 | `MaxStack` | int | Maximum stack size (default: 1 for weapons/tools) |
 | `Consumable` | boolean | Whether the item is consumed on use |
