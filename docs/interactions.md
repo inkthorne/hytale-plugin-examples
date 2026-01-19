@@ -2526,6 +2526,203 @@ The `Effects` object configures visual and audio feedback during the charging ph
 
 ---
 
+### RunRootInteraction
+
+**Package:** `config/none/RunRootInteraction`
+
+**Class hierarchy:** `RunRootInteraction` → `SimpleInstantInteraction` → `SimpleInteraction` → `Interaction`
+
+**Protocol class:** `RunRootInteraction` (handles client-server synchronization)
+
+Dynamically executes another RootInteraction by its string ID. This acts as a redirect/delegation mechanism, allowing one interaction to programmatically invoke a completely different root interaction defined elsewhere. Unlike inline interactions or string references within a chain, RunRootInteraction explicitly triggers a full root interaction with its own cooldowns, settings, and interaction chain.
+
+#### Core Properties
+
+| Property | Type | Default | Validator | Description |
+|----------|------|---------|-----------|-------------|
+| `Type` | string | Required | - | Always `"RunRoot"` |
+| `RootInteraction` | string | Required | `nonNull`, late validator | ID of the root interaction to execute |
+
+The `RootInteraction` validator ensures:
+1. The property cannot be null or empty (`nonNull`)
+2. The ID must reference a valid RootInteraction asset (late validation against `RootInteraction.VALIDATOR_CACHE`)
+
+#### How RunRoot Works
+
+When `RunRootInteraction` executes, the following steps occur internally:
+
+1. **State finalization** - Sets the current interaction state to `Finished`
+2. **Root lookup** - Retrieves the target RootInteraction using `RootInteraction.getRootInteractionOrUnknown(rootInteraction)`
+3. **Execution** - Calls `context.execute(RootInteraction)` to run the referenced root interaction
+
+```
+RunRootInteraction executes:
+┌─────────────────────────────────────────────────────────────┐
+│ Current Chain: Weapon_Special_Ability                       │
+│   └─> RunRootInteraction { RootInteraction: "Root_Dodge" }  │
+│                    │                                        │
+│                    ▼                                        │
+│   1. Set state = Finished                                   │
+│   2. Lookup "Root_Dodge" from RootInteraction assets        │
+│   3. context.execute(Root_Dodge)                            │
+│                    │                                        │
+│                    ▼                                        │
+│ New Chain: Root_Dodge                                       │
+│   └─> Interactions: ["Dodge"]                               │
+│       └─> Cooldown, RequireNewClick, etc. from Root_Dodge   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key behavior:** The referenced root interaction executes with its own configuration (cooldowns, settings, rules). This is different from simply referencing an interaction by string ID within a chain, which would use the parent chain's configuration.
+
+#### When to Use RunRoot
+
+- **Mode/stance switching** - Switch between different combat modes that have separate root interaction configurations
+- **NPC behavior delegation** - AI systems that need to trigger player-style root interactions
+- **Plugin integration** - Plugins that define custom root interactions and need to invoke them from other interactions
+- **Fallback behavior** - When a condition fails, delegate to a different root interaction entirely
+- **Cross-item interactions** - Allow one item's interaction to invoke another item's root interaction pattern
+
+#### Complete Examples
+
+**Basic usage - trigger dodge from ability:**
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "ApplyEffect",
+      "EffectId": "hytale:invulnerability",
+      "Duration": 0.5
+    },
+    {
+      "Type": "RunRoot",
+      "RootInteraction": "Dodge"
+    }
+  ]
+}
+```
+
+This grants brief invulnerability, then executes the Dodge root interaction with all its configured cooldowns and settings.
+
+**Conditional mode switch:**
+
+```json
+{
+  "Type": "StatsCondition",
+  "Stat": "SignatureEnergy",
+  "Operator": "GreaterOrEqual",
+  "Value": 100,
+  "ValueType": "Absolute",
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      {
+        "Type": "ChangeStat",
+        "StatModifiers": { "SignatureEnergy": -100 }
+      },
+      {
+        "Type": "RunRoot",
+        "RootInteraction": "Root_Weapon_Sword_Signature_Vortexstrike"
+      }
+    ]
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Not enough signature energy!"
+  }
+}
+```
+
+When signature energy is full, consumes it and switches to the signature ability's root interaction.
+
+**NPC attack delegation:**
+
+```json
+{
+  "Type": "Select",
+  "Interactions": [
+    {
+      "Weight": 3,
+      "Interaction": {
+        "Type": "RunRoot",
+        "RootInteraction": "Root_NPC_Attack_Melee"
+      }
+    },
+    {
+      "Weight": 1,
+      "Interaction": {
+        "Type": "RunRoot",
+        "RootInteraction": "Root_NPC_Shield_Block"
+      }
+    }
+  ]
+}
+```
+
+NPC randomly selects between attack and block behaviors, each with their own root interaction configuration.
+
+**Combo finisher with root switch:**
+
+```json
+{
+  "Type": "Chaining",
+  "ChainId": "Sword_Primary",
+  "ChainingAllowance": 2,
+  "Next": [
+    "Sword_Swing_1",
+    "Sword_Swing_2",
+    {
+      "Type": "FirstClick",
+      "Click": "Sword_Swing_3",
+      "Held": {
+        "Type": "Serial",
+        "Interactions": [
+          {
+            "Type": "RunRoot",
+            "RootInteraction": "Root_Weapon_Sword_Secondary_Guard"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+On the third combo hit, holding switches to the guard root interaction instead of continuing the attack.
+
+#### Common Patterns
+
+| Pattern | Use Case | Implementation |
+|---------|----------|----------------|
+| **Signature ability** | Full energy triggers special move | StatsCondition → ChangeStat → RunRoot |
+| **Stance switch** | Toggle between attack/defense modes | RunRoot to different weapon root |
+| **NPC behavior tree** | AI delegates to player-style attacks | Select/Condition → RunRoot |
+| **Combo branch** | Final hit branches to different root | Chaining → FirstClick → RunRoot |
+| **Fallback action** | Default behavior when main fails | Condition Else → RunRoot |
+
+#### Technical Notes
+
+- **Instant execution** - RunRootInteraction extends `SimpleInstantInteraction`, meaning it executes immediately with no duration. The target root interaction then manages its own timing.
+
+- **Context preservation** - The `InteractionContext` is preserved when executing the target root interaction, maintaining entity references, held item info, and meta data.
+
+- **Network synchronization** - The protocol class handles syncing the root interaction ID (as an integer index) between client and server.
+
+- **Cooldown independence** - The target root interaction uses its own cooldown configuration, not the cooldown of the interaction that contains RunRoot.
+
+- **Unknown handling** - If the RootInteraction ID doesn't exist, `getRootInteractionOrUnknown()` returns an "unknown" placeholder rather than crashing, though the late validator should catch this at asset load time.
+
+#### Related Interactions
+
+- [RootInteraction](#attack-chain-timing) - The target type that RunRoot invokes; defines `Interactions`, `Cooldown`, `RequireNewClick`, `ClickQueuingTimeout`, etc.
+- [Replace](#replace) - Alternative for variable-based interaction substitution within the same chain
+- [Serial](#serial) - Often wraps RunRoot with setup/teardown interactions
+- [StatsCondition](#statscondition) - Common guard before RunRoot to check resource availability
+
+---
+
 ## Physics Interactions
 
 ### LaunchPadInteraction
