@@ -2238,84 +2238,97 @@ Only handle cardinal directions, default others to Failed:
 
 Server-side condition that checks if a block at the target position is destroyable. Used to validate block breaking operations before execution, preventing invalid destruction attempts.
 
+**Inheritance:** `DestroyConditionInteraction` → `SimpleBlockInteraction` → `SimpleInteraction` → `Interaction`
+
 ### Core Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Type` | string | Required | Always `"DestroyCondition"` |
-| `Then` | interaction | `null` | Interaction when block is destroyable |
-| `Else` | interaction | `null` | Interaction when block is not destroyable |
+| `Next` | interaction | `null` | Interaction when block is destroyable |
+| `Failed` | interaction | `null` | Interaction when block is not destroyable |
+| `UseLatestTarget` | boolean | `false` | Use the most recent block target from context |
 
-### Execution Behavior
+### Execution Flow
+
+```
+DestroyCondition
+    │
+    ▼
+┌─────────────────────────┐
+│ Check block destroyable │
+└─────────────────────────┘
+    │
+    ├─► Destroyable ──► Execute Next
+    │
+    └─► Not destroyable ──► Execute Failed
+```
 
 DestroyCondition performs server-side validation:
 
 1. Reads target block position from interaction context
 2. Checks if block exists and is marked as destroyable
 3. Considers block properties, protection zones, and game rules
-4. Branches to `Then` if destruction is allowed, `Else` if blocked
+4. Branches to `Next` if destruction is allowed, `Failed` if blocked
 
 ### Examples
 
-**Break Container with Validation:**
+**Break Container (Real - from Break_Container.json):**
 
 ```json
 {
   "Type": "DestroyCondition",
-  "Then": {
-    "Type": "Serial",
-    "Interactions": [
-      { "Type": "DropContainerContents" },
-      { "Type": "BreakBlock" },
-      { "Type": "Simple", "Effects": { "WorldSoundEventId": "container_break" } }
-    ]
-  },
-  "Else": {
-    "Type": "SendMessage",
-    "Message": "This block cannot be destroyed!"
-  }
-}
-```
-
-**Mining Tool Validation:**
-
-```json
-{
-  "Type": "DestroyCondition",
-  "Then": {
-    "Type": "Serial",
+  "Next": {
+    "Type": "Parallel",
     "Interactions": [
       {
-        "Type": "Simple",
-        "RunTime": 0.5,
-        "Effects": { "ItemAnimationId": "Mining" }
+        "Interactions": [
+          {
+            "Type": "Simple",
+            "RunTime": 0.1,
+            "Effects": { "ItemAnimationId": "AttackLeft" }
+          }
+        ]
       },
-      { "Type": "BreakBlock" },
-      { "Type": "Simple", "Effects": { "ParticleEffectId": "block_break_particles" } }
+      {
+        "Interactions": [
+          {
+            "Type": "Simple",
+            "RunTime": 0.1,
+            "Effects": { "ItemAnimationId": "SwingLeft" },
+            "Next": { "Type": "BreakBlock" }
+          }
+        ]
+      }
     ]
-  },
-  "Else": {
-    "Type": "Simple",
-    "Effects": { "WorldSoundEventId": "tool_denied" }
   }
 }
 ```
 
-**Protected Block Check:**
+**Simple Destroy Check:**
 
 ```json
 {
   "Type": "DestroyCondition",
-  "Then": {
-    "Type": "Charging",
-    "FailOnDamage": true,
-    "Next": {
-      "1.0": { "Type": "BreakBlock" }
-    }
+  "Next": {
+    "Type": "BreakBlock"
   },
-  "Else": {
-    "Type": "SendMessage",
-    "Message": "This area is protected!"
+  "Failed": {
+    "Type": "Simple",
+    "Effects": { "WorldSoundEventId": "action_denied" }
+  }
+}
+```
+
+**With UseLatestTarget:**
+
+```json
+{
+  "Type": "DestroyCondition",
+  "UseLatestTarget": true,
+  "Next": {
+    "Type": "BreakBlock",
+    "UseLatestTarget": true
   }
 }
 ```
@@ -2324,6 +2337,7 @@ DestroyCondition performs server-side validation:
 
 - [BlockCondition](#blockcondition) - Check block type/state
 - [Block Interactions](interactions-world.md#block-interactions) - Break or place blocks
+- [Condition](#condition) - General condition branching (also uses `Next`/`Failed`)
 
 ---
 
