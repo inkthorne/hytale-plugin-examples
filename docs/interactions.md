@@ -1,6 +1,8 @@
 # Interactions API
 
 > **Note:** For `InteractionManager` (the entity component that manages interaction chains), see [entities.md](entities.md#interactionmanager).
+>
+> **See also:** [Item Definitions](items.md) for how items define and customize interactions via `InteractionVars`.
 
 ## Quick Navigation
 

@@ -7,6 +7,7 @@ Quick reference for finding the right documentation file.
 | File | Description |
 |------|-------------|
 | [interactions.md](interactions.md) | Comprehensive reference for entity interactions including combo systems, combat effects, control flow, and world manipulation. |
+| [items.md](items.md) | Item definitions including weapons, consumables, and equipment with inheritance system and InteractionVars customization. |
 | [plugin-lifecycle.md](plugin-lifecycle.md) | Documents the complete plugin lifecycle from initialization through shutdown, including setup phases, event registration, and logging. |
 | [commands.md](commands.md) | Details the command system for creating player commands with arguments, permissions, subcommands, and built-in argument types. |
 | [entities.md](entities.md) | Covers the entity system including Player and Entity classes, entity stats, velocity management, and interaction chains. |
@@ -52,6 +53,9 @@ JSON asset types used in Hytale's data-driven systems.
 
 **Interactions - Entity & World**
 [SpawnPrefab](interactions-world.md#spawnprefab), [RemoveEntity](interactions-world.md#removeentity), [LaunchProjectile](interactions-world.md#launchprojectile), [SendMessage](interactions-world.md#sendmessage), [RunRootInteraction](interactions-world.md#runrootinteraction), [OpenPage](interactions-world.md#ui-interactions), [OpenCustomUI](interactions-world.md#ui-interactions), [EquipItem](interactions-world.md#inventory-interactions), [ModifyInventory](interactions-world.md#inventory-interactions), [BreakBlock](interactions-world.md#block-interactions), [PlaceBlock](interactions-world.md#block-interactions), [ChangeState](interactions-world.md#changestate), [LaunchPadInteraction](interactions-world.md#launchpadinteraction), [WieldingInteraction](interactions-world.md#wieldinginteraction)
+
+**Items - Weapon Templates**
+[Template_Weapon_Sword](items-weapons.md#template_weapon_sword), [Template_Weapon_Daggers](items-weapons.md#template_weapon_daggers), [Template_Weapon_Shield](items-weapons.md#template_weapon_shield), [Template_Weapon_Battleaxe](items-weapons.md#template_weapon_battleaxe), [Template_Weapon_Shortbow](items-weapons.md#template_weapon_shortbow), [Template_Weapon_Mace](items-weapons.md#template_weapon_mace), [Template_Weapon_Crossbow](items-weapons.md#template_weapon_crossbow)
 
 ---
 
