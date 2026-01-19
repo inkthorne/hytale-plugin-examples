@@ -486,91 +486,196 @@ Specialized launch pad physics for bouncing entities.
 
 ## WieldingInteraction
 
-The `Wielding` interaction type enables blocking and guarding mechanics for shields and weapons.
+**Package:** `config/client/WieldingInteraction`
 
-**File locations:** `Server/Item/Interactions/Weapons/{WeaponType}/Secondary/Guard/*_Guard_Wield.json`
+**Class hierarchy:** `WieldingInteraction` → `ChargingInteraction` → `SimpleInteraction` → `Interaction`
 
-### Basic Structure
+Enables blocking and guarding mechanics for shields and weapons. When active, the player holds a defensive stance that reduces or negates incoming damage based on attack angle. The interaction inherits from ChargingInteraction, providing hold-duration behavior, movement speed reduction, and animation support. Wielding integrates with stamina systems—blocking consumes stamina proportional to damage blocked, and stamina depletion triggers guard break effects.
 
-```json
-{
-  "Type": "Wielding",
-  "AngledWielding": {
-    "Angle": 0,
-    "AngleDistance": 90,
-    "DamageModifiers": { "Physical": 0 }
-  },
-  "StaminaCost": {
-    "CostType": "Damage",
-    "Cost": 0.5
-  },
-  "BlockedEffects": {
-    "WorldSoundEventId": "SFX_Shield_T2_Impact",
-    "WorldParticles": [{ "SystemId": "Shield_Block" }]
-  },
-  "BlockedInteractions": {
-    "Interactions": [...]
-  },
-  "Failed": {
-    "Interactions": [...]
-  }
-}
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"Wielding"` |
+| `AngledWielding` | object | - | Directional blocking configuration with damage/knockback modifiers |
+| `DamageModifiers` | object | - | Direct damage reduction (alternative to AngledWielding for simpler configs) |
+| `StaminaCost` | object | - | Stamina consumption per damage blocked |
+| `BlockedEffects` | object | - | Visual/audio effects when block succeeds |
+| `BlockedInteractions` | object | - | Interactions triggered on successful block |
+| `Forks` | object | - | Branching interactions while blocking (e.g., shield bash) |
+| `Failed` | object | - | Interactions triggered on guard break (stamina depleted) |
+| `Next` | Interaction | - | Interaction to run when guard ends normally |
+| `Effects` | object | - | Animation/sound for guard start (inherited from ChargingInteraction) |
+
+**Inherited from ChargingInteraction:**
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `RunTime` | float | - | Maximum duration in seconds (omit for indefinite hold) |
+| `AllowIndefiniteHold` | boolean | `true` | If `true`, block can be held indefinitely |
+| `CancelOnOtherClick` | boolean | `false` | If `true`, interaction cancels when another input is pressed |
+| `FailOnDamage` | boolean | `false` | If `true`, interaction ends when hit (even if blocked) |
+| `HorizontalSpeedMultiplier` | float | `1.0` | Movement speed while blocking (0.0-1.0) |
+| `DisplayProgress` | boolean | - | Show guard duration indicator |
+
+### File Locations
+
+**Player weapon guards:**
+```
+Server/Item/Interactions/Weapons/{WeaponType}/Secondary/Guard/*_Guard_Wield.json
 ```
 
-### Key Properties
+Weapon types with guard: Sword, Shield, Battleaxe, Daggers, Mace, Crossbow, Shortbow
 
-> **Inheritance:** `WieldingInteraction` extends `ChargingInteraction`, which is why properties like `RunTime`, `FailOnDamage`, `allowIndefiniteHold`, and `cancelOnOtherClick` are available.
+**NPC blocks:**
+```
+Server/Item/Interactions/NPCs/{Type}/{NPC}/*_Block.json
+```
 
-| Property | Description |
-|----------|-------------|
-| `AngledWielding` | Configures angle-based damage reduction |
-| `DamageModifiers` | Reduce incoming damage by type (0 = full block, 0.5 = 50% reduction) |
-| `StaminaCost` | Stamina consumption when blocking |
-| `BlockedEffects` | Visual/audio effects when block succeeds |
-| `BlockedInteractions` | Interactions to trigger on successful block |
-| `Failed` | What happens when guard breaks (stamina depleted) |
-| `RunTime` | Maximum duration in seconds; block still ends early if input released (omit for indefinite hold-to-block) |
-| `FailOnDamage` | If `true`, interaction ends when hit (even if blocked) |
-| `allowIndefiniteHold` | If `true`, block can be held indefinitely (default behavior) |
-| `cancelOnOtherClick` | If `true`, interaction cancels when another input is pressed |
+NPCs like Skeleton Knight, Outlander Brute use simpler block configurations.
+
+**Root interactions:**
+```
+Server/Item/RootInteractions/Weapons/{WeaponType}/Root_Weapon_{Type}_Secondary_Guard.json
+```
 
 ### AngledWielding
 
-Controls directional blocking based on attack angle:
+Controls directional blocking based on attack angle, with separate modifiers for damage and knockback:
 
 ```json
 "AngledWielding": {
   "Angle": 0,
   "AngleDistance": 90,
-  "DamageModifiers": { "Physical": 0, "Magical": 0.5 }
+  "DamageModifiers": {
+    "Physical": 0,
+    "Projectile": 0,
+    "Poison": 0
+  },
+  "KnockbackModifiers": {
+    "Physical": 0.25,
+    "Projectile": 0.25
+  }
 }
 ```
 
-- **Angle**: Center angle of the blocking arc (0 = forward)
-- **AngleDistance**: Half-width of the blocking arc in degrees
-- **DamageModifiers**: Multipliers per damage type (0 = full block, 1 = no reduction)
+| Property | Type | Description |
+|----------|------|-------------|
+| `Angle` | float | Center angle of the blocking arc (0 = forward) |
+| `AngleDistance` | float | Half-width of the blocking arc in degrees |
+| `DamageModifiers` | object | Multipliers per damage type (0 = full block, 1 = no reduction) |
+| `KnockbackModifiers` | object | Multipliers per damage type for knockback reduction |
+
+**Real values from weapon assets:**
+
+| Weapon | DamageModifiers | KnockbackModifiers | Notes |
+|--------|-----------------|--------------------|----|
+| Sword | Physical: 0, Projectile: 0, Poison: 0 | Physical: 0.25, Projectile: 0.25 | Full damage block, 75% knockback reduction |
+| Shield | Physical: 0, Projectile: 0, Poison: 0 | Physical: 0.25, Projectile: 0.25 | Same as sword |
+| Battleaxe | Physical: 0, Projectile: 0, Poison: 0 | Physical: 0.25, Projectile: 0.25 | Heavy weapon guard |
+| Unarmed | Physical: 0.8, Projectile: 0.8 | - | 20% damage reduction only |
+| NPC Skeleton Knight | Physical: 0.2, Projectile: 0.2 | - | 80% damage reduction |
+| NPC Outlander Brute | Physical: 0, Projectile: 0 | - | Full block |
+
+### DamageModifiers (Top-Level)
+
+For simpler configurations (commonly used by NPCs), damage modifiers can be specified at the top level instead of inside AngledWielding:
+
+```json
+{
+  "Type": "Wielding",
+  "DamageModifiers": {
+    "Physical": 0.2,
+    "Projectile": 0.2
+  }
+}
+```
+
+This format blocks from all angles with uniform damage reduction.
+
+### Forks (Guard Branching)
+
+The `Forks` system allows branching to different interactions while blocking is active. This enables mechanics like shield bash (primary click during guard).
+
+```json
+"Forks": {
+  "Primary": {
+    "Type": "Replace",
+    "Variable": "Weapon",
+    "Next": "Guard_Bash"
+  }
+}
+```
+
+| Fork Key | Trigger | Common Use |
+|----------|---------|------------|
+| `Primary` | Primary click while blocking | Shield bash, guard counter |
+| `Secondary` | Secondary click while blocking | Alternate guard action |
+
+**Shield Bash Pattern:**
+
+The Primary fork typically uses Replace to select the correct bash animation based on weapon type:
+
+```json
+"Forks": {
+  "Primary": {
+    "Type": "Replace",
+    "Variable": "Weapon",
+    "Next": {
+      "Sword": "Sword_Guard_Bash",
+      "Shield": "Shield_Guard_Bash",
+      "Battleaxe": "Battleaxe_Guard_Bash"
+    }
+  }
+}
+```
+
+### Effects (Guard Start)
+
+Inherited from ChargingInteraction, the `Effects` object configures the animation and sound when entering guard stance:
+
+```json
+"Effects": {
+  "ItemAnimationId": "Guard",
+  "ClearAnimationOnFinish": true,
+  "WorldSoundEventId": "SFX_Shield_T2_Raise",
+  "LocalSoundEventId": "SFX_Shield_T2_Raise_Local"
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ItemAnimationId` | string | Animation to play on held item when guard starts |
+| `ClearAnimationOnFinish` | boolean | Stop animation when guard ends |
+| `WorldSoundEventId` | string | Sound event audible to nearby players |
+| `LocalSoundEventId` | string | Sound event only the blocking player hears |
 
 ### StaminaCost
 
-Stamina consumption can be based on damage blocked:
+Stamina consumption when blocking damage:
 
 ```json
 "StaminaCost": {
   "CostType": "Damage",
-  "Cost": 0.5
+  "Value": 7
 }
 ```
 
-- **CostType**: `"Damage"` = cost per point of damage blocked
-- **Cost**: Multiplier for stamina drain
+| Property | Type | Description |
+|----------|------|-------------|
+| `CostType` | string | `"Damage"` = cost per point of damage blocked |
+| `Value` | float | Stamina consumed per damage point blocked |
+
+**Real values:** Most weapons use `Value: 7` for their guard stamina cost.
 
 ### BlockedEffects
 
-Effects triggered on successful block (sounds, particles, camera effects):
+Effects triggered on each successful block (sounds, particles):
 
 ```json
 "BlockedEffects": {
   "WorldSoundEventId": "SFX_Shield_T2_Impact",
+  "LocalSoundEventId": "SFX_Shield_T2_Impact_Local",
   "WorldParticles": [
     { "SystemId": "Shield_Block" }
   ]
@@ -579,7 +684,10 @@ Effects triggered on successful block (sounds, particles, camera effects):
 
 ### BlockedInteractions
 
-Trigger additional interactions when a block succeeds. This enables mechanics like granting stats on successful blocks:
+Interactions triggered when a block succeeds. This enables mechanics like:
+- Granting signature energy on successful blocks
+- Applying knockback to attackers
+- Setting chain flags for counter-attack windows
 
 ```json
 "BlockedInteractions": {
@@ -591,21 +699,252 @@ Trigger additional interactions when a block succeeds. This enables mechanics li
       }
     },
     {
-      "Type": "ApplyForce",
-      "Force": [0, 5, -10]
+      "Type": "ChainFlag",
+      "ChainId": "Sword_Combat",
+      "Flag": "Counter_Ready"
     }
   ]
 }
 ```
 
+**Parry Example (from Debug_Stick_Parry):**
+
+A parry is a short-duration wielding that triggers special interactions on block:
+
+```json
+{
+  "Type": "Wielding",
+  "RunTime": 0.3,
+  "AngledWielding": {
+    "Angle": 0,
+    "AngleDistance": 180,
+    "DamageModifiers": { "Physical": 0 }
+  },
+  "BlockedInteractions": {
+    "Interactions": [
+      {
+        "Type": "SendMessage",
+        "Message": "Perfect Parry!"
+      },
+      {
+        "Type": "ApplyForce",
+        "Target": "Attacker",
+        "Force": [0, 5, -15]
+      },
+      {
+        "Type": "ChainFlag",
+        "ChainId": "Debug_Combat",
+        "Flag": "Parry_Counter"
+      }
+    ]
+  }
+}
+```
+
 ### Failed (Guard Break)
 
-Interactions triggered when stamina is depleted during a block:
+Interactions triggered when stamina is depleted while blocking:
 
 ```json
 "Failed": {
   "Interactions": [
-    { "Type": "Stagger" }
+    {
+      "Type": "ChangeState",
+      "StateId": "Staggered",
+      "Duration": 1.0
+    },
+    {
+      "Type": "PlaySound",
+      "SoundId": "SFX_Guard_Break"
+    }
   ]
 }
 ```
+
+Guard break typically applies a stagger state, leaving the player vulnerable.
+
+### Next (Post-Guard)
+
+The `Next` property specifies an interaction to run when guard ends normally (not from guard break). Common use: reset stamina regeneration delay.
+
+```json
+"Next": {
+  "Type": "ChangeStat",
+  "Behaviour": "Set",
+  "StatModifiers": {
+    "StaminaRegenDelay": -1
+  }
+}
+```
+
+This pattern resets the stamina regen delay timer when guard ends, allowing stamina to begin regenerating.
+
+### Complete Examples
+
+**Full Sword Guard Configuration:**
+
+```json
+{
+  "Type": "Wielding",
+  "Effects": {
+    "ItemAnimationId": "Guard",
+    "ClearAnimationOnFinish": true,
+    "WorldSoundEventId": "SFX_Sword_T2_Guard_Raise",
+    "LocalSoundEventId": "SFX_Sword_T2_Guard_Raise_Local"
+  },
+  "AngledWielding": {
+    "Angle": 0,
+    "AngleDistance": 90,
+    "DamageModifiers": {
+      "Physical": 0,
+      "Projectile": 0,
+      "Poison": 0
+    },
+    "KnockbackModifiers": {
+      "Physical": 0.25,
+      "Projectile": 0.25
+    }
+  },
+  "StaminaCost": {
+    "CostType": "Damage",
+    "Value": 7
+  },
+  "BlockedEffects": {
+    "WorldSoundEventId": "SFX_Sword_T2_Impact",
+    "LocalSoundEventId": "SFX_Sword_T2_Impact_Local",
+    "WorldParticles": [
+      { "SystemId": "Sword_Block_Sparks" }
+    ]
+  },
+  "BlockedInteractions": {
+    "Interactions": [
+      {
+        "Type": "ChangeStat",
+        "StatModifiers": {
+          "SignatureEnergy": 3
+        }
+      }
+    ]
+  },
+  "Forks": {
+    "Primary": {
+      "Type": "Replace",
+      "Variable": "Weapon",
+      "Next": "Sword_Guard_Bash"
+    }
+  },
+  "Failed": {
+    "Interactions": [
+      {
+        "Type": "ChangeState",
+        "StateId": "Staggered",
+        "Duration": 0.8
+      }
+    ]
+  },
+  "Next": {
+    "Type": "ChangeStat",
+    "Behaviour": "Set",
+    "StatModifiers": {
+      "StaminaRegenDelay": -1
+    }
+  }
+}
+```
+
+**Simple NPC Block:**
+
+```json
+{
+  "Type": "Wielding",
+  "DamageModifiers": {
+    "Physical": 0.2,
+    "Projectile": 0.2
+  },
+  "BlockedEffects": {
+    "WorldSoundEventId": "SFX_Metal_Block"
+  }
+}
+```
+
+**Timed Parry Window:**
+
+```json
+{
+  "Type": "Wielding",
+  "RunTime": 0.25,
+  "AllowIndefiniteHold": false,
+  "AngledWielding": {
+    "Angle": 0,
+    "AngleDistance": 120,
+    "DamageModifiers": { "Physical": 0 }
+  },
+  "Effects": {
+    "ItemAnimationId": "Parry_Start",
+    "ClearAnimationOnFinish": true
+  },
+  "BlockedInteractions": {
+    "Interactions": [
+      {
+        "Type": "Serial",
+        "Interactions": [
+          {
+            "Type": "ApplyForce",
+            "Target": "Attacker",
+            "Force": [0, 3, -12]
+          },
+          {
+            "Type": "ChangeState",
+            "Target": "Attacker",
+            "StateId": "Staggered",
+            "Duration": 0.5
+          },
+          {
+            "Type": "ChainFlag",
+            "ChainId": "Combat",
+            "Flag": "Perfect_Parry"
+          }
+        ]
+      }
+    ]
+  },
+  "Failed": {
+    "Interactions": [
+      {
+        "Type": "SendMessage",
+        "Message": "Parry missed!"
+      }
+    ]
+  }
+}
+```
+
+### Common Patterns
+
+| Pattern | Key Properties | Use Case |
+|---------|----------------|----------|
+| **Standard Guard** | `AngledWielding` + `StaminaCost` + `Forks.Primary` | Sword/shield blocking with bash option |
+| **Simple NPC Block** | `DamageModifiers` only | Basic AI blocking |
+| **Parry Window** | `RunTime: 0.25`, `BlockedInteractions` with counter | Timing-based defensive option |
+| **Energy-Building Block** | `BlockedInteractions` with `ChangeStat` | Blocking charges signature meter |
+| **Counter Setup** | `BlockedInteractions` with `ChainFlag` | Successful block unlocks counter-attack |
+
+### Technical Notes
+
+- **Inheritance** - WieldingInteraction inherits all properties from ChargingInteraction, including movement speed modifiers, progress display, and the `Next` map system. However, Wielding typically uses `AllowIndefiniteHold: true` by default.
+
+- **Stamina Integration** - When `StaminaCost` is configured with `CostType: "Damage"`, each point of damage blocked consumes `Value` stamina. When stamina reaches zero, the `Failed` branch triggers.
+
+- **Directional Blocking** - The `Angle` and `AngleDistance` create a blocking arc. Attacks from within this arc apply `DamageModifiers`; attacks from outside bypass the block entirely.
+
+- **Forks Execution** - When a Fork triggers (e.g., Primary click during guard), the Wielding interaction ends and the forked interaction executes. The guard does not resume automatically.
+
+- **Guard Break Recovery** - The `Failed` interactions should include a state change (stagger/stun) that prevents immediate re-blocking, creating a vulnerability window.
+
+### Related Interactions
+
+- [ChargingInteraction](interactions-combo.md#charginginteraction) - Parent class providing hold-duration behavior
+- [ChainFlagInteraction](interactions-combo.md#chainflaginteraction) - Set flags from BlockedInteractions for counter-attack systems
+- [ChangeState](interactions-world.md#changestate) - Used in Failed for guard break stagger
+- [ChangeStat](interactions-stat.md#changestat) - Modify stamina, signature energy on block
+- [Replace](interactions-flow.md#replace) - Used in Forks for weapon-specific bash attacks
