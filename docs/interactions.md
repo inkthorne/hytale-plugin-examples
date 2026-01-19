@@ -22,6 +22,7 @@
 
 **Combat & Effects** ([interactions-combat.md](interactions-combat.md))
 - [SimpleInteraction](interactions-combat.md#simpleinteraction) - Delays, animations, sounds, and flow control
+- [Selector](interactions-combat.md#selector) - Target selection for melee attacks (hitboxes)
 - [DamageEntity](interactions-combat.md#damageentity) - Deal damage with effects, knockback, and stat grants
 - [ApplyForce](interactions-combat.md#applyforce) - Apply physics forces for knockback and launches
 - [ApplyEffect](interactions-combat.md#applyeffect) - Apply status effects (buffs, debuffs, DoT)
@@ -41,7 +42,6 @@
 - [DestroyCondition](interactions-flow.md#destroycondition) - Check if block is destroyable
 - [PlacementCountCondition](interactions-flow.md#placementcountcondition) - Branch based on block placement count
 - [Repeat](interactions-flow.md#repeat) - Loop execution of interactions
-- [Select](interactions-flow.md#select) - Random weighted selection
 - [Replace](interactions-flow.md#replace) - Variable substitution for templates
 - [Target Selectors](interactions-flow.md#target-selectors) - AOE, raycast, and sweep targeting
 

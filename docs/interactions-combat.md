@@ -7,6 +7,7 @@
 | Interaction | Description |
 |-------------|-------------|
 | [SimpleInteraction](#simpleinteraction) | Delays, animations, sounds, and flow control |
+| [Selector](#selector) | Target selection for melee attacks (hitboxes) |
 | [DamageEntity](#damageentity) | Deal damage with effects, knockback, and stat grants |
 | [ApplyForce](#applyforce) | Apply physics forces for knockback and launches |
 | [ApplyEffect](#applyeffect) | Apply status effects (buffs, debuffs, DoT) |
@@ -243,6 +244,220 @@ boolean walk(Collector collector, InteractionContext context)
 - [Serial](interactions-flow.md#serial) - Often used to chain multiple SimpleInteractions
 - [Parallel](interactions-flow.md#parallel) - Execute SimpleInteractions concurrently
 - [ChargingInteraction](interactions-combo.md#charginginteraction) - Uses SimpleInteraction for `Failed` handlers
+
+---
+
+## Selector
+
+**Package:** `config/none/SelectInteraction`
+
+Target selection for combat interactions. Defines hitbox shapes and detection areas for melee attacks, and executes interactions when entities or blocks are hit.
+
+### Structure
+
+```json
+{
+  "Type": "Selector",
+  "RunTime": 0.1,
+  "Selector": {
+    "Id": "Horizontal",
+    "Direction": "ToRight",
+    "TestLineOfSight": true,
+    "ExtendTop": 0.5,
+    "ExtendBottom": 0.5,
+    "StartDistance": 0.1,
+    "EndDistance": 2.5,
+    "Length": 60,
+    "RollOffset": 45,
+    "YawStartOffset": -15
+  },
+  "HitEntity": {
+    "Interactions": [
+      "Sword_Swing_Damage"
+    ]
+  }
+}
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `RunTime` | float | Duration of the selection window in seconds |
+| `Selector` | object | Hitbox configuration (see Selector Types below) |
+| `HitEntity` | object | Interactions to execute when an entity is hit |
+| `HitBlock` | object | Interactions to execute when a block is hit |
+| `HitEntityRules` | array | Conditional hit handling with matchers |
+| `IgnoreOwner` | boolean | Whether to ignore the attacking entity |
+| `FailOn` | string | Condition that causes the selector to fail |
+
+### Selector Types
+
+#### Horizontal (Sweeping attacks)
+
+Used for sword swings and wide melee attacks.
+
+```json
+{
+  "Id": "Horizontal",
+  "Direction": "ToRight",
+  "TestLineOfSight": true,
+  "ExtendTop": 0.5,
+  "ExtendBottom": 0.5,
+  "StartDistance": 0.1,
+  "EndDistance": 2.5,
+  "Length": 60,
+  "RollOffset": 45,
+  "YawStartOffset": -15
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Direction` | string | `"ToLeft"` or `"ToRight"` - sweep direction |
+| `TestLineOfSight` | boolean | Check for obstacles between attacker and target |
+| `ExtendTop` | float | Hitbox extension upward |
+| `ExtendBottom` | float | Hitbox extension downward |
+| `StartDistance` | float | Starting distance from attacker |
+| `EndDistance` | float | Maximum reach distance |
+| `Length` | float | Arc length in degrees |
+| `RollOffset` | float | Rotation offset around forward axis |
+| `YawStartOffset` | float | Starting yaw offset in degrees |
+
+#### AOECircle (Area of effect)
+
+Used for ground slams and radial attacks.
+
+```json
+{
+  "Id": "AOECircle",
+  "Range": 4
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Range` | float | Radius of the circular area |
+
+#### Raycast (Straight line)
+
+Used for wand spells and targeted abilities.
+
+```json
+{
+  "Id": "Raycast",
+  "Offset": {
+    "Y": 1.6
+  }
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Offset` | object | Starting point offset from entity position |
+
+#### Stab (Thrust attacks)
+
+Used for spear thrusts and lunging attacks.
+
+```json
+{
+  "Id": "Stab",
+  "TestLineOfSight": true,
+  "ExtendTop": 0.5,
+  "ExtendBottom": 0.5,
+  "ExtendLeft": 0.5,
+  "ExtendRight": 0.5,
+  "StartDistance": 0,
+  "EndDistance": 2.5
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ExtendLeft` | float | Hitbox extension to the left |
+| `ExtendRight` | float | Hitbox extension to the right |
+
+### HitEntityRules
+
+For conditional hit handling based on entity matchers:
+
+```json
+{
+  "HitEntityRules": [{
+    "Matchers": [{
+      "Type": "Vulnerable"
+    }],
+    "Next": {
+      "Interactions": [
+        { "Type": "ApplyEffect", "EffectId": "Stoneskin" }
+      ]
+    }
+  }]
+}
+```
+
+### Examples
+
+**Sword Swing (Horizontal sweep):**
+
+```json
+{
+  "Type": "Selector",
+  "RunTime": 0.055,
+  "Selector": {
+    "Id": "Horizontal",
+    "Direction": "ToRight",
+    "TestLineOfSight": true,
+    "ExtendTop": 0.5,
+    "ExtendBottom": 0.5,
+    "StartDistance": 0.1,
+    "EndDistance": 2.5,
+    "Length": 30,
+    "RollOffset": 45,
+    "YawStartOffset": -15
+  },
+  "HitEntity": {
+    "Interactions": ["Sword_Swing_Damage"]
+  }
+}
+```
+
+**Ground Stomp (AOE Circle):**
+
+```json
+{
+  "Type": "Selector",
+  "RunTime": 0.333,
+  "Selector": {
+    "Id": "AOECircle",
+    "Range": 4
+  },
+  "HitEntity": {
+    "Interactions": ["Stomp_Damage"]
+  }
+}
+```
+
+**Wand Spell (Raycast):**
+
+```json
+{
+  "Type": "Selector",
+  "Selector": {
+    "Id": "Raycast",
+    "Offset": { "Y": 1.6 }
+  },
+  "HitEntityRules": [{
+    "Matchers": [{ "Type": "Vulnerable" }],
+    "Next": {
+      "Interactions": [
+        { "Type": "ApplyEffect", "EffectId": "Root" }
+      ]
+    }
+  }]
+}
+```
 
 ---
 

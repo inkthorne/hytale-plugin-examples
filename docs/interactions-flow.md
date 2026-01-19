@@ -17,7 +17,6 @@
 | [DestroyCondition](#destroycondition) | Check if block is destroyable |
 | [PlacementCountCondition](#placementcountcondition) | Branch based on block placement count |
 | [Repeat](#repeat) | Loop execution of interactions |
-| [Select](#select) | Random weighted selection |
 | [Replace](#replace) | Variable substitution for templates |
 | [Target Selectors](#target-selectors) | AOE, raycast, and sweep targeting |
 
@@ -2269,45 +2268,6 @@ Loop execution of interactions with timing control and optional interruption.
 - Without the `Repeat` property specified, acts as a single fork that waits for completion
 - Can be nested within other flow interactions for complex multi-level repetition patterns
 - `Rules.InterruptedBy` accepts input names like `"Primary"`, `"Secondary"` to allow player input to break the loop
-
----
-
-## Select
-
-**Package:** `config/none/SelectInteraction`
-
-Random selection from multiple interactions.
-
-### Structure
-
-```json
-{
-  "Type": "Select",
-  "Interactions": [
-    {
-      "Weight": 1,
-      "Interaction": { "Type": "ApplyEffect", "EffectId": "hytale:burning" }
-    },
-    {
-      "Weight": 1,
-      "Interaction": { "Type": "ApplyEffect", "EffectId": "hytale:frozen" }
-    },
-    {
-      "Weight": 2,
-      "Interaction": { "Type": "ApplyEffect", "EffectId": "hytale:poison" }
-    }
-  ]
-}
-```
-
-### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `Weight` | float | Selection weight (higher = more likely) |
-| `Interaction` | object | Interaction to execute if selected |
-
-In this example, poison has twice the chance of being selected.
 
 ---
 
