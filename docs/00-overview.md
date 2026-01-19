@@ -37,6 +37,12 @@ Quick reference for finding the right documentation file.
 | [i18n.md](i18n.md) | Localization system with GenerateDefaultLanguageEvent for registering plugin translations during server startup. |
 | [singleplayer.md](singleplayer.md) | Singleplayer-specific functionality with SingleplayerRequestAccessEvent for handling local server access requests. |
 | [audio.md](audio.md) | Audio system documentation covering sound events, audio categories, ambience, reverb, EQ, and integration with other systems. |
+| [worldgen.md](worldgen.md) | World generation system overview including zones, biomes, terrain layers, caves, and structure placement. |
+| [worldgen-zones.md](worldgen-zones.md) | Zone system with Voronoi distribution, biome pattern generators, and discovery UI configuration. |
+| [worldgen-biomes.md](worldgen-biomes.md) | Biome definitions with containers for layers, covers, prefabs, water, tints, and environment. |
+| [worldgen-terrain.md](worldgen-terrain.md) | Terrain layer system with static/dynamic layers, noise suppliers, and block priority. |
+| [worldgen-caves.md](worldgen-caves.md) | Cave system with node-based generation, shapes, corridors, and cave prefabs. |
+| [worldgen-prefabs.md](worldgen-prefabs.md) | Structure placement including surface prefabs and globally unique structures. |
 
 ## Asset Type Index
 
@@ -65,6 +71,21 @@ JSON asset types used in Hytale's data-driven systems.
 
 **Audio**
 [SoundEvents](audio.md#soundevents), [AudioCategories](audio.md#audiocategories), [AmbienceFX](audio.md#ambiencefx), [EQ](audio.md#eq-equalizer), [Reverb](audio.md#reverb), [ItemSounds](audio.md#itemsounds), [SoundSets](audio.md#soundsets)
+
+**World Generation - Zones & Biomes**
+[Zone](worldgen-zones.md#zone-record), [ZonePatternGenerator](worldgen-zones.md#zonepatterngenerator), [BiomePatternGenerator](worldgen-zones.md#biomepatterngenerator), [ZoneDiscoveryConfig](worldgen-zones.md#zonediscoveryconfig), [Biome](worldgen-biomes.md#biome-types), [TileBiome](worldgen-biomes.md#tilebome), [BiomeInterpolation](worldgen-biomes.md#biomeinterpolation)
+
+**World Generation - Biome Containers**
+[LayerContainer](worldgen-biomes.md#layercontainer), [CoverContainer](worldgen-biomes.md#covercontainer), [PrefabContainer](worldgen-biomes.md#prefabcontainer), [WaterContainer](worldgen-biomes.md#watercontainer), [TintContainer](worldgen-biomes.md#tintcontainer), [EnvironmentContainer](worldgen-biomes.md#environmentcontainer), [FadeContainer](worldgen-biomes.md#fadecontainer)
+
+**World Generation - Terrain**
+[StaticLayer](worldgen-terrain.md#staticlayer), [DynamicLayer](worldgen-terrain.md#dynamiclayer), [HeightSupplier](worldgen-terrain.md#height-suppliers), [BlockPopulator](worldgen-terrain.md#blockpopulator), [BlockPriorityChunk](worldgen-terrain.md#block-priority)
+
+**World Generation - Caves**
+[CaveType](worldgen-caves.md#cavetype), [CaveNodeType](worldgen-caves.md#cavenodetype), [CaveNodeShape](worldgen-caves.md#cavenodeshape), [CaveNodeChildEntry](worldgen-caves.md#cavenodechildentry), [CaveNodeCoverEntry](worldgen-caves.md#cavenodecoverentry), [CavePrefabContainer](worldgen-caves.md#caveprefabcontainer)
+
+**World Generation - Prefabs**
+[PrefabPopulator](worldgen-prefabs.md#prefabpopulator), [UniquePrefabGenerator](worldgen-prefabs.md#uniqueprefabgenerator), [UniquePrefabConfiguration](worldgen-prefabs.md#uniqueprefabconfiguration), [PlacementConditions](worldgen-prefabs.md#placement-conditions)
 
 ---
 
@@ -198,3 +219,11 @@ JSON asset types used in Hytale's data-driven systems.
 **Utilities** - Helper systems
 - prefabs.md - Prefab loading, placement, and events
 - math.md - Vectors, matrices, quaternions, shapes
+
+**World Generation** - Procedural terrain and structure generation
+- worldgen.md - World generation overview and pipeline
+- worldgen-zones.md - Zone system with Voronoi distribution
+- worldgen-biomes.md - Biome definitions and containers
+- worldgen-terrain.md - Terrain layers and block population
+- worldgen-caves.md - Cave system with node-based generation
+- worldgen-prefabs.md - Structure and prefab placement
