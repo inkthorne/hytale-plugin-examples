@@ -2,6 +2,14 @@
 
 This document covers NPC loading events and AI sensor systems.
 
+## Quick Navigation
+
+| Category | File | Description |
+|----------|------|-------------|
+| [NPC Roles](npc-roles.md) | `npc-roles.md` | Asset definitions: templates, variants, behaviors, spawning (897 roles) |
+
+---
+
 ## NPC Events
 
 Events related to NPC (Non-Player Character) loading and management.
