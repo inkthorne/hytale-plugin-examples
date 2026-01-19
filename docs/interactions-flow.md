@@ -22,9 +22,24 @@
 
 **Package:** `config/none/SerialInteraction`
 
-Executes interactions sequentially, one after another.
+Executes multiple interactions sequentially, one after another. Each interaction in the sequence must complete before the next one begins. This is the fundamental building block for multi-step abilities, consumables, combo finishers, and any interaction that requires ordered execution of multiple effects.
 
-### Structure
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"Serial"` |
+| `Interactions` | array | Required | List of interactions to execute in order |
+
+### Interactions Array Format
+
+The `Interactions` property accepts an array where each entry can be:
+
+1. **Inline interaction object** - Full interaction definition
+2. **String reference** - Path to another interaction file
+3. **Mixed format** - Combination of both
+
+**Inline interaction objects:**
 
 ```json
 {
@@ -36,7 +51,447 @@ Executes interactions sequentially, one after another.
 }
 ```
 
-Each interaction completes before the next begins.
+**String references:**
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    "Sword_Damage_Light",
+    "Sword_Sound_Hit",
+    "Sword_Particles_Slash"
+  ]
+}
+```
+
+**Mixed format:**
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    "Prepare_Animation",
+    { "Type": "DamageEntity", "DamageParameters": { "DamageAmount": 10 } },
+    "Cleanup_Effects"
+  ]
+}
+```
+
+### Execution Behavior
+
+Serial interactions execute **synchronously in order**. Each interaction must fully complete before the next one begins. This differs from [Parallel](#parallel) which starts all interactions simultaneously.
+
+**Execution flow:**
+
+```
+Serial Start
+    │
+    ▼
+┌─────────────────┐
+│ Interaction 1   │──► Wait for completion
+└─────────────────┘
+    │
+    ▼
+┌─────────────────┐
+│ Interaction 2   │──► Wait for completion
+└─────────────────┘
+    │
+    ▼
+┌─────────────────┐
+│ Interaction 3   │──► Wait for completion
+└─────────────────┘
+    │
+    ▼
+Serial Complete
+```
+
+**Important timing considerations:**
+
+- Interactions with `RunTime` will block until that duration completes
+- Instant interactions (like stat changes) complete immediately
+- Nested Serial blocks execute their full sequence before continuing
+- If any interaction fails, subsequent interactions may still execute (no short-circuit)
+
+### Deep Nesting Patterns
+
+Serial interactions can be nested within other control flow structures for complex multi-step behaviors.
+
+**Serial inside `Next` blocks (Charging):**
+
+```json
+{
+  "Type": "Charging",
+  "FailOnDamage": true,
+  "Next": {
+    "2.0": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ModifyInventory", "AdjustHeldItemQuantity": -1 },
+        { "Type": "ApplyEffect", "EffectId": "hytale:regeneration", "Duration": 30 }
+      ]
+    }
+  }
+}
+```
+
+**Serial inside `Then`/`Else` blocks (Condition):**
+
+```json
+{
+  "Type": "StatsCondition",
+  "Stat": "Health",
+  "Operator": "LessThan",
+  "Value": 25,
+  "ValueType": "Percent",
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "DamageEntity", "DamageParameters": { "DamageAmount": 999 } },
+      { "Type": "SendMessage", "Message": "Executed!" }
+    ]
+  }
+}
+```
+
+**Serial inside `Failed` blocks (Charging):**
+
+```json
+{
+  "Type": "Charging",
+  "FailOnDamage": true,
+  "Failed": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "PlaySound", "SoundId": "action_canceled" },
+      { "Type": "ClearItemAnimation" }
+    ]
+  },
+  "Next": { "1.0": "Consume_Complete" }
+}
+```
+
+**Serial inside Serial (deeply nested):**
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "Serial",
+      "Interactions": [
+        "Prepare_Phase_1",
+        "Execute_Phase_1"
+      ]
+    },
+    {
+      "Type": "Serial",
+      "Interactions": [
+        "Prepare_Phase_2",
+        "Execute_Phase_2"
+      ]
+    }
+  ]
+}
+```
+
+### Complete Examples
+
+**Dodge Mechanic (from Dodge_Left.json):**
+
+A dodge combines movement, animation, effects, and stat changes in sequence:
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "RunTime": 0.4,
+      "Effects": {
+        "AnimationTreeParameter": {
+          "ParameterId": "DodgeDirection",
+          "Value": "Left"
+        },
+        "TriggerAnimation": "Dodge",
+        "LocalSoundEventId": "hytale:sounds/player/dodge_whoosh"
+      },
+      "Next": {
+        "Type": "ApplyMovementImpulse",
+        "Direction": "Left",
+        "Force": 8.0
+      }
+    },
+    {
+      "Type": "ApplyEffect",
+      "EffectId": "hytale:invulnerable",
+      "Duration": 0.3
+    },
+    {
+      "Type": "ModifyStat",
+      "Stat": "Stamina",
+      "Amount": -15
+    }
+  ]
+}
+```
+
+**Double Jump (from Double_Jump.json):**
+
+Sequential checks and actions for an aerial ability:
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "StatsCondition",
+      "Stat": "Jumps",
+      "Operator": "GreaterThan",
+      "Value": 0,
+      "Then": {
+        "Type": "Serial",
+        "Interactions": [
+          {
+            "Type": "ApplyMovementImpulse",
+            "Direction": "Up",
+            "Force": 6.5
+          },
+          {
+            "Type": "ModifyStat",
+            "Stat": "Jumps",
+            "Amount": -1
+          },
+          {
+            "Type": "Simple",
+            "Effects": {
+              "TriggerAnimation": "DoubleJump",
+              "WorldSoundEventId": "hytale:sounds/player/jump"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+**Consumable with Charge (from Consume_Charge.json):**
+
+A consumable that requires holding, then executes multiple effects:
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "Charging",
+      "FailOnDamage": true,
+      "HorizontalSpeedMultiplier": 0.3,
+      "DisplayProgress": true,
+      "Effects": {
+        "ItemAnimationId": "Consume"
+      },
+      "Next": {
+        "0": {
+          "Type": "Serial",
+          "Interactions": [
+            { "Type": "ClearItemAnimation" }
+          ]
+        },
+        "2.0": {
+          "Type": "Serial",
+          "Interactions": [
+            { "Type": "ModifyInventory", "AdjustHeldItemQuantity": -1 },
+            { "Type": "ApplyEffect", "EffectId": "hytale:satiated", "Duration": 120 },
+            { "Type": "ModifyStat", "Stat": "Health", "Amount": 20 },
+            { "Type": "PlaySound", "SoundId": "hytale:sounds/player/eat_finish" }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+**Signature Ability (from Weapon_Sword_Signature_Vortexstrike.json):**
+
+A powerful ability with stamina cost, animation, damage, and cleanup:
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "StatsCondition",
+      "Stat": "SignatureEnergy",
+      "Operator": "GreaterOrEqual",
+      "Value": 100,
+      "Then": {
+        "Type": "Serial",
+        "Interactions": [
+          { "Type": "ModifyStat", "Stat": "SignatureEnergy", "Amount": -100 },
+          {
+            "Type": "Simple",
+            "RunTime": 1.2,
+            "Effects": {
+              "ItemAnimationId": "Vortexstrike",
+              "WorldSoundEventId": "hytale:sounds/weapons/sword_signature"
+            },
+            "Next": {
+              "Type": "DamageEntity",
+              "TargetSelector": {
+                "Type": "AOECircle",
+                "Radius": 4.0,
+                "Center": "Self"
+              },
+              "DamageParameters": {
+                "DamageAmount": 35,
+                "DamageCauseId": "Physical"
+              }
+            }
+          },
+          { "Type": "ApplyEffect", "EffectId": "hytale:slow", "Target": "Self", "Duration": 0.5 }
+        ]
+      },
+      "Else": {
+        "Type": "SendMessage",
+        "Message": "Not enough energy!"
+      }
+    }
+  ]
+}
+```
+
+**Arrow Volley (deep nesting example):**
+
+A charged ability that fires multiple projectiles in sequence:
+
+```json
+{
+  "Type": "Charging",
+  "AllowIndefiniteHold": true,
+  "Next": {
+    "0": "Bow_Cancel",
+    "1.5": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ConsumeAmmo", "AmmoType": "arrow", "Count": 5 },
+        {
+          "Type": "Repeat",
+          "Count": 5,
+          "Interval": 0.1,
+          "Interaction": {
+            "Type": "Serial",
+            "Interactions": [
+              {
+                "Type": "LaunchProjectile",
+                "ProjectileId": "arrow",
+                "Speed": 45,
+                "SpreadAngle": 15
+              },
+              {
+                "Type": "Simple",
+                "Effects": {
+                  "WorldSoundEventId": "hytale:sounds/weapons/bow_release"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "Type": "Simple",
+          "RunTime": 0.8,
+          "Effects": {
+            "ItemAnimationId": "Bow_Recover"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Serial vs Parallel Comparison
+
+| Aspect | Serial | Parallel |
+|--------|--------|----------|
+| **Execution order** | Sequential (1 → 2 → 3) | Simultaneous (1, 2, 3 all at once) |
+| **Timing** | Total time = sum of all interactions | Total time = longest interaction |
+| **Dependencies** | Each step can depend on previous | No ordering guarantees |
+| **Use case** | Multi-step abilities, state changes | Multiple simultaneous effects |
+| **Failure handling** | Subsequent steps still execute | All started regardless of failures |
+
+**When to use Serial:**
+- Stat changes that must happen before damage
+- Consuming items before applying effects
+- Animations that must play in sequence
+- Any ordered multi-step process
+
+**When to use Parallel:**
+- Applying multiple status effects at once
+- Playing multiple sounds/particles simultaneously
+- Independent effects that don't need ordering
+
+**Parallel example for reference:**
+
+```json
+{
+  "Type": "Parallel",
+  "Interactions": [
+    { "Type": "ApplyEffect", "EffectId": "hytale:burning", "Duration": 5 },
+    { "Type": "ApplyEffect", "EffectId": "hytale:slow", "Duration": 5 },
+    { "Type": "PlaySound", "SoundId": "fire_ignite" }
+  ]
+}
+```
+
+All three effects start at the same instant rather than one after another.
+
+### Common Patterns
+
+| Pattern | Description | Example Use |
+|---------|-------------|-------------|
+| **Sequential actions** | Multiple effects in order | Consume item → apply buff → play sound |
+| **Combo finishers** | Multi-hit or multi-effect attacks | Damage → knockback → particle burst |
+| **Stat changes before ability** | Resource consumption | Spend stamina → execute attack |
+| **Variable injection with Replace** | Template customization | Set variable → execute template |
+| **Conditional then actions** | Multiple effects on condition pass | Check health → heal → message → sound |
+| **Cleanup sequences** | Restore state after ability | Clear animation → reset cooldown → remove buff |
+
+### Integration with Replace
+
+Serial is commonly used with [Replace](#replace) to create reusable templates:
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "Replace",
+      "Var": "DamageAmount",
+      "DefaultValue": { "Interactions": [] }
+    },
+    {
+      "Type": "Replace",
+      "Var": "EffectToApply",
+      "DefaultOk": true,
+      "DefaultValue": {
+        "Interactions": ["No_Effect"]
+      }
+    }
+  ]
+}
+```
+
+Items or abilities calling this template provide their own `DamageAmount` and `EffectToApply` values.
+
+### Related Interactions
+
+- [Parallel](#parallel) - Execute interactions simultaneously instead of sequentially
+- [Condition](#condition) - Conditional branching (often contains Serial in Then/Else)
+- [StatsCondition](#statscondition) - Stat-based branching (often contains Serial in Then/Else)
+- [Replace](#replace) - Variable substitution for templates
+- [Repeat](#repeat) - Execute a Serial block multiple times
 
 ---
 
