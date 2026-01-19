@@ -27,17 +27,36 @@ The [docs/](./docs/) directory contains comprehensive API documentation:
 - [Blocks](./docs/blocks.md) - Block states and custom blocks
 - [Fluids](./docs/fluids.md) - Fluid systems
 - [Prefabs](./docs/prefabs.md) - Structure templates
+- [Prefab Categories](./docs/prefabs-categories.md) - Category system for prefabs
 - [Collision](./docs/collision.md) - Collision queries
 
 ### Entities
 - [Entities](./docs/entities.md) - Entity hierarchy
 - [Player](./docs/player.md) - Player API
 - [NPC](./docs/npc.md) - NPC and AI systems
+- [NPC Roles](./docs/npc-roles.md) - NPC role templates and behaviors
+- [Drops](./docs/drops.md) - Drop system and loot tables
 - [Projectiles](./docs/projectiles.md) - Projectile configuration
 
 ### Combat & Effects
 - [Combat](./docs/combat.md) - Damage and kill feed
 - [Effects & Stats](./docs/effects-stats.md) - Status effects and stats
+
+### Items
+- [Items](./docs/items.md) - Item definitions overview
+- [Block Items](./docs/items-blocks.md) - Block items
+- [Consumables](./docs/items-consumables.md) - Consumable items
+- [Crafting](./docs/items-crafting.md) - Crafting system
+- [Tools](./docs/items-tools.md) - Tool items
+- [Weapons](./docs/items-weapons.md) - Weapon templates
+
+### World Generation
+- [World Generation](./docs/worldgen.md) - World generation overview
+- [Zones](./docs/worldgen-zones.md) - Zone system
+- [Biomes](./docs/worldgen-biomes.md) - Biome definitions
+- [Terrain](./docs/worldgen-terrain.md) - Terrain layers
+- [Caves](./docs/worldgen-caves.md) - Cave system
+- [Prefabs](./docs/worldgen-prefabs.md) - Structure placement
 
 ### Interactions
 - [Interactions](./docs/interactions.md) - Interactions API overview
@@ -49,6 +68,7 @@ The [docs/](./docs/) directory contains comprehensive API documentation:
 ### Assets & Events
 - [Assets](./docs/assets.md) - Asset registry
 - [Asset Editor](./docs/asset-editor.md) - Editor events
+- [Audio](./docs/audio.md) - Audio system
 - [Events](./docs/events.md) - Event system overview
 - [Adventure](./docs/adventure.md) - Adventure gameplay events
 - [Singleplayer](./docs/singleplayer.md) - Singleplayer events
