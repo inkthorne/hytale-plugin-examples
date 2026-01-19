@@ -387,6 +387,8 @@ Applies physics force to entities, used for knockback, launches, and movement ef
 
 Applies status effects to entities (buffs, debuffs, damage over time, etc.).
 
+> **See also:** [Effects Reference](effects-stats.md#effects-status-effects) for the complete effect asset JSON structure including stat modifiers, application effects, and damage resistance.
+
 ### Structure
 
 ```json
@@ -474,6 +476,8 @@ Removes status effects from entities.
 ## ChangeStat
 
 Modifies entity stats like health, stamina, or signature energy.
+
+> **See also:** [Stat Definitions](effects-stats.md#stat-definitions) for the complete stat asset JSON structure including regeneration rules, conditions, and min/max value effects.
 
 **Example locations:**
 - `Server/Entity/Effects/Potion/*_Regen.json`

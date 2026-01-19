@@ -2,7 +2,7 @@
 
 This document covers damage events, combat systems, and kill feed customization.
 
-> **See also:** For JSON-based combat configuration (damage interactions, effects, target selectors), see [Interactions API Reference](interactions.md#reference).
+> **See also:** For JSON-based combat configuration (damage interactions, effects, target selectors), see [Interactions API Reference](interactions.md#reference). For effect and stat asset definitions, see [Effects & Stats Reference](effects-stats.md).
 
 ## Damage Events (DamageEventSystem)
 
