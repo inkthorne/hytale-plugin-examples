@@ -32,9 +32,14 @@
 **Control Flow** ([interactions-flow.md](interactions-flow.md))
 - [Serial](interactions-flow.md#serial) - Execute interactions sequentially
 - [Parallel](interactions-flow.md#parallel) - Execute interactions concurrently
-- [Condition](interactions-flow.md#condition) - Conditional branching
+- [Condition](interactions-flow.md#condition) - Game mode and movement state branching
 - [StatsCondition](interactions-flow.md#statscondition) - Branch based on entity stat values
 - [EffectCondition](interactions-flow.md#effectcondition) - Branch based on active status effects
+- [BlockCondition](interactions-flow.md#blockcondition) - Branch based on block type/state/tag
+- [CooldownCondition](interactions-flow.md#cooldowncondition) - Branch based on cooldown completion
+- [MovementCondition](interactions-flow.md#movementcondition) - Direction-based input branching
+- [DestroyCondition](interactions-flow.md#destroycondition) - Check if block is destroyable
+- [PlacementCountCondition](interactions-flow.md#placementcountcondition) - Branch based on block placement count
 - [Repeat](interactions-flow.md#repeat) - Loop execution of interactions
 - [Select](interactions-flow.md#select) - Random weighted selection
 - [Replace](interactions-flow.md#replace) - Variable substitution for templates

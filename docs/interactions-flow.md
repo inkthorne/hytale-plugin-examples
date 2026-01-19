@@ -8,9 +8,14 @@
 |-------------|-------------|
 | [Serial](#serial) | Execute interactions sequentially |
 | [Parallel](#parallel) | Execute interactions concurrently |
-| [Condition](#condition) | Conditional branching |
+| [Condition](#condition) | Game mode and movement state branching |
 | [StatsCondition](#statscondition) | Branch based on entity stat values |
 | [EffectCondition](#effectcondition) | Branch based on active status effects |
+| [BlockCondition](#blockcondition) | Branch based on block type/state/tag |
+| [CooldownCondition](#cooldowncondition) | Branch based on cooldown completion |
+| [MovementCondition](#movementcondition) | Direction-based input branching |
+| [DestroyCondition](#destroycondition) | Check if block is destroyable |
+| [PlacementCountCondition](#placementcountcondition) | Branch based on block placement count |
 | [Repeat](#repeat) | Loop execution of interactions |
 | [Select](#select) | Random weighted selection |
 | [Replace](#replace) | Variable substitution for templates |
@@ -929,37 +934,186 @@ Parallel execution has specific error handling behavior:
 
 **Package:** `config/none/ConditionInteraction`
 
-Conditional branching based on various conditions.
+The base Condition interaction provides branching based on game mode and entity movement states (jumping, swimming, crouching, running, flying). It evaluates the current state of an entity and branches to either `Next` (condition passed) or `Failed` (condition did not pass).
 
-### Structure
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"Condition"` |
+| `RequiredGameMode` | string | `null` | Game mode that must be active (`Creative`, `Survival`, `Adventure`) |
+| `Jumping` | boolean | `null` | If set, entity must be/not be jumping |
+| `Swimming` | boolean | `null` | If set, entity must be/not be swimming |
+| `Crouching` | boolean | `null` | If set, entity must be/not be crouching |
+| `Running` | boolean | `null` | If set, entity must be/not be running (sprinting) |
+| `Flying` | boolean | `null` | If set, entity must be/not be flying |
+| `Next` | interaction | `null` | Interaction to execute when condition passes |
+| `Failed` | interaction | `null` | Interaction to execute when condition fails |
+
+### Branching Behavior
+
+Unlike most condition interactions that use `Then`/`Else`, the base Condition uses `Next`/`Failed`:
+
+- **Next**: Executed when ALL specified conditions are met
+- **Failed**: Executed when ANY specified condition is not met
+- Unset properties (`null`) are not checked - only explicitly set conditions are evaluated
+
+### Execution Flow
+
+```
+Condition Evaluation
+    │
+    ├─► Check RequiredGameMode (if set)
+    │       └─► Mismatch? → Execute Failed
+    │
+    ├─► Check Jumping (if set)
+    │       └─► Mismatch? → Execute Failed
+    │
+    ├─► Check Swimming (if set)
+    │       └─► Mismatch? → Execute Failed
+    │
+    ├─► Check Crouching (if set)
+    │       └─► Mismatch? → Execute Failed
+    │
+    ├─► Check Running (if set)
+    │       └─► Mismatch? → Execute Failed
+    │
+    ├─► Check Flying (if set)
+    │       └─► Mismatch? → Execute Failed
+    │
+    └─► All checks passed → Execute Next
+```
+
+### Examples
+
+**Game Mode Restriction:**
+
+Only allow ability in Creative mode:
 
 ```json
 {
   "Type": "Condition",
-  "Condition": {
-    "Type": "HasEffect",
-    "EffectId": "hytale:burning"
+  "RequiredGameMode": "Creative",
+  "Next": {
+    "Type": "SpawnPrefab",
+    "PrefabId": "debug_entity"
   },
-  "Then": {
-    "Type": "DamageEntity",
-    "DamageParameters": { "DamageAmount": 20, "DamageCauseId": "Fire" }
-  },
-  "Else": {
-    "Type": "DamageEntity",
-    "DamageParameters": { "DamageAmount": 10, "DamageCauseId": "Fire" }
+  "Failed": {
+    "Type": "SendMessage",
+    "Message": "Creative mode only!"
   }
 }
 ```
 
-### Condition Types
+**Aerial Combat Ability:**
 
-| Type | Description | Parameters |
-|------|-------------|------------|
-| `HasEffect` | Check if entity has status effect | `EffectId` |
-| `IsBlocking` | Check if entity is blocking | - |
-| `IsOnGround` | Check if entity is grounded | - |
-| `HasItem` | Check if entity has item | `ItemId` |
-| `Random` | Random chance | `Chance` (0-1) |
+Special attack that only works while jumping:
+
+```json
+{
+  "Type": "Condition",
+  "Jumping": true,
+  "Next": {
+    "Type": "Serial",
+    "Interactions": [
+      {
+        "Type": "ApplyMovementImpulse",
+        "Direction": "Down",
+        "Force": 15.0
+      },
+      {
+        "Type": "DamageEntity",
+        "TargetSelector": { "Type": "AOECircle", "Radius": 3.0 },
+        "DamageParameters": { "DamageAmount": 40 }
+      }
+    ]
+  },
+  "Failed": "Ground_Attack_Normal"
+}
+```
+
+**Aquatic Boost:**
+
+Faster swimming when already in water:
+
+```json
+{
+  "Type": "Condition",
+  "Swimming": true,
+  "Next": {
+    "Type": "ApplyEffect",
+    "EffectId": "hytale:dolphins_grace",
+    "Duration": 10
+  }
+}
+```
+
+**Stealth Attack:**
+
+Bonus damage when attacking from crouch:
+
+```json
+{
+  "Type": "Condition",
+  "Crouching": true,
+  "Next": {
+    "Type": "DamageEntity",
+    "DamageParameters": { "DamageAmount": 50, "DamageCauseId": "Physical" }
+  },
+  "Failed": {
+    "Type": "DamageEntity",
+    "DamageParameters": { "DamageAmount": 20, "DamageCauseId": "Physical" }
+  }
+}
+```
+
+**Sprint Attack:**
+
+Momentum-based damage scaling:
+
+```json
+{
+  "Type": "Condition",
+  "Running": true,
+  "Next": {
+    "Type": "Serial",
+    "Interactions": [
+      {
+        "Type": "DamageEntity",
+        "DamageParameters": { "DamageAmount": 35, "KnockbackForce": 12.0 }
+      },
+      {
+        "Type": "Simple",
+        "Effects": { "WorldSoundEventId": "charge_impact" }
+      }
+    ]
+  },
+  "Failed": "Attack_Normal"
+}
+```
+
+**Multiple Conditions:**
+
+All specified conditions must be true:
+
+```json
+{
+  "Type": "Condition",
+  "RequiredGameMode": "Survival",
+  "Running": true,
+  "Jumping": false,
+  "Next": "Sprint_Slide_Start",
+  "Failed": "Movement_Normal"
+}
+```
+
+This checks: Survival mode AND sprinting AND NOT jumping.
+
+### Related Interactions
+
+- [StatsCondition](#statscondition) - Branch based on stat values
+- [EffectCondition](#effectcondition) - Branch based on active effects
+- [MovementCondition](#movementcondition) - Branch based on movement direction input
 
 ---
 
@@ -967,38 +1121,70 @@ Conditional branching based on various conditions.
 
 **Package:** `config/none/StatsConditionInteraction`
 
-Branch based on entity stat values.
+Branch based on entity stat values. Compares a stat against a threshold value using configurable operators. Supports both absolute values and percentages of maximum. Essential for resource gating, execute mechanics, and stat-based ability variations.
 
-### Structure
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"StatsCondition"` |
+| `Stat` | string | Required | Stat identifier to check |
+| `Operator` | string | Required | Comparison operator |
+| `Value` | float | Required | Value to compare against |
+| `ValueType` | string | `"Absolute"` | How to interpret `Value` |
+| `Lenient` | boolean | `false` | If true, passes when stat doesn't exist |
+| `Then` | interaction | `null` | Interaction when condition is true |
+| `Else` | interaction | `null` | Interaction when condition is false |
+
+### Operator Reference
+
+| Operator | Symbol | Description |
+|----------|--------|-------------|
+| `LessThan` | `<` | Stat value is less than threshold |
+| `GreaterThan` | `>` | Stat value is greater than threshold |
+| `Equals` | `==` | Stat value equals threshold |
+| `LessOrEqual` | `<=` | Stat value is less than or equal to threshold |
+| `GreaterOrEqual` | `>=` | Stat value is greater than or equal to threshold |
+
+### ValueType Reference
+
+| ValueType | Description |
+|-----------|-------------|
+| `Absolute` | Compare against the raw stat value |
+| `Percent` | Compare against percentage of maximum (0-100) |
+
+### Lenient Mode
+
+When `Lenient` is `true`, the condition passes if the stat doesn't exist on the entity. This is useful for optional stats that not all entities have.
 
 ```json
 {
   "Type": "StatsCondition",
-  "Stat": "Health",
-  "Operator": "LessThan",
-  "Value": 50,
-  "ValueType": "Percent",
-  "Then": {
-    "Type": "DamageEntity",
-    "DamageParameters": { "DamageAmount": 30 }
-  },
-  "Else": {
-    "Type": "DamageEntity",
-    "DamageParameters": { "DamageAmount": 10 }
-  }
+  "Stat": "CustomAbilityCharge",
+  "Operator": "GreaterOrEqual",
+  "Value": 100,
+  "Lenient": true,
+  "Then": "Execute_Ability",
+  "Else": "Charge_More"
 }
 ```
 
-### Properties
+If an entity doesn't have `CustomAbilityCharge`, it will execute `Then` instead of failing.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `Stat` | string | Stat to check (Health, Stamina, SignatureEnergy) |
-| `Operator` | string | `LessThan`, `GreaterThan`, `Equals`, `LessOrEqual`, `GreaterOrEqual` |
-| `Value` | float | Value to compare against |
-| `ValueType` | string | `Absolute` or `Percent` (of max) |
+### Common Stats
 
-### Example: Execute Low Health Enemies
+| Stat | Description |
+|------|-------------|
+| `Health` | Current health points |
+| `Stamina` | Current stamina points |
+| `SignatureEnergy` | Signature ability charge |
+| `Mana` | Magic resource (if applicable) |
+| `Hunger` | Hunger level |
+| `Temperature` | Entity temperature |
+
+### Examples
+
+**Execute Mechanic (Low Health Finisher):**
 
 ```json
 {
@@ -1015,13 +1201,134 @@ Branch based on entity stat values.
         "DamageParameters": { "DamageAmount": 999, "DamageCauseId": "Physical" }
       },
       {
-        "Type": "SendMessage",
-        "Message": "Executed!"
+        "Type": "Simple",
+        "Effects": {
+          "WorldSoundEventId": "execute_sound",
+          "ParticleEffectId": "execute_particles"
+        }
       }
+    ]
+  },
+  "Else": {
+    "Type": "DamageEntity",
+    "DamageParameters": { "DamageAmount": 20, "DamageCauseId": "Physical" }
+  }
+}
+```
+
+**Stamina Cost Check:**
+
+Verify stamina before executing ability:
+
+```json
+{
+  "Type": "StatsCondition",
+  "Stat": "Stamina",
+  "Operator": "GreaterOrEqual",
+  "Value": 25,
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ModifyStat", "Stat": "Stamina", "Amount": -25 },
+      "Dodge_Execute"
+    ]
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Not enough stamina!"
+  }
+}
+```
+
+**Signature Energy Threshold:**
+
+```json
+{
+  "Type": "StatsCondition",
+  "Stat": "SignatureEnergy",
+  "Operator": "GreaterOrEqual",
+  "Value": 100,
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ModifyStat", "Stat": "SignatureEnergy", "Amount": -100 },
+      "Signature_Ability_Execute"
+    ]
+  },
+  "Else": {
+    "Type": "Simple",
+    "Effects": { "WorldSoundEventId": "ability_not_ready" }
+  }
+}
+```
+
+**Full Health Check:**
+
+```json
+{
+  "Type": "StatsCondition",
+  "Stat": "Health",
+  "Operator": "Equals",
+  "Value": 100,
+  "ValueType": "Percent",
+  "Then": "Apply_Full_Health_Bonus",
+  "Else": "Apply_Normal_Effect"
+}
+```
+
+**Critical Health Warning:**
+
+```json
+{
+  "Type": "StatsCondition",
+  "Stat": "Health",
+  "Operator": "LessOrEqual",
+  "Value": 20,
+  "ValueType": "Percent",
+  "Then": {
+    "Type": "Parallel",
+    "Interactions": [
+      { "Type": "ApplyEffect", "EffectId": "hytale:critical_health_warning", "Duration": 5 },
+      { "Type": "Simple", "Effects": { "WorldSoundEventId": "heartbeat_warning" } }
     ]
   }
 }
 ```
+
+**Nested Stats Checks:**
+
+Multiple resource requirements:
+
+```json
+{
+  "Type": "StatsCondition",
+  "Stat": "Stamina",
+  "Operator": "GreaterOrEqual",
+  "Value": 50,
+  "Then": {
+    "Type": "StatsCondition",
+    "Stat": "Mana",
+    "Operator": "GreaterOrEqual",
+    "Value": 30,
+    "Then": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ModifyStat", "Stat": "Stamina", "Amount": -50 },
+        { "Type": "ModifyStat", "Stat": "Mana", "Amount": -30 },
+        "Hybrid_Ability_Execute"
+      ]
+    },
+    "Else": { "Type": "SendMessage", "Message": "Not enough mana!" }
+  },
+  "Else": { "Type": "SendMessage", "Message": "Not enough stamina!" }
+}
+```
+
+### Related Interactions
+
+- [Condition](#condition) - Game mode and movement state branching
+- [EffectCondition](#effectcondition) - Branch based on active effects
+- [ModifyStat](interactions-combat.md#changestat) - Modify stat values
 
 ---
 
@@ -1029,18 +1336,64 @@ Branch based on entity stat values.
 
 **Package:** `config/none/EffectConditionInteraction`
 
-Branch based on active status effects.
+Branch based on whether an entity has active status effects. Supports checking for multiple effects with configurable match modes (`All` or `None`). Use this for effect-based combat bonuses, immunity checks, and tiered buff systems.
 
-### Structure
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"EffectCondition"` |
+| `EntityEffectIds` | array | Required | List of effect IDs to check |
+| `Match` | string | `"All"` | Match mode: `"All"` or `"None"` |
+| `EntityTarget` | string | `"Self"` | Which entity to check (`"Self"`, `"Target"`) |
+| `Then` | interaction | `null` | Interaction when condition is true |
+| `Else` | interaction | `null` | Interaction when condition is false |
+
+### Match Modes
+
+| Mode | Description |
+|------|-------------|
+| `All` | Entity must have ALL specified effects |
+| `None` | Entity must have NONE of the specified effects |
+
+### EntityTarget Reference
+
+| Target | Description |
+|--------|-------------|
+| `Self` | Check the entity executing the interaction |
+| `Target` | Check the target entity (from context) |
+
+### Execution Behavior
+
+```
+EffectCondition Evaluation
+    │
+    ├─► Resolve EntityTarget (Self or Target)
+    │
+    ├─► For each effect in EntityEffectIds:
+    │       └─► Check if entity has effect
+    │
+    ├─► Match Mode: All
+    │       └─► ALL effects present? → Then
+    │       └─► ANY effect missing? → Else
+    │
+    └─► Match Mode: None
+            └─► NO effects present? → Then
+            └─► ANY effect present? → Else
+```
+
+### Examples
+
+**Single Effect Check:**
 
 ```json
 {
   "Type": "EffectCondition",
-  "EffectId": "hytale:burning",
-  "Target": "Target",
+  "EntityEffectIds": ["hytale:burning"],
+  "EntityTarget": "Target",
   "Then": {
     "Type": "DamageEntity",
-    "DamageParameters": { "DamageAmount": 20, "DamageCauseId": "Fire" }
+    "DamageParameters": { "DamageAmount": 30, "DamageCauseId": "Fire" }
   },
   "Else": {
     "Type": "ApplyEffect",
@@ -1049,6 +1402,766 @@ Branch based on active status effects.
   }
 }
 ```
+
+If target is burning, deal bonus fire damage. Otherwise, ignite them.
+
+**Multiple Effects Check (All):**
+
+Combo system requiring multiple debuffs:
+
+```json
+{
+  "Type": "EffectCondition",
+  "EntityEffectIds": ["hytale:burning", "hytale:poisoned", "hytale:frozen"],
+  "Match": "All",
+  "EntityTarget": "Target",
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      {
+        "Type": "DamageEntity",
+        "DamageParameters": { "DamageAmount": 100, "DamageCauseId": "Elemental" }
+      },
+      { "Type": "ClearEntityEffect", "EffectId": "hytale:burning" },
+      { "Type": "ClearEntityEffect", "EffectId": "hytale:poisoned" },
+      { "Type": "ClearEntityEffect", "EffectId": "hytale:frozen" },
+      { "Type": "Simple", "Effects": { "ParticleEffectId": "elemental_explosion" } }
+    ]
+  },
+  "Else": "Normal_Attack"
+}
+```
+
+**Immunity Check (None):**
+
+Prevent effect stacking:
+
+```json
+{
+  "Type": "EffectCondition",
+  "EntityEffectIds": ["hytale:immunity"],
+  "Match": "None",
+  "EntityTarget": "Target",
+  "Then": {
+    "Type": "ApplyEffect",
+    "EffectId": "hytale:stun",
+    "Duration": 3
+  },
+  "Else": {
+    "Type": "Simple",
+    "Effects": { "WorldSoundEventId": "ability_blocked" }
+  }
+}
+```
+
+Only apply stun if target doesn't have immunity.
+
+**Tiered Buff System (Meat_TierCheck pattern):**
+
+Check for food buff tiers:
+
+```json
+{
+  "Type": "EffectCondition",
+  "EntityEffectIds": ["hytale:well_fed_tier3"],
+  "Match": "None",
+  "EntityTarget": "Self",
+  "Then": {
+    "Type": "EffectCondition",
+    "EntityEffectIds": ["hytale:well_fed_tier2"],
+    "Match": "None",
+    "EntityTarget": "Self",
+    "Then": {
+      "Type": "EffectCondition",
+      "EntityEffectIds": ["hytale:well_fed_tier1"],
+      "Match": "None",
+      "EntityTarget": "Self",
+      "Then": "Apply_Tier1_Buff",
+      "Else": "Upgrade_To_Tier2"
+    },
+    "Else": "Upgrade_To_Tier3"
+  },
+  "Else": "Refresh_Tier3"
+}
+```
+
+**Self-Buff Check:**
+
+Only allow ability if not already buffed:
+
+```json
+{
+  "Type": "EffectCondition",
+  "EntityEffectIds": ["hytale:enraged"],
+  "Match": "None",
+  "EntityTarget": "Self",
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ApplyEffect", "EffectId": "hytale:enraged", "Duration": 30 },
+      { "Type": "Simple", "Effects": { "TriggerAnimation": "Enrage" } }
+    ]
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Already enraged!"
+  }
+}
+```
+
+**Elemental Weakness:**
+
+Bonus damage against debuffed targets:
+
+```json
+{
+  "Type": "EffectCondition",
+  "EntityEffectIds": ["hytale:wet"],
+  "Match": "All",
+  "EntityTarget": "Target",
+  "Then": {
+    "Type": "Parallel",
+    "Interactions": [
+      { "Type": "DamageEntity", "DamageParameters": { "DamageAmount": 40, "DamageCauseId": "Lightning" } },
+      { "Type": "ApplyEffect", "EffectId": "hytale:shocked", "Duration": 3 }
+    ]
+  },
+  "Else": {
+    "Type": "DamageEntity",
+    "DamageParameters": { "DamageAmount": 20, "DamageCauseId": "Lightning" }
+  }
+}
+```
+
+### Related Interactions
+
+- [Condition](#condition) - Game mode and movement state branching
+- [StatsCondition](#statscondition) - Branch based on stat values
+- [ApplyEffect](interactions-combat.md#applyeffect) - Apply status effects
+- [ClearEntityEffect](interactions-combat.md#clearentityeffect) - Remove status effects
+
+---
+
+## BlockCondition
+
+**Package:** `config/client/BlockConditionInteraction`
+
+Branch based on block type, state, or tag at a target position. Uses a `Matchers` array with `BlockMatcher` objects that can check block IDs, block states, and tags. Supports face-specific matching for directional placement logic.
+
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"BlockCondition"` |
+| `Matchers` | array | Required | List of `BlockMatcher` objects |
+| `Then` | interaction | `null` | Interaction when any matcher succeeds |
+| `Else` | interaction | `null` | Interaction when all matchers fail |
+
+### BlockMatcher Structure
+
+Each `BlockMatcher` in the array has:
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Face` | string | `"None"` | Which face to check relative to target |
+| `StaticFace` | boolean | `false` | If true, face is absolute; if false, face is relative to player |
+| `Id` | string | `null` | Exact block ID to match |
+| `State` | object | `null` | Block state properties to match |
+| `Tag` | string | `null` | Block tag to match |
+| `TagIndex` | int | `null` | Specific tag index for multi-tag blocks |
+
+### Face Reference
+
+| Face | Description |
+|------|-------------|
+| `None` | Check block at target position |
+| `Up` | Check block above target |
+| `Down` | Check block below target |
+| `Left` | Check block to the left |
+| `Right` | Check block to the right |
+| `Front` | Check block in front |
+| `Back` | Check block behind |
+
+### StaticFace Behavior
+
+| StaticFace | Behavior |
+|------------|----------|
+| `false` | Face directions are relative to player's facing direction |
+| `true` | Face directions are absolute world directions |
+
+### Examples
+
+**Seed Planting Validation:**
+
+Check if target block is farmland before planting:
+
+```json
+{
+  "Type": "BlockCondition",
+  "Matchers": [
+    {
+      "Face": "Down",
+      "Tag": "hytale:farmland"
+    }
+  ],
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "PlaceBlock", "BlockId": "hytale:wheat_seeds" },
+      { "Type": "ModifyInventory", "AdjustHeldItemQuantity": -1 }
+    ]
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Seeds must be planted on farmland!"
+  }
+}
+```
+
+**Specific Block ID Check:**
+
+Only interact with specific block type:
+
+```json
+{
+  "Type": "BlockCondition",
+  "Matchers": [
+    {
+      "Id": "hytale:crafting_table"
+    }
+  ],
+  "Then": {
+    "Type": "OpenPage",
+    "PageId": "crafting_ui"
+  }
+}
+```
+
+**Block State Check:**
+
+Check for specific block state (e.g., open door):
+
+```json
+{
+  "Type": "BlockCondition",
+  "Matchers": [
+    {
+      "Id": "hytale:wooden_door",
+      "State": { "open": "true" }
+    }
+  ],
+  "Then": "Close_Door_Interaction",
+  "Else": "Open_Door_Interaction"
+}
+```
+
+**Multiple Matchers (OR logic):**
+
+Plant can be placed on multiple soil types:
+
+```json
+{
+  "Type": "BlockCondition",
+  "Matchers": [
+    { "Face": "Down", "Tag": "hytale:farmland" },
+    { "Face": "Down", "Tag": "hytale:grass" },
+    { "Face": "Down", "Id": "hytale:dirt" }
+  ],
+  "Then": "Plant_Seed",
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Cannot plant here!"
+  }
+}
+```
+
+**Wall Placement Check:**
+
+Check for solid block behind for wall-mounted items:
+
+```json
+{
+  "Type": "BlockCondition",
+  "Matchers": [
+    {
+      "Face": "Back",
+      "StaticFace": false,
+      "Tag": "hytale:solid"
+    }
+  ],
+  "Then": "Place_Wall_Torch",
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Requires a solid wall behind!"
+  }
+}
+```
+
+### Related Interactions
+
+- [DestroyCondition](#destroycondition) - Check if block is destroyable
+- [PlacementCountCondition](#placementcountcondition) - Check block placement limits
+- [Block Interactions](interactions-world.md#block-interactions) - Break or place blocks
+
+---
+
+## CooldownCondition
+
+**Package:** `config/client/CooldownConditionInteraction`
+
+Branch based on whether a cooldown has completed. Checks if the specified cooldown timer has elapsed, allowing time-gated abilities and rate limiting.
+
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"CooldownCondition"` |
+| `Cooldown` | string | Required | Cooldown identifier to check |
+| `Then` | interaction | `null` | Interaction when cooldown is ready |
+| `Else` | interaction | `null` | Interaction when cooldown is active |
+
+### Execution Behavior
+
+CooldownCondition checks if the specified cooldown timer has expired:
+
+- **Then**: Executed when cooldown has elapsed (ability is ready)
+- **Else**: Executed when cooldown is still active (ability on cooldown)
+
+### Examples
+
+**Basic Ability Cooldown:**
+
+```json
+{
+  "Type": "CooldownCondition",
+  "Cooldown": "dash_ability",
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      "Execute_Dash",
+      { "Type": "StartCooldown", "Cooldown": "dash_ability", "Duration": 5.0 }
+    ]
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Dash is on cooldown!"
+  }
+}
+```
+
+**Ultimate Ability Check:**
+
+```json
+{
+  "Type": "CooldownCondition",
+  "Cooldown": "ultimate_ability",
+  "Then": {
+    "Type": "StatsCondition",
+    "Stat": "SignatureEnergy",
+    "Operator": "GreaterOrEqual",
+    "Value": 100,
+    "Then": {
+      "Type": "Serial",
+      "Interactions": [
+        { "Type": "ModifyStat", "Stat": "SignatureEnergy", "Amount": -100 },
+        "Execute_Ultimate",
+        { "Type": "StartCooldown", "Cooldown": "ultimate_ability", "Duration": 60.0 }
+      ]
+    },
+    "Else": { "Type": "SendMessage", "Message": "Not enough energy!" }
+  },
+  "Else": {
+    "Type": "Simple",
+    "Effects": { "WorldSoundEventId": "ability_not_ready" }
+  }
+}
+```
+
+**Item Use Cooldown:**
+
+```json
+{
+  "Type": "CooldownCondition",
+  "Cooldown": "health_potion",
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ModifyStat", "Stat": "Health", "Amount": 50 },
+      { "Type": "ModifyInventory", "AdjustHeldItemQuantity": -1 },
+      { "Type": "StartCooldown", "Cooldown": "health_potion", "Duration": 30.0 },
+      { "Type": "Simple", "Effects": { "WorldSoundEventId": "potion_drink" } }
+    ]
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Potion on cooldown!"
+  }
+}
+```
+
+### Related Interactions
+
+- [Condition](#condition) - Base conditional branching
+- [StatsCondition](#statscondition) - Resource-based gating
+
+---
+
+## MovementCondition
+
+**Package:** `config/client/MovementConditionInteraction`
+
+Branch based on player movement input direction. Provides eight directional branches plus a failed branch, enabling direction-based combat abilities like directional dodges, strafing attacks, and movement-responsive mechanics.
+
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"MovementCondition"` |
+| `Forward` | interaction | `null` | Interaction when moving forward |
+| `Back` | interaction | `null` | Interaction when moving backward |
+| `Left` | interaction | `null` | Interaction when moving left |
+| `Right` | interaction | `null` | Interaction when moving right |
+| `ForwardLeft` | interaction | `null` | Interaction when moving forward-left diagonal |
+| `ForwardRight` | interaction | `null` | Interaction when moving forward-right diagonal |
+| `BackLeft` | interaction | `null` | Interaction when moving backward-left diagonal |
+| `BackRight` | interaction | `null` | Interaction when moving backward-right diagonal |
+| `Failed` | interaction | `null` | Interaction when no movement or no matching direction |
+
+### Direction Detection
+
+Directions are based on player input relative to camera facing:
+
+```
+        Forward
+           ↑
+   ForwardLeft  ForwardRight
+        ↖   ↗
+Left  ←       →  Right
+        ↙   ↘
+   BackLeft    BackRight
+           ↓
+         Back
+```
+
+### Execution Behavior
+
+1. Reads current movement input direction
+2. Matches to closest of 8 cardinal/diagonal directions
+3. Executes corresponding branch interaction
+4. If no movement input or no branch defined for direction, executes `Failed`
+
+### Examples
+
+**Directional Dodge System:**
+
+```json
+{
+  "Type": "MovementCondition",
+  "Forward": "Dodge_Forward",
+  "Back": "Dodge_Back",
+  "Left": "Dodge_Left",
+  "Right": "Dodge_Right",
+  "ForwardLeft": "Dodge_Forward_Left",
+  "ForwardRight": "Dodge_Forward_Right",
+  "BackLeft": "Dodge_Back_Left",
+  "BackRight": "Dodge_Back_Right",
+  "Failed": "Dodge_Back"
+}
+```
+
+**Directional Attack Variations:**
+
+```json
+{
+  "Type": "MovementCondition",
+  "Forward": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ApplyMovementImpulse", "Direction": "Forward", "Force": 5.0 },
+      { "Type": "DamageEntity", "DamageParameters": { "DamageAmount": 25 } }
+    ]
+  },
+  "Back": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ApplyMovementImpulse", "Direction": "Back", "Force": 3.0 },
+      { "Type": "DamageEntity", "DamageParameters": { "DamageAmount": 15 } }
+    ]
+  },
+  "Left": "Slash_Left",
+  "Right": "Slash_Right",
+  "Failed": "Slash_Neutral"
+}
+```
+
+**Simple Four-Direction Dodge:**
+
+Only handle cardinal directions, default others to Failed:
+
+```json
+{
+  "Type": "MovementCondition",
+  "Forward": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ApplyMovementImpulse", "Direction": "Forward", "Force": 8.0 },
+      { "Type": "ModifyStat", "Stat": "Stamina", "Amount": -20 },
+      { "Type": "ApplyEffect", "EffectId": "hytale:invulnerable", "Duration": 0.3 }
+    ]
+  },
+  "Back": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ApplyMovementImpulse", "Direction": "Back", "Force": 8.0 },
+      { "Type": "ModifyStat", "Stat": "Stamina", "Amount": -20 },
+      { "Type": "ApplyEffect", "EffectId": "hytale:invulnerable", "Duration": 0.3 }
+    ]
+  },
+  "Left": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ApplyMovementImpulse", "Direction": "Left", "Force": 8.0 },
+      { "Type": "ModifyStat", "Stat": "Stamina", "Amount": -20 },
+      { "Type": "ApplyEffect", "EffectId": "hytale:invulnerable", "Duration": 0.3 }
+    ]
+  },
+  "Right": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "ApplyMovementImpulse", "Direction": "Right", "Force": 8.0 },
+      { "Type": "ModifyStat", "Stat": "Stamina", "Amount": -20 },
+      { "Type": "ApplyEffect", "EffectId": "hytale:invulnerable", "Duration": 0.3 }
+    ]
+  },
+  "Failed": {
+    "Type": "SendMessage",
+    "Message": "Hold a direction to dodge!"
+  }
+}
+```
+
+**Movement-Based Attack Selection:**
+
+```json
+{
+  "Type": "StatsCondition",
+  "Stat": "Stamina",
+  "Operator": "GreaterOrEqual",
+  "Value": 15,
+  "Then": {
+    "Type": "MovementCondition",
+    "Forward": "Lunge_Attack",
+    "Back": "Retreating_Slash",
+    "Left": "Sidestep_Left_Attack",
+    "Right": "Sidestep_Right_Attack",
+    "Failed": "Standing_Attack"
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Not enough stamina!"
+  }
+}
+```
+
+### Related Interactions
+
+- [Condition](#condition) - Movement state branching (jumping, running, etc.)
+- [ApplyMovementImpulse](interactions-combat.md#applyforce) - Apply movement forces
+
+---
+
+## DestroyCondition
+
+**Package:** `config/server/DestroyConditionInteraction`
+
+Server-side condition that checks if a block at the target position is destroyable. Used to validate block breaking operations before execution, preventing invalid destruction attempts.
+
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"DestroyCondition"` |
+| `Then` | interaction | `null` | Interaction when block is destroyable |
+| `Else` | interaction | `null` | Interaction when block is not destroyable |
+
+### Execution Behavior
+
+DestroyCondition performs server-side validation:
+
+1. Reads target block position from interaction context
+2. Checks if block exists and is marked as destroyable
+3. Considers block properties, protection zones, and game rules
+4. Branches to `Then` if destruction is allowed, `Else` if blocked
+
+### Examples
+
+**Break Container with Validation:**
+
+```json
+{
+  "Type": "DestroyCondition",
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "DropContainerContents" },
+      { "Type": "BreakBlock" },
+      { "Type": "Simple", "Effects": { "WorldSoundEventId": "container_break" } }
+    ]
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "This block cannot be destroyed!"
+  }
+}
+```
+
+**Mining Tool Validation:**
+
+```json
+{
+  "Type": "DestroyCondition",
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      {
+        "Type": "Simple",
+        "RunTime": 0.5,
+        "Effects": { "ItemAnimationId": "Mining" }
+      },
+      { "Type": "BreakBlock" },
+      { "Type": "Simple", "Effects": { "ParticleEffectId": "block_break_particles" } }
+    ]
+  },
+  "Else": {
+    "Type": "Simple",
+    "Effects": { "WorldSoundEventId": "tool_denied" }
+  }
+}
+```
+
+**Protected Block Check:**
+
+```json
+{
+  "Type": "DestroyCondition",
+  "Then": {
+    "Type": "Charging",
+    "FailOnDamage": true,
+    "Next": {
+      "1.0": { "Type": "BreakBlock" }
+    }
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "This area is protected!"
+  }
+}
+```
+
+### Related Interactions
+
+- [BlockCondition](#blockcondition) - Check block type/state
+- [Block Interactions](interactions-world.md#block-interactions) - Break or place blocks
+
+---
+
+## PlacementCountCondition
+
+**Package:** `config/server/PlacementCountConditionInteraction`
+
+Server-side condition that branches based on the count of a specific block type placed in an area or by the player. Used to enforce placement limits for special blocks like teleporters or spawners.
+
+### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"PlacementCountCondition"` |
+| `Block` | string | Required | Block ID to count |
+| `Value` | int | Required | Threshold value for comparison |
+| `LessThan` | boolean | `true` | If true, passes when count < value; if false, passes when count >= value |
+| `Then` | interaction | `null` | Interaction when condition is true |
+| `Else` | interaction | `null` | Interaction when condition is false |
+
+### Execution Behavior
+
+| LessThan | Condition | Behavior |
+|----------|-----------|----------|
+| `true` | count < value | Execute `Then` |
+| `true` | count >= value | Execute `Else` |
+| `false` | count >= value | Execute `Then` |
+| `false` | count < value | Execute `Else` |
+
+### Examples
+
+**Teleporter Placement Limit:**
+
+Only allow placing teleporter if player has fewer than 2:
+
+```json
+{
+  "Type": "PlacementCountCondition",
+  "Block": "hytale:teleporter",
+  "Value": 2,
+  "LessThan": true,
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "PlaceBlock", "BlockId": "hytale:teleporter" },
+      { "Type": "ModifyInventory", "AdjustHeldItemQuantity": -1 },
+      { "Type": "Simple", "Effects": { "WorldSoundEventId": "teleporter_placed" } }
+    ]
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "You can only have 2 teleporters!"
+  }
+}
+```
+
+**Spawner Limit Check:**
+
+```json
+{
+  "Type": "PlacementCountCondition",
+  "Block": "hytale:creature_spawner",
+  "Value": 5,
+  "LessThan": true,
+  "Then": "Place_Spawner",
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Maximum spawners reached (5)!"
+  }
+}
+```
+
+**Minimum Placement Requirement:**
+
+Check if player has placed at least 4 blocks:
+
+```json
+{
+  "Type": "PlacementCountCondition",
+  "Block": "hytale:ritual_stone",
+  "Value": 4,
+  "LessThan": false,
+  "Then": {
+    "Type": "Serial",
+    "Interactions": [
+      { "Type": "SpawnPrefab", "PrefabId": "ritual_boss" },
+      { "Type": "Simple", "Effects": { "WorldSoundEventId": "ritual_complete" } }
+    ]
+  },
+  "Else": {
+    "Type": "SendMessage",
+    "Message": "Place 4 ritual stones to summon the boss!"
+  }
+}
+```
+
+### Related Interactions
+
+- [BlockCondition](#blockcondition) - Check block type at position
+- [Block Interactions](interactions-world.md#block-interactions) - Break or place blocks
 
 ---
 
