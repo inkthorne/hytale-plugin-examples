@@ -6,33 +6,33 @@ Quick reference for finding the right documentation file.
 
 | File | Description | Key Classes |
 |------|-------------|-------------|
-| plugin-lifecycle.md | Plugin setup, lifecycle, and server events | JavaPlugin, PluginBase, PluginState, HytaleLogger |
-| commands.md | Command creation and arguments | AbstractPlayerCommand, CommandContext |
-| entities.md | Players, entities, stats, velocity, and entity lifecycle events | Player, PlayerRef, Velocity, EntityStatMap |
-| player.md | Player events and messaging | PlayerConnectEvent, PlayerInteractEvent, Message |
-| world.md | World access, world events, chunk events | World, WorldChunk, GameplayConfig, ClientFeature |
-| events.md | Core event system and patterns | EventRegistry, EventPriority, EntityEventSystem |
-| components.md | ECS architecture | Store, Ref, EntityStore, ChunkStore, TransformComponent |
-| permissions.md | Permission checks and events | PermissionHolder, PlayerGroupEvent |
-| inventory.md | Items, inventory, crafting, and inventory events | Inventory, ItemStack, CraftingRecipe, CraftRecipeEvent, DropItemEvent |
-| tasks.md | Async task scheduling | TaskRegistry, TaskRegistration |
-| ui.md | Player UI management | UICommandBuilder, WindowManager, HudComponent, Page |
-| blocks.md | Block states and block events | BlockStateRegistry, BlockType, PlaceBlockEvent, BreakBlockEvent |
-| assets.md | Asset registration and models | AssetRegistry, Model |
-| codecs.md | Serialization | Codec, RecordCodecBuilder |
-| interactions.md | Interaction system | Interaction, SimpleInteraction, SimpleInstantInteraction |
-| networking.md | Network serialization and protocol | NetworkSerializable, Direction, WaitForDataFrom |
-| prefabs.md | Prefab loading, placement, and events | PrefabStore, BlockSelection, PrefabRotation |
-| math.md | Math library | Vector3d, Vector3l, Vector4d, Matrix4d, Quatf, Box |
-| projectiles.md | Projectile spawning and physics | ProjectileModule, ProjectileConfig, StandardPhysicsProvider |
-| collision.md | Collision detection and queries | CollisionModule, CollisionResult, CollisionDataArray |
-| fluids.md | Fluid types and properties | Fluid |
-| combat.md | Damage system and kill feed | Damage, DamageEventSystem, KillFeedEvent |
-| npc.md | NPC loading and AI sensors | AllNPCsLoadedEvent, BuilderInfo, SensorEvent |
-| adventure.md | Adventure features | DiscoverInstanceEvent, TreasureChestOpeningEvent |
-| asset-editor.md | Asset editor events | EditorClientEvent, AssetEditorSelectAssetEvent |
-| i18n.md | Localization events | GenerateDefaultLanguageEvent |
-| singleplayer.md | Singleplayer events | SingleplayerRequestAccessEvent |
+| [interactions.md](interactions.md) | Interaction system | Interaction, SimpleInteraction, SimpleInstantInteraction |
+| [plugin-lifecycle.md](plugin-lifecycle.md) | Plugin setup, lifecycle, and server events | JavaPlugin, PluginBase, PluginState, HytaleLogger |
+| [commands.md](commands.md) | Command creation and arguments | AbstractPlayerCommand, CommandContext |
+| [entities.md](entities.md) | Players, entities, stats, velocity, and entity lifecycle events | Player, PlayerRef, Velocity, EntityStatMap |
+| [player.md](player.md) | Player events and messaging | PlayerConnectEvent, PlayerInteractEvent, Message |
+| [world.md](world.md) | World access, world events, chunk events | World, WorldChunk, GameplayConfig, ClientFeature |
+| [events.md](events.md) | Core event system and patterns | EventRegistry, EventPriority, EntityEventSystem |
+| [components.md](components.md) | ECS architecture | Store, Ref, EntityStore, ChunkStore, TransformComponent |
+| [permissions.md](permissions.md) | Permission checks and events | PermissionHolder, PlayerGroupEvent |
+| [inventory.md](inventory.md) | Items, inventory, crafting, and inventory events | Inventory, ItemStack, CraftingRecipe, CraftRecipeEvent, DropItemEvent |
+| [tasks.md](tasks.md) | Async task scheduling | TaskRegistry, TaskRegistration |
+| [ui.md](ui.md) | Player UI management | UICommandBuilder, WindowManager, HudComponent, Page |
+| [blocks.md](blocks.md) | Block states and block events | BlockStateRegistry, BlockType, PlaceBlockEvent, BreakBlockEvent |
+| [assets.md](assets.md) | Asset registration and models | AssetRegistry, Model |
+| [codecs.md](codecs.md) | Serialization | Codec, RecordCodecBuilder |
+| [networking.md](networking.md) | Network serialization and protocol | NetworkSerializable, Direction, WaitForDataFrom |
+| [prefabs.md](prefabs.md) | Prefab loading, placement, and events | PrefabStore, BlockSelection, PrefabRotation |
+| [math.md](math.md) | Math library | Vector3d, Vector3l, Vector4d, Matrix4d, Quatf, Box |
+| [projectiles.md](projectiles.md) | Projectile spawning and physics | ProjectileModule, ProjectileConfig, StandardPhysicsProvider |
+| [collision.md](collision.md) | Collision detection and queries | CollisionModule, CollisionResult, CollisionDataArray |
+| [fluids.md](fluids.md) | Fluid types and properties | Fluid |
+| [combat.md](combat.md) | Damage system and kill feed | Damage, DamageEventSystem, KillFeedEvent |
+| [npc.md](npc.md) | NPC loading and AI sensors | AllNPCsLoadedEvent, BuilderInfo, SensorEvent |
+| [adventure.md](adventure.md) | Adventure features | DiscoverInstanceEvent, TreasureChestOpeningEvent |
+| [asset-editor.md](asset-editor.md) | Asset editor events | EditorClientEvent, AssetEditorSelectAssetEvent |
+| [i18n.md](i18n.md) | Localization events | GenerateDefaultLanguageEvent |
+| [singleplayer.md](singleplayer.md) | Singleplayer events | SingleplayerRequestAccessEvent |
 
 ## Class Lookup Index
 
