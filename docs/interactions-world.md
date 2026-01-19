@@ -529,7 +529,7 @@ The `Wielding` interaction type enables blocking and guarding mechanics for shie
 | `BlockedEffects` | Visual/audio effects when block succeeds |
 | `BlockedInteractions` | Interactions to trigger on successful block |
 | `Failed` | What happens when guard breaks (stamina depleted) |
-| `RunTime` | Fixed duration in seconds (omit for hold-to-block) |
+| `RunTime` | Maximum duration in seconds; block still ends early if input released (omit for indefinite hold-to-block) |
 | `FailOnDamage` | If `true`, interaction ends when hit (even if blocked) |
 | `allowIndefiniteHold` | If `true`, block can be held indefinitely (default behavior) |
 | `cancelOnOtherClick` | If `true`, interaction cancels when another input is pressed |

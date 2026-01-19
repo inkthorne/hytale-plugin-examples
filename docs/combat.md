@@ -565,7 +565,7 @@ The `Wielding` interaction supports time-limited blocks and parry windows throug
 
 #### RunTime
 
-Sets a fixed duration for the block. When set, the interaction runs for exactly this duration regardless of input.
+Sets a **maximum duration** for the block. The interaction ends at whichever comes first: the player releasing the input button, or the `RunTime` expiring.
 
 ```json
 {
@@ -576,7 +576,9 @@ Sets a fixed duration for the block. When set, the interaction runs for exactly 
 ```
 
 - Without `RunTime`: Block continues while input is held (standard guard)
-- With `RunTime`: Block lasts for the specified duration in seconds
+- With `RunTime`: Block lasts up to the specified duration, but still ends early if input is released
+
+> **Note:** There is no JSON-only way to create a "click-once-to-block-for-X-seconds" mechanic where releasing the button doesn't end the block. The `RunTime` property only provides an upper bound—it does not commit the player to blocking for the full duration.
 
 #### FailOnDamage
 
@@ -635,9 +637,9 @@ This creates a 5-second parry window that:
 - On successful parry: knocks back attacker and triggers a counter-attack
 - Ends after being hit once (`FailOnDamage`) or after 5 seconds (`RunTime`)
 
-#### Example: Click-to-Block
+#### Example: Timed Block with Maximum Duration
 
-For a simple click-to-block mechanic (single click activates block for a fixed duration):
+A block with a maximum duration that still ends early if the player releases the input:
 
 ```json
 {
@@ -659,10 +661,12 @@ For a simple click-to-block mechanic (single click activates block for a fixed d
 
 | Property | Value | Effect |
 |----------|-------|--------|
-| `RunTime` | `0.5` | Block lasts exactly 0.5 seconds |
+| `RunTime` | `0.5` | Block lasts up to 0.5 seconds (ends early if input released) |
 | `FailOnDamage` | `false` | Block continues even after being hit |
-| `allowIndefiniteHold` | `false` | Block ends when `RunTime` expires, cannot be extended by holding |
+| `allowIndefiniteHold` | `false` | Block cannot exceed `RunTime` even if input is held |
 | `cancelOnOtherClick` | `true` | Block cancels if player clicks another input |
+
+> **Limitation:** This configuration still requires holding the input to maintain the block. Releasing the button ends the block early. A true "click-once-to-block" mechanic (where the block persists for the full duration regardless of input) would require custom Java code.
 
 > **Inherited Properties:** These properties (`RunTime`, `FailOnDamage`, `allowIndefiniteHold`, `cancelOnOtherClick`) are inherited from `ChargingInteraction`, which `WieldingInteraction` extends. See [WieldingInteraction](interactions-world.md#wieldinginteraction) for the full property list.
 
