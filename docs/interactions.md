@@ -1584,7 +1584,7 @@ A separate interaction can set these flags:
 
 #### Related Chain Interaction Types
 
-**FirstClickInteraction** - Differentiates between tap and hold inputs:
+**[FirstClickInteraction](#firstclickinteraction)** - Differentiates between tap and hold inputs:
 
 ```json
 {
@@ -1598,7 +1598,7 @@ A separate interaction can set these flags:
 }
 ```
 
-**ChainFlagInteraction** - Sets a flag to trigger a Flags branch:
+**[ChainFlagInteraction](#chainflaginteraction)** - Sets a flag to trigger a Flags branch. See full documentation below.
 
 ```json
 {
@@ -1608,7 +1608,7 @@ A separate interaction can set these flags:
 }
 ```
 
-**CancelChainInteraction** - Cancels an active chain:
+**[CancelChainInteraction](#cancelchaininteraction)** - Cancels/resets an active chain. See full documentation below.
 
 ```json
 {
@@ -1737,6 +1737,291 @@ NPCs use high `ChainingAllowance` values since AI timing is less precise:
 | Flag combos | Conditional special moves | `Flags` + `ChainFlag` |
 
 See also: [Attack Chain Timing](#attack-chain-timing) above for timing concepts, [ChargingInteraction](#charginginteraction) for charge-release mechanics.
+
+---
+
+### ChainFlagInteraction
+
+**Package:** `config/none/ChainFlagInteraction`
+
+Sets a flag on a chain that a [ChainingInteraction](#chaininginteraction) can use to jump to an alternative execution path. This enables cross-chain communication where one interaction (like a successful block or special input) can trigger a special move in another chain sharing the same `ChainId`.
+
+#### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"ChainFlag"` |
+| `ChainId` | string | Required | Target chain identifier to set the flag on |
+| `Flag` | string | Required | Flag name matching a key in the target chain's `Flags` map |
+
+#### How Flag Triggering Works
+
+When `ChainFlagInteraction` executes:
+
+1. The system looks up the entity's active chain state for the given `ChainId`
+2. It sets a flag index that points to the named flag
+3. On the next tick of the target `ChainingInteraction`, it checks `flagIndex`
+4. If a flag is set (`flagIndex != -1`), the chain jumps to the interaction defined in `Flags[flagName]` instead of continuing its normal `Next` sequence
+5. The flag is consumed (reset) after triggering
+
+This allows interactions to "inject" behavior into an ongoing chain without interrupting it directly.
+
+#### Cross-Chain Communication
+
+Multiple chains can share the same `ChainId`, enabling coordination between primary and secondary attack chains:
+
+**Primary attack chain (defines the flag targets):**
+
+```json
+{
+  "Type": "Chaining",
+  "ChainId": "Sword_Combat",
+  "ChainingAllowance": 2,
+  "Next": ["Sword_Swing_1", "Sword_Swing_2", "Sword_Swing_3"],
+  "Flags": {
+    "Counter_Ready": "Sword_Counter_Attack",
+    "Special_Second": "Sword_Special_Strike"
+  }
+}
+```
+
+**Secondary attack chain (can trigger the primary's flags):**
+
+```json
+{
+  "Type": "Chaining",
+  "ChainId": "Sword_Combat",
+  "ChainingAllowance": 3,
+  "Next": [
+    {
+      "Type": "Wielding",
+      "BlockedInteractions": {
+        "Interactions": [
+          {
+            "Type": "ChainFlag",
+            "ChainId": "Sword_Combat",
+            "Flag": "Counter_Ready"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+When the player successfully blocks (secondary), it sets `Counter_Ready` on the shared chain. The next time the player uses primary attack, instead of continuing the normal combo, the chain jumps to `Sword_Counter_Attack`.
+
+#### Complete Examples
+
+**Debug combo with flag from held input:**
+
+From `Debug_Combo_Primary.json` - when player holds during second attack, it sets a flag:
+
+```json
+{
+  "Type": "Chaining",
+  "ChainId": "Debug_Combo",
+  "ChainingAllowance": 0.8,
+  "Next": [
+    {
+      "Type": "SendMessage",
+      "Message": "First - Primary",
+      "RunTime": 0.5
+    },
+    {
+      "Type": "FirstClick",
+      "Click": {
+        "Type": "SendMessage",
+        "Message": "Second click - Primary",
+        "RunTime": 0.5
+      },
+      "Held": {
+        "Type": "SendMessage",
+        "Message": "Second held - Primary",
+        "RunTime": 0.5,
+        "Next": {
+          "Type": "ChainFlag",
+          "ChainId": "Debug_Combo",
+          "Flag": "Held_Second"
+        }
+      }
+    }
+  ],
+  "Flags": {
+    "Special_Second": {
+      "Type": "SendMessage",
+      "Message": "Flag triggered!"
+    }
+  }
+}
+```
+
+**Secondary attack triggering primary's special:**
+
+From `Debug_Combo_Secondary.json` - secondary attack sets a flag on the primary chain:
+
+```json
+{
+  "Type": "Chaining",
+  "ChainId": "Debug_Combo",
+  "ChainingAllowance": 0.8,
+  "Next": [
+    {
+      "Type": "Serial",
+      "Interactions": [
+        {
+          "Type": "SendMessage",
+          "Message": "First - Secondary"
+        },
+        {
+          "Type": "ChainFlag",
+          "ChainId": "Debug_Combo",
+          "Flag": "Special_Second"
+        }
+      ],
+      "RunTime": 0.5
+    }
+  ]
+}
+```
+
+When the player uses secondary attack, it immediately sets `Special_Second`. The next primary attack will jump to the flag target instead of the normal combo.
+
+#### Common Patterns
+
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| **Block counter** | Successful block unlocks riposte | Block sets `Counter_Ready`, next primary triggers counter attack |
+| **Combo extender** | Specific input unlocks special finisher | Hold during combo sets `Special_Finisher` flag |
+| **Primary/Secondary sync** | Secondary attack modifies primary behavior | Secondary sets flag, primary checks it next tick |
+| **Parry window** | Perfect timing unlocks powerful response | Parry interaction sets `Perfect_Parry` flag |
+
+#### Related Interactions
+
+- [ChainingInteraction](#chaininginteraction) - Defines the `Flags` map that ChainFlag targets
+- [CancelChainInteraction](#cancelchaininteraction) - Resets chain state (clears flags)
+- [FirstClickInteraction](#firstclickinteraction) - Often used to trigger flags on held input
+
+---
+
+### CancelChainInteraction
+
+**Package:** `config/none/CancelChainInteraction`
+
+Cancels and resets an active chain's state, returning it to the beginning. This is used to break combos early, reset chain state after special moves, or clear chain flags without waiting for the `ChainingAllowance` timeout.
+
+#### Core Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Type` | string | Required | Always `"CancelChain"` |
+| `ChainId` | string | Required | Target chain identifier to cancel/reset |
+
+#### When to Use CancelChain
+
+- **After charged attacks** - Reset combo after a charged heavy attack so the next attack starts fresh
+- **On special move execution** - Clear chain state when a flagged special move triggers
+- **Manual combo reset** - Allow players to reset their combo with a specific action (dodge, block)
+- **Timeout override** - Force-reset a chain before its `ChainingAllowance` would naturally expire
+
+#### Complete Examples
+
+**Reset combo after charged attack:**
+
+From `Sword_Combo_Stage_1.json` - after a charged attack, the chain resets:
+
+```json
+{
+  "Type": "Chaining",
+  "ChainId": "Sword_Primary",
+  "ChainingAllowance": 2,
+  "Next": [
+    {
+      "Type": "FirstClick",
+      "Click": "Sword_Swing_1",
+      "Held": {
+        "Type": "Charging",
+        "Next": {
+          "0": "Sword_Swing_Cancel",
+          "1.0": {
+            "Type": "Serial",
+            "Interactions": [
+              "Sword_Heavy_Attack",
+              {
+                "Type": "CancelChain",
+                "ChainId": "Sword_Primary"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "Sword_Swing_2",
+    "Sword_Swing_3"
+  ]
+}
+```
+
+The charged attack (`Sword_Heavy_Attack`) is followed by `CancelChain`, so the next attack will restart from `Sword_Swing_1` instead of continuing to `Sword_Swing_2`.
+
+**Reset after special flag execution:**
+
+```json
+{
+  "Type": "Chaining",
+  "ChainId": "Advanced_Combo",
+  "ChainingAllowance": 2,
+  "Next": ["Attack_1", "Attack_2", "Attack_3"],
+  "Flags": {
+    "Counter": {
+      "Type": "Serial",
+      "Interactions": [
+        "Powerful_Counter_Attack",
+        {
+          "Type": "CancelChain",
+          "ChainId": "Advanced_Combo"
+        }
+      ]
+    }
+  }
+}
+```
+
+When the `Counter` flag triggers, it executes the counter attack and then resets the chain.
+
+**Dodge-cancel combo:**
+
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "Dodge",
+      "Direction": "Back"
+    },
+    {
+      "Type": "CancelChain",
+      "ChainId": "Sword_Primary"
+    }
+  ]
+}
+```
+
+Dodging cancels any active combo chain, letting the player reset their attack pattern.
+
+#### Common Patterns
+
+| Pattern | Use Case | Implementation |
+|---------|----------|----------------|
+| **Heavy attack reset** | Charged attacks end the combo | CancelChain after charged hit |
+| **Special move reset** | Flag-triggered moves reset chain | CancelChain in Flags target |
+| **Defensive reset** | Blocking/dodging resets combo | CancelChain in block/dodge interaction |
+| **Mode switch** | Switching weapon modes resets combos | CancelChain when switching |
+
+#### Related Interactions
+
+- [ChainingInteraction](#chaininginteraction) - The chain type that CancelChain resets
+- [ChainFlagInteraction](#chainflaginteraction) - Often used together (flag triggers special, then cancel resets)
 
 ---
 
