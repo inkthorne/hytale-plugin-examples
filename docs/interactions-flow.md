@@ -2345,51 +2345,121 @@ DestroyCondition performs server-side validation:
 
 **Package:** `config/server/PlacementCountConditionInteraction`
 
-Server-side condition that branches based on the count of a specific block type placed in an area or by the player. Used to enforce placement limits for special blocks like teleporters or spawners.
+Server-side condition that checks the count of a specific block type placed by the player in the current instance. Used to enforce placement limits for special blocks like teleporters. The condition passes when the player's placement count is less than the threshold value.
 
 ### Core Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Type` | string | Required | Always `"PlacementCountCondition"` |
-| `Block` | string | Required | Block ID to count |
-| `Value` | int | Required | Threshold value for comparison |
-| `LessThan` | boolean | `true` | If true, passes when count < value; if false, passes when count >= value |
-| `Then` | interaction | `null` | Interaction when condition is true |
-| `Else` | interaction | `null` | Interaction when condition is false |
+| `Block` | string | Required | Block ID to count (without namespace prefix) |
+| `Value` | int | Required | Threshold value - condition passes when count < this value |
+| `Next` | interaction | `null` | Interaction when count < Value (condition passes) |
+| `Failed` | interaction | `null` | Interaction when count >= Value (condition fails) |
 
-### Execution Behavior
+### Execution Flow
 
-| LessThan | Condition | Behavior |
-|----------|-----------|----------|
-| `true` | count < value | Execute `Then` |
-| `true` | count >= value | Execute `Else` |
-| `false` | count >= value | Execute `Then` |
-| `false` | count < value | Execute `Else` |
+```
+PlacementCountCondition
+    │
+    ▼
+┌─────────────────────────┐
+│ Get player's block      │
+│ placement count from    │
+│ instance BlockCounter   │
+└─────────────────────────┘
+    │
+    ├─► count < Value ──► Execute Next
+    │
+    └─► count >= Value ──► Execute Failed
+```
+
+PlacementCountCondition performs server-side validation:
+
+1. Reads the block type from `Block` property
+2. Queries the instance's `BlockCounter` for the player's placement count of that block type
+3. Compares count against `Value` threshold
+4. Branches to `Next` if count is below threshold, `Failed` if at or above
+
+### Block Tracking Requirements
+
+For PlacementCountCondition to work, two components must be configured:
+
+**1. Block must have TrackedPlacement component:**
+
+Blocks that should be counted need the `TrackedPlacement` component in their BlockEntity definition:
+
+```json
+{
+  "BlockEntity": {
+    "TrackedPlacement": {}
+  }
+}
+```
+
+**2. Instance must have BlockCounter resource:**
+
+The instance resource (e.g., `BlockCounter.json`) tracks placement counts:
+
+```json
+{
+  "BlockPlacementCounts": {}
+}
+```
 
 ### Examples
 
-**Teleporter Placement Limit:**
+**Teleporter Placement Limit (Real - from Teleporter_Try_Place.json):**
 
-Only allow placing teleporter if player has fewer than 2:
+Only allow placing a teleporter if the player has fewer than 2:
 
 ```json
 {
   "Type": "PlacementCountCondition",
-  "Block": "hytale:teleporter",
+  "Block": "Teleporter",
   "Value": 2,
-  "LessThan": true,
-  "Then": {
-    "Type": "Serial",
-    "Interactions": [
-      { "Type": "PlaceBlock", "BlockId": "hytale:teleporter" },
-      { "Type": "ModifyInventory", "AdjustHeldItemQuantity": -1 },
-      { "Type": "Simple", "Effects": { "WorldSoundEventId": "teleporter_placed" } }
-    ]
+  "Next": {
+    "Type": "PlaceBlock",
+    "RunTime": 0.125
   },
-  "Else": {
+  "Failed": {
     "Type": "SendMessage",
-    "Message": "You can only have 2 teleporters!"
+    "Key": "server.interactions.teleporter.failedCollectMore"
+  }
+}
+```
+
+**Combined with MemoriesCondition for Tier-Based Limits:**
+
+Different memory states can unlock higher placement limits:
+
+```json
+{
+  "Type": "MemoriesCondition",
+  "Conditions": [
+    {
+      "Condition": "UnlockedTeleporterTier2",
+      "Interaction": {
+        "Type": "PlacementCountCondition",
+        "Block": "Teleporter",
+        "Value": 4,
+        "Next": "Place_Teleporter",
+        "Failed": {
+          "Type": "SendMessage",
+          "Key": "server.interactions.teleporter.limitReached"
+        }
+      }
+    }
+  ],
+  "Failed": {
+    "Type": "PlacementCountCondition",
+    "Block": "Teleporter",
+    "Value": 2,
+    "Next": "Place_Teleporter",
+    "Failed": {
+      "Type": "SendMessage",
+      "Key": "server.interactions.teleporter.failedCollectMore"
+    }
   }
 }
 ```
@@ -2399,45 +2469,22 @@ Only allow placing teleporter if player has fewer than 2:
 ```json
 {
   "Type": "PlacementCountCondition",
-  "Block": "hytale:creature_spawner",
+  "Block": "CreatureSpawner",
   "Value": 5,
-  "LessThan": true,
-  "Then": "Place_Spawner",
-  "Else": {
+  "Next": "Place_Spawner",
+  "Failed": {
     "Type": "SendMessage",
-    "Message": "Maximum spawners reached (5)!"
-  }
-}
-```
-
-**Minimum Placement Requirement:**
-
-Check if player has placed at least 4 blocks:
-
-```json
-{
-  "Type": "PlacementCountCondition",
-  "Block": "hytale:ritual_stone",
-  "Value": 4,
-  "LessThan": false,
-  "Then": {
-    "Type": "Serial",
-    "Interactions": [
-      { "Type": "SpawnPrefab", "PrefabId": "ritual_boss" },
-      { "Type": "Simple", "Effects": { "WorldSoundEventId": "ritual_complete" } }
-    ]
-  },
-  "Else": {
-    "Type": "SendMessage",
-    "Message": "Place 4 ritual stones to summon the boss!"
+    "Key": "server.interactions.spawner.maxReached"
   }
 }
 ```
 
 ### Related Interactions
 
-- [BlockCondition](#blockcondition) - Check block type at position
-- [Block Interactions](interactions-world.md#block-interactions) - Break or place blocks
+- [DestroyCondition](#destroycondition) - Check if block is destroyable (also uses `Next`/`Failed`)
+- [CooldownCondition](#cooldowncondition) - Check cooldown state (also uses `Next`/`Failed`)
+- [MemoriesCondition](#memoriescondition) - Branch based on player memory states
+- [Block Interactions](interactions-world.md#block-interactions) - PlaceBlock interaction for actual placement
 
 ---
 
