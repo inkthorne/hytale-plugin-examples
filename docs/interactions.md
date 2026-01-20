@@ -456,6 +456,105 @@ public class InteractionRules {
 
 ---
 
+### InteractionSettings
+
+**Package:** `com.hypixel.hytale.protocol`
+
+`InteractionSettings` configures per-GameMode behavior for nested interactions (accessed via `Interaction.getSettings()`).
+
+```java
+public class InteractionSettings {
+    public boolean allowSkipOnClick;
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `AllowSkipOnClick` | boolean | If true, clicking can skip this interaction early |
+
+#### JSON Configuration
+
+InteractionSettings can be configured per game mode within nested interaction definitions:
+
+```json
+{
+  "Type": "Simple",
+  "RunTime": 0.5,
+  "Settings": {
+    "Creative": {
+      "AllowSkipOnClick": true
+    }
+  }
+}
+```
+
+#### Usage in Code
+
+```java
+Interaction interaction = Interaction.getInteractionOrUnknown("my_interaction");
+Map<GameMode, InteractionSettings> settings = interaction.getSettings();
+
+InteractionSettings creativeSettings = settings.get(GameMode.Creative);
+if (creativeSettings != null && creativeSettings.allowSkipOnClick) {
+    // Handle skip behavior
+}
+```
+
+---
+
+### RootInteractionSettings
+
+**Package:** `com.hypixel.hytale.protocol`
+
+`RootInteractionSettings` configures per-GameMode behavior for root interactions (accessed via `RootInteraction.getSettings()`). Unlike `InteractionSettings`, this class includes cooldown configuration.
+
+```java
+public class RootInteractionSettings {
+    public boolean allowSkipChainOnClick;
+    public InteractionCooldown cooldown;
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `AllowSkipChainOnClick` | boolean | If true, clicking can skip the entire interaction chain early |
+| `Cooldown` | [InteractionCooldown](#cooldown-configuration) | Cooldown configuration for this game mode |
+
+#### JSON Configuration
+
+RootInteractionSettings are configured in root interaction files (`Server/Item/RootInteractions/`):
+
+```json
+{
+  "Interactions": ["Block_Primary"],
+  "Settings": {
+    "Adventure": {
+      "Cooldown": {
+        "Id": "BlockInteraction",
+        "Cooldown": 0.278
+      }
+    },
+    "Creative": {
+      "AllowSkipChainOnClick": true,
+      "Cooldown": {
+        "Id": "BlockInteraction_Creative",
+        "Cooldown": 0.0,
+        "ClickBypass": true
+      }
+    }
+  }
+}
+```
+
+#### Difference from InteractionSettings
+
+| Class | Used By | Key Difference |
+|-------|---------|----------------|
+| `InteractionSettings` | Nested `Interaction` | Has `AllowSkipOnClick` (skips single interaction) |
+| `RootInteractionSettings` | `RootInteraction` | Has `AllowSkipChainOnClick` (skips entire chain) + cooldown config |
+
+---
+
 ### Root vs Nested Interactions
 
 Interactions are organized into two categories based on their role and file location.

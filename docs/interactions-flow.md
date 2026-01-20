@@ -1875,6 +1875,8 @@ The `Cooldown` property uses the InteractionCooldown configuration object:
 | `Cooldown` | float | Required | Duration in seconds |
 | `ClickBypass` | boolean | `false` | If true, clicking bypasses the cooldown |
 | `Charges` | float[] | `null` | Array of charge times for charged abilities |
+| `SkipCooldownReset` | boolean | `false` | If true, prevents cooldown from being reset when triggered again |
+| `InterruptRecharge` | boolean | `false` | If true, interrupting the ability also interrupts cooldown recharge |
 
 ### Examples
 
