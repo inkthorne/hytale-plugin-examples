@@ -2,12 +2,17 @@
 
 > **Note:** For `InteractionManager` (the entity component that manages interaction chains), see [entities.md](entities.md#interactionmanager).
 >
-> **See also:** [Item Definitions](items.md) for how items define and customize interactions via `InteractionVars`.
+> **See also:**
+> - [Operation System](interactions-operations.md) - Low-level execution model and flow control
+> - [InteractionContext](interactions-context.md) - Execution state and data access
+> - [Item Definitions](items.md) - How items define and customize interactions via `InteractionVars`
 
 ## Quick Navigation
 
 | Category | File | Description |
 |----------|------|-------------|
+| [Operation System](interactions-operations.md) | `interactions-operations.md` | Low-level execution model, OperationsBuilder, labels |
+| [InteractionContext](interactions-context.md) | `interactions-context.md` | Execution state, entity refs, meta store, InteractionVars |
 | [Combo Systems](interactions-combo.md) | `interactions-combo.md` | Chaining, charging, input branching |
 | [Combat & Effects](interactions-combat.md) | `interactions-combat.md` | Damage, forces, status effects, animations |
 | [Control Flow](interactions-flow.md) | `interactions-flow.md` | Serial, parallel, conditions, targeting |
@@ -304,6 +309,257 @@ Root interactions are defined in `Server/Item/RootInteractions/` and configure h
 | `ClickQueuingTimeout` | float | Buffer window to queue next attack input |
 | `Cooldown` | object | Minimum delay between attacks |
 | `Interactions` | array | List of interactions to execute |
+
+### Cooldown System
+
+Cooldowns prevent interactions from being spammed by enforcing minimum delays between uses.
+
+#### CooldownHandler
+
+**Package:** `com.hypixel.hytale.server.core.modules.interaction.interaction`
+
+The `CooldownHandler` manages cooldown timers for an entity:
+
+```java
+public class CooldownHandler {
+    // Check if a cooldown is active
+    boolean isOnCooldown(RootInteraction root, String cooldownId, float time,
+                         float[] progress, boolean checkOnly);
+
+    // Reset a cooldown timer
+    void resetCooldown(String cooldownId, float duration, float[] progress, boolean notify);
+
+    // Get cooldown info
+    Cooldown getCooldown(String cooldownId);
+
+    // Update all cooldowns (called each frame)
+    void tick(float deltaTime);
+}
+```
+
+#### Cooldown Configuration
+
+Cooldowns are configured in RootInteraction JSON files:
+
+```json
+{
+  "Interactions": ["Weapon_Sword_Primary"],
+  "Settings": {
+    "Adventure": {
+      "Cooldown": {
+        "Id": "SwordAttack",
+        "Cooldown": 0.278
+      }
+    },
+    "Creative": {
+      "Cooldown": {
+        "Id": "SwordAttack_Creative",
+        "Cooldown": 0.0,
+        "ClickBypass": true
+      }
+    }
+  }
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Id` | string | Unique cooldown identifier |
+| `Cooldown` | float | Cooldown duration in seconds |
+| `ClickBypass` | boolean | If true, clicking can bypass cooldown |
+
+#### Cooldown Interactions
+
+Several interactions work with cooldowns:
+
+| Interaction | Description |
+|-------------|-------------|
+| `TriggerCooldown` | Start a cooldown timer |
+| `ResetCooldown` | Reset a cooldown to zero |
+| `CooldownCondition` | Branch based on cooldown state |
+
+See [interactions-flow.md#cooldowncondition](interactions-flow.md#cooldowncondition) for conditional usage.
+
+---
+
+### InteractionRules
+
+`InteractionRules` control how interactions conflict with each other. They determine which interactions can be blocked or interrupted by others.
+
+#### Rule Types
+
+```java
+public class InteractionRules {
+    // Which interaction types block this interaction from starting
+    InteractionType[] blockedBy;
+    String blockedByBypass;  // Condition to bypass blocking
+
+    // Which interaction types this interaction blocks
+    InteractionType[] blocking;
+    String blockingBypass;
+
+    // Which interaction types can interrupt this interaction mid-execution
+    InteractionType[] interruptedBy;
+    String interruptedByBypass;
+
+    // Which interaction types this interaction interrupts
+    InteractionType[] interrupting;
+    String interruptingBypass;
+
+    // Validation methods
+    boolean validateInterrupts(InteractionType type);
+    boolean validateBlocked(InteractionType type);
+}
+```
+
+#### JSON Configuration
+
+```json
+{
+  "Type": "Simple",
+  "RunTime": 0.5,
+  "Rules": {
+    "BlockedBy": ["SECONDARY"],
+    "InterruptedBy": ["DODGE"],
+    "Interrupting": ["PRIMARY"]
+  }
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `BlockedBy` | array | Interaction types that prevent starting |
+| `Blocking` | array | Interaction types this blocks |
+| `InterruptedBy` | array | Types that can cancel mid-execution |
+| `Interrupting` | array | Types this cancels |
+| `*Bypass` | string | Condition name that bypasses the rule |
+
+#### Common Patterns
+
+**Heavy Attack (can be interrupted by dodge):**
+```json
+{
+  "Rules": {
+    "InterruptedBy": ["DODGE", "BLOCK"]
+  }
+}
+```
+
+**Blocking Stance (blocks attacks from starting):**
+```json
+{
+  "Rules": {
+    "Blocking": ["PRIMARY", "SECONDARY"]
+  }
+}
+```
+
+---
+
+### Root vs Nested Interactions
+
+Interactions are organized into two categories based on their role and file location.
+
+#### Root Interactions
+
+**Location:** `Server/Item/RootInteractions/`
+
+Root interactions are entry points triggered by player input (PRIMARY, SECONDARY, etc.). They:
+
+- Define per-GameMode settings
+- Configure cooldowns
+- Specify which nested interactions to execute
+- Are referenced by items via `PrimaryInteraction`, `SecondaryInteraction`, etc.
+
+**Example:** `Block_Primary.json`
+```json
+{
+  "Interactions": ["Block_Primary"],
+  "Settings": {
+    "Adventure": {
+      "Cooldown": {
+        "Id": "BlockInteraction",
+        "Cooldown": 0.278
+      }
+    },
+    "Creative": {
+      "AllowSkipChainOnClick": true,
+      "Cooldown": {
+        "Id": "BlockInteraction_Creative",
+        "Cooldown": 0.0,
+        "ClickBypass": true
+      }
+    }
+  }
+}
+```
+
+#### Nested Interactions
+
+**Location:** `Server/Item/Interactions/`
+
+Nested interactions are reusable building blocks. They:
+
+- Define the actual behavior (animations, damage, effects)
+- Can be referenced by ID from other interactions
+- Can be inlined directly in JSON
+- Support composition via `Serial`, `Parallel`, `Condition`, etc.
+
+**Example:** `Dodge.json`
+```json
+{
+  "Type": "Condition",
+  "Flying": false,
+  "Next": {
+    "Type": "MovementCondition",
+    "ForwardLeft": { "Type": "Simple" },
+    "Left": "Dodge_Left",
+    "Right": "Dodge_Right"
+  }
+}
+```
+
+#### Reference Patterns
+
+Nested interactions can be referenced in two ways:
+
+**By ID (string reference):**
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    "Sword_Swing_Down",
+    "Sword_Damage_Hit"
+  ]
+}
+```
+
+**Inline (direct definition):**
+```json
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "RunTime": 0.2,
+      "Effects": { "ItemAnimationId": "SwingDown" }
+    },
+    "Sword_Damage_Hit"
+  ]
+}
+```
+
+#### Asset Discovery
+
+The interaction system loads assets in this order:
+
+1. **Root interactions** from `Server/Item/RootInteractions/`
+2. **Nested interactions** from `Server/Item/Interactions/`
+3. String references resolve to loaded interaction IDs
+
+IDs are derived from filenames without the `.json` extension.
+
+---
 
 ### Complete Interaction Type Reference
 

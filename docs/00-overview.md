@@ -7,6 +7,8 @@ Quick reference for finding the right documentation file.
 | File | Description |
 |------|-------------|
 | [interactions.md](interactions.md) | Comprehensive reference for entity interactions including combo systems, combat effects, control flow, and world manipulation. |
+| [interactions-operations.md](interactions-operations.md) | Low-level Operation system that powers interaction execution, including OperationsBuilder and label-based flow control. |
+| [interactions-context.md](interactions-context.md) | InteractionContext API for accessing entities, items, meta store, and InteractionVars during interaction execution. |
 | [items.md](items.md) | Item definitions including weapons, consumables, and equipment with inheritance system and InteractionVars customization. |
 | [plugin-lifecycle.md](plugin-lifecycle.md) | Documents the complete plugin lifecycle from initialization through shutdown, including setup phases, event registration, and logging. |
 | [commands.md](commands.md) | Details the command system for creating player commands with arguments, permissions, subcommands, and built-in argument types. |
@@ -131,7 +133,7 @@ JSON asset types used in Hytale's data-driven systems.
 [AssetRegistry](assets.md), [Model](assets.md), [ModelAsset](assets.md), [AssetPackRegisterEvent](assets.md), [AssetPackUnregisterEvent](assets.md), [LoadAssetEvent](assets.md), [GenerateSchemaEvent](assets.md), [CommonAssetMonitorEvent](assets.md), [SendCommonAssetsEvent](assets.md), [PathEvent](assets.md)
 
 **Interactions**
-[Interaction](interactions.md), [SimpleInteraction](interactions.md), [SimpleInstantInteraction](interactions.md)
+[Interaction](interactions.md), [SimpleInteraction](interactions.md), [SimpleInstantInteraction](interactions.md), [Operation](interactions-operations.md), [OperationsBuilder](interactions-operations.md), [InteractionContext](interactions-context.md), [CooldownHandler](interactions.md#cooldown-system), [InteractionRules](interactions.md#interactionrules)
 
 **Networking**
 [NetworkSerializable](networking.md), [Direction](networking.md), [WaitForDataFrom](networking.md)
@@ -191,6 +193,8 @@ JSON asset types used in Hytale's data-driven systems.
 - blocks.md - Block manipulation and block events
 - assets.md - Asset registry, models, and asset events
 - interactions.md - Interaction system (attacks, abilities)
+- interactions-operations.md - Operation execution model and flow control
+- interactions-context.md - InteractionContext data access API
 - projectiles.md - Projectile spawning and physics
 - collision.md - Collision detection and queries
 - fluids.md - Fluid types and properties
