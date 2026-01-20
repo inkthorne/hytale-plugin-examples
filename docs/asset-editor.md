@@ -8,14 +8,14 @@ Events for the built-in asset editor system.
 
 | Class | Key Type | Description |
 |-------|----------|-------------|
-| `EditorClientEvent<K>` | Generic | Abstract base for editor events |
-| `AssetEditorActivateButtonEvent` | `String` | Button activated |
-| `AssetEditorAssetCreatedEvent` | `String` | Asset created |
-| `AssetEditorClientDisconnectEvent` | `Void` | Client disconnected |
-| `AssetEditorSelectAssetEvent` | `Void` | Asset selected |
-| `AssetEditorFetchAutoCompleteDataEvent` | `String` | Async - autocomplete fetch |
-| `AssetEditorRequestDataSetEvent` | `String` | Async - dataset request |
-| `AssetEditorUpdateWeatherPreviewLockEvent` | `Void` | Weather preview lock |
+| [`EditorClientEvent<K>`](#editorclienteventkeytype-base-class) | Generic | Abstract base for editor events |
+| [`AssetEditorActivateButtonEvent`](#asseteditoractivatebuttonevent) | `String` | Button activated |
+| [`AssetEditorAssetCreatedEvent`](#asseteditorassetcreatedevent) | `String` | Asset created |
+| [`AssetEditorClientDisconnectEvent`](#asseteditorclientdisconnectevent) | `Void` | Client disconnected |
+| [`AssetEditorSelectAssetEvent`](#asseteditorselectassetevent) | `Void` | Asset selected |
+| [`AssetEditorFetchAutoCompleteDataEvent`](#asseteditorfetchautocompletedataevent) | `String` | Async - autocomplete fetch |
+| [`AssetEditorRequestDataSetEvent`](#asseteditorrequestdatasetevent) | `String` | Async - dataset request |
+| [`AssetEditorUpdateWeatherPreviewLockEvent`](#asseteditorupdateweatherpreviewlockevent) | `Void` | Weather preview lock |
 
 ---
 
