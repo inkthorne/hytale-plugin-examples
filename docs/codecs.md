@@ -233,6 +233,141 @@ Codec<BaseClass> dispatch = type.dispatch(
 
 ---
 
+## Polymorphic Type Dispatch
+
+Hytale uses type dispatch for assets that have multiple implementations sharing a common base type. This allows JSON files to specify which concrete type to deserialize using a `"Type"` field.
+
+### How Type Dispatch Works
+
+When loading a polymorphic asset, the system:
+1. Reads the `"Type"` field from JSON
+2. Looks up the corresponding codec in a registry
+3. Uses that codec to deserialize the remaining fields
+
+```json
+{
+  "Type": "Simple",
+  "Duration": 1.5,
+  "Animation": "wave"
+}
+```
+
+The `"Type": "Simple"` tells the system to use `SimpleInteraction.CODEC` instead of `ComplexInteraction.CODEC`.
+
+### StringCodecMapCodec vs AssetCodecMapCodec
+
+**`StringCodecMapCodec<T, C>`** - Maps type strings to codecs for polymorphic dispatch:
+```java
+// Registry that maps "Simple" -> SimpleInteraction.CODEC, etc.
+public static final StringCodecMapCodec<Interaction, Codec<? extends Interaction>> TYPE_CODEC =
+    new StringCodecMapCodec<>("Type", Interaction.class);
+```
+
+**`AssetCodecMapCodec<K, T>`** - Maps asset keys to asset instances (for asset stores):
+```java
+// Registry that maps asset IDs to loaded asset instances
+public static final AssetCodecMapCodec<String, MyAsset> ASSET_MAP =
+    new AssetCodecMapCodec<>(MyAsset.CODEC);
+```
+
+Use `StringCodecMapCodec` when you need polymorphic type selection. Use `AssetCodecMapCodec` for asset storage.
+
+### Registering Custom Types
+
+To add a new type to an existing polymorphic system, register it during plugin `setup()`:
+
+```java
+@Override
+protected void setup() {
+    // Get the codec registry for the Interaction type system
+    CodecMapRegistry<Interaction, Codec<? extends Interaction>> registry =
+        getCodecRegistry(Interaction.TYPE_CODEC);
+
+    // Register your custom interaction type
+    // JSON files can now use "Type": "MyCustom" to select this codec
+    registry.register("MyCustom", MyCustomInteraction.CODEC);
+}
+```
+
+After registration, JSON files can use your type:
+```json
+{
+  "Type": "MyCustom",
+  "CustomField": "value"
+}
+```
+
+### When Registration Happens
+
+Type registration must occur during the plugin `setup()` phase:
+- Built-in types are pre-registered by server modules before plugins load
+- Plugin types are registered when `setup()` is called
+- All types must be registered before asset loading completes
+
+### Built-in Type Systems
+
+Some Hytale systems use type dispatch internally. Plugins can extend these by registering additional types:
+
+| System | Codec | Built-in Types |
+|--------|-------|----------------|
+| Interactions | `Interaction.TYPE_CODEC` | Simple, Complex, Sequence |
+| Conditions | `Condition.TYPE_CODEC` | And, Or, Not, HasItem |
+
+> **Note:** Check specific API documentation to see which systems support plugin type extensions.
+
+### Creating Your Own Type-Dispatched System
+
+For a completely new polymorphic asset system:
+
+```java
+// 1. Define the base type
+public interface MyEffect {
+    void apply(Player player);
+
+    // Type dispatch codec
+    StringCodecMapCodec<MyEffect, Codec<? extends MyEffect>> TYPE_CODEC =
+        new StringCodecMapCodec<>("Type", MyEffect.class);
+}
+
+// 2. Implement concrete types
+public class DamageEffect implements MyEffect {
+    private final int amount;
+
+    public static final Codec<DamageEffect> CODEC = RecordCodecBuilder.create(instance ->
+        instance.group(
+            Codec.INT.fieldOf("Amount").forGetter(e -> e.amount)
+        ).apply(instance, DamageEffect::new)
+    );
+
+    @Override
+    public void apply(Player player) {
+        player.damage(amount);
+    }
+}
+
+// 3. Register types in setup()
+@Override
+protected void setup() {
+    CodecMapRegistry<MyEffect, Codec<? extends MyEffect>> registry =
+        getCodecRegistry(MyEffect.TYPE_CODEC);
+
+    registry.register("Damage", DamageEffect.CODEC);
+    registry.register("Heal", HealEffect.CODEC);
+}
+```
+
+JSON usage:
+```json
+{
+  "Type": "Damage",
+  "Amount": 10
+}
+```
+
+> **See also:** [Assets API](assets.md) for creating complete asset stores with type dispatch
+
+---
+
 ## Usage Examples
 
 ### Plugin Configuration
@@ -273,28 +408,23 @@ protected void setup() {
 ### Custom Asset with Codec
 ```java
 public class SpellDefinition implements JsonAsset<String> {
-    private final String id;
     private final String name;
     private final int manaCost;
     private final float cooldown;
 
     public static final Codec<SpellDefinition> CODEC = RecordCodecBuilder.create(instance ->
         instance.group(
-            Codec.STRING.fieldOf("id").forGetter(SpellDefinition::getId),
-            Codec.STRING.fieldOf("name").forGetter(SpellDefinition::getName),
-            Codec.INT.fieldOf("manaCost").forGetter(SpellDefinition::getManaCost),
-            Codec.FLOAT.fieldOf("cooldown").forGetter(SpellDefinition::getCooldown)
+            Codec.STRING.fieldOf("Name").forGetter(SpellDefinition::getName),
+            Codec.INT.fieldOf("ManaCost").forGetter(SpellDefinition::getManaCost),
+            Codec.FLOAT.fieldOf("Cooldown").forGetter(SpellDefinition::getCooldown)
         ).apply(instance, SpellDefinition::new)
     );
 
     // Constructor and getters...
-
-    @Override
-    public String getKey() {
-        return id;
-    }
 }
 ```
+
+> **See also:** [Assets API - Creating Custom Asset Types](assets.md#creating-custom-asset-types) for the complete guide
 
 ### Block State with Codec
 ```java

@@ -182,7 +182,7 @@ String idleAnim = model.getFirstBoundAnimationId("idle", "default");
 
 ## JSON Asset Pattern
 
-Assets in Hytale typically follow a JSON-based pattern with codec serialization:
+Assets in Hytale typically follow a JSON-based pattern with codec serialization. For a complete implementation guide, see [Creating Custom Asset Types](#creating-custom-asset-types).
 
 ```java
 public class MyAsset implements JsonAsset<String> {
@@ -223,16 +223,280 @@ public class MyAsset implements JsonAsset<String> {
 Create a custom asset store:
 
 ```java
-public class MyAssetStore extends AssetStore<String, MyAsset, MyAssetMap> {
+public class MyAssetStore extends AssetStore<String, MyAsset, DefaultAssetMap<String, MyAsset>> {
     public MyAssetStore() {
-        super(MyAsset.class, MyAssetMap.class, MyAsset.CODEC);
+        super(MyAsset.class, DefaultAssetMap.class, MyAsset.CODEC);
+    }
+}
+```
+
+> **Note:** Most plugins should use `DefaultAssetMap` rather than creating a custom AssetMap implementation. See the complete guide below.
+
+---
+
+## Creating Custom Asset Types
+
+This section provides a complete guide to creating custom JSON-populated asset types for your plugin.
+
+### When to Create Custom Assets
+
+Create a custom asset type when you need:
+- Data-driven definitions loaded from JSON files
+- Multiple instances of the same structure (e.g., spell definitions, item configs)
+- Hot-reloadable content without code changes
+
+For simple configuration, use `BuilderCodec` with `withConfig()` instead. See [Plugin Configuration](plugin-lifecycle.md#configuration).
+
+### Asset File Structure
+
+Plugin assets are placed in `src/main/resources/` and require manifest configuration.
+
+**Folder Structure:**
+```
+src/main/resources/
+├── manifest.json                    # Must include "IncludesAssetPack": true
+├── Server/
+│   └── Spells/                      # Your asset type folder
+│       ├── Fireball.json
+│       ├── IceBlast.json
+│       └── Heal.json
+└── Common/                          # For client-shared assets (UI, etc.)
+    └── UI/
+        └── Custom/
+            └── MyPage.ui
+```
+
+**manifest.json Requirements:**
+```json
+{
+  "Group": "MyPlugin",
+  "Name": "SpellsPlugin",
+  "Main": "com.example.SpellsPlugin",
+  "IncludesAssetPack": true
+}
+```
+
+The `"IncludesAssetPack": true` flag tells the server to scan your plugin's resources for asset files.
+
+**Asset Discovery:**
+- Server assets: `Server/[AssetType]/` folder
+- Common assets: `Common/[AssetType]/` folder
+- Asset keys default to the filename without extension (e.g., `Fireball.json` → key `"Fireball"`)
+
+### AssetMap Implementations
+
+`AssetMap` stores loaded assets for lookup. Most plugins should use the built-in implementation:
+
+**`DefaultAssetMap<K, T>`** - Standard map-based storage (recommended):
+```java
+// Uses HashMap internally, suitable for most use cases
+DefaultAssetMap<String, SpellDefinition>
+```
+
+**`IndexedLookupTableAssetMap<K, T>`** - Array-backed storage for O(1) indexed lookups:
+```java
+// Used internally by systems like Interaction that need index-based access
+// Only use if you need integer-indexed lookups
+IndexedLookupTableAssetMap<String, MyAsset>
+```
+
+**When to use each:**
+| Use Case | AssetMap Type |
+|----------|---------------|
+| Most plugins | `DefaultAssetMap` |
+| Need integer index lookups | `IndexedLookupTableAssetMap` |
+| Custom lookup requirements | Extend `AssetMap` |
+
+### Complete Working Example
+
+Here's a full implementation of a custom "Spell" asset system:
+
+**1. Define the Asset Class**
+
+```java
+package com.example.spells;
+
+import com.hypixel.hytale.codec.Codec;
+import com.hypixel.hytale.codec.RecordCodecBuilder;
+import com.hypixel.hytale.server.core.asset.JsonAsset;
+
+public class SpellDefinition implements JsonAsset<String> {
+    private final String name;
+    private final int manaCost;
+    private final float cooldown;
+    private final String effect;
+
+    public static final Codec<SpellDefinition> CODEC = RecordCodecBuilder.create(instance ->
+        instance.group(
+            Codec.STRING.fieldOf("Name").forGetter(SpellDefinition::getName),
+            Codec.INT.fieldOf("ManaCost").forGetter(SpellDefinition::getManaCost),
+            Codec.FLOAT.fieldOf("Cooldown").forGetter(SpellDefinition::getCooldown),
+            Codec.STRING.optionalFieldOf("Effect", "none").forGetter(SpellDefinition::getEffect)
+        ).apply(instance, SpellDefinition::new)
+    );
+
+    public SpellDefinition(String name, int manaCost, float cooldown, String effect) {
+        this.name = name;
+        this.manaCost = manaCost;
+        this.cooldown = cooldown;
+        this.effect = effect;
+    }
+
+    // JsonAsset requires no getKey() override when using filename-based keys
+
+    public String getName() { return name; }
+    public int getManaCost() { return manaCost; }
+    public float getCooldown() { return cooldown; }
+    public String getEffect() { return effect; }
+}
+```
+
+**2. Define the Asset Store**
+
+```java
+package com.example.spells;
+
+import com.hypixel.hytale.server.core.asset.AssetStore;
+import com.hypixel.hytale.server.core.asset.DefaultAssetMap;
+
+public class SpellStore extends AssetStore<String, SpellDefinition, DefaultAssetMap<String, SpellDefinition>> {
+
+    // Singleton for easy access
+    private static SpellStore instance;
+
+    public SpellStore() {
+        super(SpellDefinition.class, DefaultAssetMap.class, SpellDefinition.CODEC);
+        instance = this;
+    }
+
+    public static SpellStore getInstance() {
+        return instance;
+    }
+
+    // AssetStore provides:
+    // - get(String key) - retrieve by key
+    // - getAssetMap() - access underlying map
+    // - contains(String key) - check existence
+}
+```
+
+**3. Create JSON Asset Files**
+
+`src/main/resources/Server/Spells/Fireball.json`:
+```json
+{
+  "Name": "Fireball",
+  "ManaCost": 25,
+  "Cooldown": 3.0,
+  "Effect": "fire_burst"
+}
+```
+
+`src/main/resources/Server/Spells/Heal.json`:
+```json
+{
+  "Name": "Healing Light",
+  "ManaCost": 15,
+  "Cooldown": 5.0,
+  "Effect": "regeneration"
+}
+```
+
+**4. Register in Plugin Setup**
+
+```java
+package com.example.spells;
+
+import com.hypixel.hytale.server.core.plugin.JavaPlugin;
+
+public class SpellsPlugin extends JavaPlugin {
+
+    @Override
+    protected void setup() {
+        // Create and register the asset store
+        SpellStore spellStore = new SpellStore();
+        getAssetRegistry().register(spellStore);
+
+        // Assets are automatically loaded from Server/Spells/*.json
+    }
+}
+```
+
+**5. Access Assets at Runtime**
+
+```java
+// In a command or event handler
+public void castSpell(Player player, String spellName) {
+    SpellDefinition spell = SpellStore.getInstance().get(spellName);
+
+    if (spell == null) {
+        player.sendMessage("Unknown spell: " + spellName);
+        return;
+    }
+
+    if (player.getMana() < spell.getManaCost()) {
+        player.sendMessage("Not enough mana! Need " + spell.getManaCost());
+        return;
+    }
+
+    // Cast the spell
+    player.consumeMana(spell.getManaCost());
+    player.sendMessage("Casting " + spell.getName() + "!");
+
+    // Apply cooldown
+    player.applyCooldown("spell:" + spellName, spell.getCooldown());
+}
+```
+
+### Adding Polymorphic Types
+
+If your asset system needs multiple subtypes (e.g., different spell categories with different fields), use type dispatch:
+
+```java
+// Base interface
+public interface SpellEffect {
+    void apply(Player caster, Entity target);
+
+    StringCodecMapCodec<SpellEffect, Codec<? extends SpellEffect>> TYPE_CODEC =
+        new StringCodecMapCodec<>("Type", SpellEffect.class);
+}
+
+// Damage effect implementation
+public class DamageSpellEffect implements SpellEffect {
+    private final int damage;
+
+    public static final Codec<DamageSpellEffect> CODEC = RecordCodecBuilder.create(instance ->
+        instance.group(
+            Codec.INT.fieldOf("Damage").forGetter(e -> e.damage)
+        ).apply(instance, DamageSpellEffect::new)
+    );
+
+    @Override
+    public void apply(Player caster, Entity target) {
+        target.damage(damage);
     }
 }
 
-public class MyAssetMap extends AssetMap<String, MyAsset> {
-    // Map implementation
+// Register in setup()
+@Override
+protected void setup() {
+    CodecMapRegistry<SpellEffect, Codec<? extends SpellEffect>> registry =
+        getCodecRegistry(SpellEffect.TYPE_CODEC);
+
+    registry.register("Damage", DamageSpellEffect.CODEC);
+    registry.register("Heal", HealSpellEffect.CODEC);
 }
 ```
+
+JSON with type dispatch:
+```json
+{
+  "Type": "Damage",
+  "Damage": 50
+}
+```
+
+> **See also:** [Codecs API - Polymorphic Type Dispatch](codecs.md#polymorphic-type-dispatch)
 
 ---
 
@@ -304,6 +568,8 @@ Assets are loaded during server startup:
 - Use the appropriate codec type for your asset structure
 - Assets persist across server restarts (stored in data files)
 - Explore specific asset type packages for detailed APIs
+- For a complete guide on creating custom assets, see [Creating Custom Asset Types](#creating-custom-asset-types)
+- For polymorphic assets with type dispatch, see [Codecs API - Polymorphic Type Dispatch](codecs.md#polymorphic-type-dispatch)
 
 ---
 
