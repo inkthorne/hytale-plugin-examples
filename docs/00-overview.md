@@ -40,11 +40,6 @@ Quick reference for finding the right documentation file.
 | [singleplayer.md](singleplayer.md) | Singleplayer-specific functionality with SingleplayerRequestAccessEvent for handling local server access requests. |
 | [audio.md](audio.md) | Audio system documentation covering sound events, audio categories, ambience, reverb, EQ, and integration with other systems. |
 | [worldgen.md](worldgen.md) | World generation system overview including zones, biomes, terrain layers, caves, and structure placement. |
-| [worldgen-zones.md](worldgen-zones.md) | Zone system with Voronoi distribution, biome pattern generators, and discovery UI configuration. |
-| [worldgen-biomes.md](worldgen-biomes.md) | Biome definitions with containers for layers, covers, prefabs, water, tints, and environment. |
-| [worldgen-terrain.md](worldgen-terrain.md) | Terrain layer system with static/dynamic layers, noise suppliers, and block priority. |
-| [worldgen-caves.md](worldgen-caves.md) | Cave system with node-based generation, shapes, corridors, and cave prefabs. |
-| [worldgen-prefabs.md](worldgen-prefabs.md) | Structure placement including surface prefabs and globally unique structures. |
 
 ## Asset Type Index
 
@@ -225,9 +220,4 @@ JSON asset types used in Hytale's data-driven systems.
 - math.md - Vectors, matrices, quaternions, shapes
 
 **World Generation** - Procedural terrain and structure generation
-- worldgen.md - World generation overview and pipeline
-- worldgen-zones.md - Zone system with Voronoi distribution
-- worldgen-biomes.md - Biome definitions and containers
-- worldgen-terrain.md - Terrain layers and block population
-- worldgen-caves.md - Cave system with node-based generation
-- worldgen-prefabs.md - Structure and prefab placement
+- worldgen.md - World generation overview, pipeline, zones, biomes, terrain, caves, and prefabs
