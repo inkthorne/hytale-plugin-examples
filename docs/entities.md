@@ -199,6 +199,76 @@ void clearReference()
 Holder<EntityStore> toHolder()
 ```
 
+## PlayerRef vs Player: When to Use Each
+
+Commands receive both `PlayerRef` and `Ref<EntityStore>`. Understanding when to use each is important:
+
+### PlayerRef — Lightweight Reference
+
+`PlayerRef` is a lightweight wrapper providing:
+- **Messaging:** `sendMessage()`, `getLanguage()`
+- **Identity:** `getUuid()`, `getUsername()`
+- **Position:** `getTransform()`, `getWorldUuid()`
+- **Network:** `getPacketHandler()`, `referToServer()`
+
+Use `PlayerRef` when you only need these operations.
+
+### Player — Full Component Access
+
+`Player` is the full entity component with access to:
+- **Permissions:** `hasPermission()`
+- **Inventory:** `getInventory()`, `sendInventory()`
+- **Game State:** `getGameMode()`, `isFirstSpawn()`
+- **UI Managers:** `getWindowManager()`, `getPageManager()`, `getHudManager()`, `getHotbarManager()`
+- **Movement:** `moveTo()`, `resetVelocity()`
+
+### Getting Player from PlayerRef
+
+In commands, you receive `Ref<EntityStore>` which can access any component:
+
+```java
+@Override
+protected void execute(CommandContext ctx, Store<EntityStore> store,
+                      Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+    // PlayerRef is sufficient for messaging
+    playerRef.sendMessage(Message.raw("Hello!"));
+
+    // Get Player component for extended functionality
+    Player player = store.getComponent(ref, Player.getComponentType());
+
+    // Now you can access Player-specific features
+    if (player.hasPermission("myplugin.admin")) {
+        HudManager hud = player.getHudManager();
+        Inventory inventory = player.getInventory();
+        // ...
+    }
+}
+```
+
+### Quick Reference
+
+| Need | Use | How |
+|------|-----|-----|
+| Send message | `PlayerRef` | `playerRef.sendMessage(msg)` |
+| Get UUID/username | `PlayerRef` | `playerRef.getUuid()` |
+| Get position | `PlayerRef` | `playerRef.getTransform()` |
+| Check permissions | `Player` | `player.hasPermission(perm)` |
+| Access inventory | `Player` | `player.getInventory()` |
+| Manage HUD | `Player` | `player.getHudManager()` |
+| Open pages/windows | `Player` | `player.getPageManager()`, `player.getWindowManager()` |
+
+### Alternative: PlayerRef.getComponent()
+
+`PlayerRef` also has a `getComponent()` method for convenience:
+
+```java
+// These are equivalent:
+Player player = store.getComponent(ref, Player.getComponentType());
+Player player = playerRef.getComponent(Player.getComponentType());
+```
+
+---
+
 ## Usage in Commands
 ```java
 @Override

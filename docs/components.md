@@ -696,6 +696,74 @@ if (transform != null) {
 
 ---
 
+## Action Components
+
+Some operations in Hytale use "action components" — components you add to an entity that trigger systems to perform an action, rather than storing persistent state. This is an ECS pattern where adding a component causes a system to process it, perform the action, and often remove the component afterward.
+
+### The Pattern
+
+1. **Create** an action component using a factory method
+2. **Add** the component to the entity store
+3. **System processes** the component and performs the action
+4. **Component removed** (automatically by the system)
+
+### Teleport Module
+
+The `Teleport` component is the primary example of this pattern. Instead of calling `transform.teleportPosition()` directly, you add a `Teleport` component and the `TeleportSystems` process it.
+
+**Package:** `com.hypixel.hytale.server.core.modules.entity.teleport`
+
+#### Factory Methods
+```java
+// Create teleport for a player (handles player-specific synchronization)
+static Teleport createForPlayer(World world, Vector3d position, Vector3f rotation)
+
+// Get component type for ECS operations
+static ComponentType<EntityStore, Teleport> getComponentType()
+```
+
+#### Usage Example
+```java
+@Override
+protected void execute(CommandContext ctx, Store<EntityStore> store,
+                      Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+    Transform current = playerRef.getTransform();
+    Vector3d targetPos = new Vector3d(100, 64, 200);
+
+    // Create teleport component for player
+    Teleport teleport = Teleport.createForPlayer(world, targetPos, current.getRotation());
+
+    // Add to store - TeleportSystems will process this and move the player
+    store.addComponent(ref, Teleport.getComponentType(), teleport);
+
+    playerRef.sendMessage(Message.raw("Teleporting..."));
+}
+```
+
+### Direct Teleport vs Action Component
+
+Both approaches exist for teleportation:
+
+| Approach | Method | Use Case |
+|----------|--------|----------|
+| Direct | `transform.teleportPosition(pos)` | Simple position changes, NPCs |
+| Action Component | `store.addComponent(ref, Teleport.getComponentType(), teleport)` | Player teleportation with proper client sync |
+
+**When to use each:**
+- **Action Component (Teleport):** Recommended for players — handles network synchronization, chunk loading, and client state properly
+- **Direct (TransformComponent):** Suitable for server-side entities or when you need immediate position changes without system processing
+
+### Other Action Components
+
+The action component pattern may be used by other modules. Look for:
+- Static factory methods like `createFor*()`
+- Components that trigger behavior rather than store state
+- Systems that process and remove components
+
+> **Note:** Action components differ from persistent components. Persistent components (like `Player`, `Inventory`, `Health`) store ongoing state. Action components represent a one-time request for the ECS to perform an operation.
+
+---
+
 ## Usage in Commands
 ```java
 @Override
