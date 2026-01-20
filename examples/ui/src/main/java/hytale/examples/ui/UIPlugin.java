@@ -13,6 +13,7 @@ public class UIPlugin extends JavaPlugin {
     protected void setup() {
         getCommandRegistry().registerCommand(new MenuCommand());
         getCommandRegistry().registerCommand(new HudCommand());
+        getCommandRegistry().registerCommand(new StatusHudCommand());
 
         getLogger().atInfo().log("UIExample plugin loaded!");
     }

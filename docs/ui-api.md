@@ -15,6 +15,7 @@ Server-side Java API reference for Hytale's UI system.
 | [CustomUIPage](#customuipage) | Custom page implementation |
 | [WindowManager](#windowmanager) | Window lifecycle management |
 | [HudManager](#hudmanager) | HUD visibility control |
+| [CustomUIHud](#customuihud) | Custom HUD overlays |
 | [HotbarManager](#hotbarmanager) | Hotbar configuration |
 | [File Browser](#file-browser-system) | Server file browser UI |
 | [WindowCloseEvent](#windowcloseevent) | Window close handling |
@@ -613,6 +614,299 @@ hud.showHudComponents(playerRef, HudComponent.Stamina);
 ```
 
 > **See also:** [Player API](player.md#player-events)
+
+---
+
+## CustomUIHud
+**Package:** `com.hypixel.hytale.server.core.entity.entities.player.hud`
+
+Abstract base class for custom HUD overlays. Extend this to add your own icons, text, or other elements to the player's HUD that persist while playing.
+
+### API
+```java
+// Constructor
+CustomUIHud(PlayerRef playerRef)
+
+// Abstract - must implement
+protected abstract void build(UICommandBuilder cmd)
+
+// Update HUD
+void show()                                    // Force refresh (calls build() internally)
+void update(boolean clear, UICommandBuilder cmd)  // Update with commands
+
+// Access
+PlayerRef getPlayerRef()
+```
+
+### CustomUIHud vs Native HUD Components
+
+CustomUIHud creates a **separate overlay layer** that renders alongside (not instead of) the native HUD components.
+
+| System | What It Controls | How to Use |
+|--------|------------------|------------|
+| Native HudComponents | Built-in elements (Health bar, Mana bar, Hotbar, etc.) | `hud.showHudComponents()`, `hud.hideHudComponents()` |
+| CustomUIHud | Your custom overlay (text, icons, panels) | `hud.setCustomHud()` |
+
+**Key point:** CustomUIHud does NOT modify or extend the native HUD. To display custom health/mana values:
+- Create a CustomUIHud with your own Label elements
+- The native Health/Mana bars will still appear separately (unless you hide them)
+
+```java
+// Example: Custom HUD + selective native components
+HudManager hud = player.getHudManager();
+
+// Hide native health/mana bars (optional)
+hud.hideHudComponents(playerRef, HudComponent.Health, HudComponent.Mana);
+
+// Show custom HUD with your own health/mana display
+hud.setCustomHud(playerRef, new StatusHud(playerRef));
+```
+
+### Obtaining ECS Context for UI Operations
+
+Custom HUDs typically need ECS context (store, ref, playerRef) to interact with game state. This context is obtained from command handlers or event callbacks:
+
+**From Commands (most common):**
+```java
+@Override
+protected void execute(CommandContext ctx, Store<EntityStore> store,
+                      Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+    // store, ref, playerRef provided by command framework
+    Player player = store.getComponent(ref, Player.getComponentType());
+    player.getHudManager().setCustomHud(playerRef, new StatusHud(playerRef));
+}
+```
+
+**From Events:**
+```java
+getEventRegistry().register(SomeEvent.class, event -> {
+    // Context available from event
+    Store<EntityStore> store = event.getStore();
+    Ref<EntityStore> ref = event.getRef();
+    // ...
+});
+```
+
+> **See also:** [Commands API](commands.md) for command context details
+
+### Implementation Example
+```java
+public class StatusHud extends CustomUIHud {
+    public StatusHud(PlayerRef playerRef) {
+        super(playerRef);
+    }
+
+    @Override
+    protected void build(UICommandBuilder cmd) {
+        cmd.append("StatusHud.ui");
+    }
+
+    /**
+     * Update HUD values dynamically.
+     * Call this method whenever stats change.
+     */
+    public void updateStats(int health, int mana) {
+        UICommandBuilder cmd = new UICommandBuilder();
+        cmd.set("#HealthLabel.Text", "Health: " + health);
+        cmd.set("#ManaLabel.Text", "Mana: " + mana);
+        update(false, cmd);  // false = apply incrementally
+    }
+}
+
+// Register the custom HUD
+Player player = store.getComponent(ref, Player.getComponentType());
+HudManager hud = player.getHudManager();
+StatusHud statusHud = new StatusHud(playerRef);
+hud.setCustomHud(playerRef, statusHud);
+
+// Later, update the HUD
+statusHud.updateStats(85, 50);
+```
+
+### Dynamic Updates
+
+```java
+void update(boolean clear, UICommandBuilder cmd)
+```
+
+**Parameters:**
+- `clear=false` — Apply commands incrementally (recommended for updates)
+- `clear=true` — Remove all content before applying commands (full rebuild)
+
+**When to use each:**
+| Scenario | Use |
+|----------|-----|
+| Updating text, values, properties | `update(false, cmd)` |
+| Changing layout structure | `update(true, cmd)` |
+| Switching HUD modes/states | `update(true, cmd)` |
+| Frequent value updates | `update(false, cmd)` |
+
+**Example:**
+```java
+// Incremental update (recommended for most cases)
+UICommandBuilder cmd = new UICommandBuilder();
+cmd.set("#HealthLabel.Text", "Health: 85");
+cmd.set("#ManaLabel.Text", "Mana: 50");
+customHud.update(false, cmd);
+
+// Full rebuild (use sparingly)
+UICommandBuilder rebuildCmd = new UICommandBuilder();
+rebuildCmd.append("AlternateHud.ui");
+customHud.update(true, rebuildCmd);
+```
+
+### show() vs update() Relationship
+
+| Method | When Called | What Happens |
+|--------|-------------|--------------|
+| `show()` | Initial display or force refresh | Calls `build()` internally, sends full UI to client |
+| `update(clear, cmd)` | After initial display | Sends only the specified commands without re-calling `build()` |
+
+The `show()` method is called automatically when you call `setCustomHud()`. Use `update()` for all subsequent changes.
+
+### UICommandBuilder Method Support
+
+All UICommandBuilder methods work in both `build()` and `update()`:
+
+| Method | Description |
+|--------|-------------|
+| `set(selector, value)` | Set element property (String, boolean, int, float, etc.) |
+| `setNull(selector)` | Set property to null |
+| `setObject(selector, obj)` | Set arbitrary object |
+| `clear(selector)` | Clear element contents |
+| `remove(selector)` | Remove element from DOM |
+| `append(path)` | Append .ui file to root |
+| `append(selector, path)` | Append .ui file to element |
+| `appendInline(selector, dsl)` | Append inline DSL markup |
+| `insertBefore(selector, path)` | Insert .ui file before element |
+| `insertBeforeInline(selector, dsl)` | Insert inline DSL before element |
+
+### Element Targeting Syntax
+
+Target elements using `#ElementId.Property` syntax:
+
+```java
+UICommandBuilder cmd = new UICommandBuilder();
+
+// Set text content
+cmd.set("#HealthLabel.Text", "Health: 100");
+
+// Set visibility
+cmd.set("#WarningIcon.Visible", false);
+
+// Set numeric values
+cmd.set("#ProgressBar.Value", 0.75f);
+
+// Set colors (as hex string)
+cmd.set("#StatusLabel.Style.TextColor", "#FF0000");
+
+// Append to container
+cmd.append("#ItemContainer", "Components/Item.ui");
+
+// Clear container contents
+cmd.clear("#NotificationList");
+
+// Remove specific element
+cmd.remove("#TempMessage");
+```
+
+### Event Handling
+
+**CustomUIHud does NOT support event handling.** The `build()` method only receives `UICommandBuilder`, not `UIEventBuilder`.
+
+For UIs that need to respond to user interaction (button clicks, input changes, etc.), use [CustomUIPage](#customuipage) instead.
+
+| Feature | CustomUIHud | CustomUIPage |
+|---------|-------------|--------------|
+| Event handling | ❌ No | ✅ Yes |
+| `build()` signature | `build(UICommandBuilder)` | `build(Ref, UICommandBuilder, UIEventBuilder, Store)` |
+| `handleDataEvent()` | Not available | Override to handle events |
+
+### Multiple HUDs
+
+**Only one CustomUIHud can be active per player.** The `HudManager` stores a single `customHud` reference. Calling `setCustomHud()` replaces any existing custom HUD.
+
+To display multiple HUD elements simultaneously:
+1. **Combine in one HUD:** Include all elements in a single CustomUIHud with multiple containers
+2. **Use native components:** Combine CustomUIHud with built-in `HudComponent` elements
+
+```java
+// Example: Combined HUD with multiple sections
+public class CombinedHud extends CustomUIHud {
+    @Override
+    protected void build(UICommandBuilder cmd) {
+        cmd.append("CombinedHud.ui");  // Contains both status and minimap sections
+    }
+}
+```
+
+### .ui File Example (StatusHud.ui)
+```
+Group {
+    Anchor: (Top: 10, Right: 10, Width: 200, Height: 80);
+    Background: (Color: #000000(0.5));
+    Padding: (Full: 10);
+    LayoutMode: Top;
+
+    Label #HealthLabel {
+        Style: (FontSize: 16, TextColor: #FF4444);
+        Text: "Health: 100";
+    }
+
+    Label #ManaLabel {
+        Anchor: (Top: 5);
+        Style: (FontSize: 16, TextColor: #4444FF);
+        Text: "Mana: 100";
+    }
+}
+```
+
+### Manifest Requirements
+
+CustomUIHud requires the plugin manifest to include:
+
+```json
+{
+    "Group": "YourGroup",
+    "Name": "YourPlugin",
+    "Main": "your.package.YourPlugin",
+    "IncludesAssetPack": true
+}
+```
+
+The `"IncludesAssetPack": true` setting is **required** for any plugin using custom `.ui` files.
+
+### Removing Custom HUD
+To remove a custom HUD, set it to null or reset the HUD:
+
+```java
+hud.setCustomHud(playerRef, null);
+// Or reset everything:
+hud.resetHud(playerRef);
+```
+
+---
+
+## Choosing Between CustomUIPage and CustomUIHud
+
+| Feature | CustomUIPage | CustomUIHud |
+|---------|--------------|-------------|
+| **Display Mode** | Full-screen overlay | Persistent overlay |
+| **Blocks Gameplay** | Yes (modal) | No (non-blocking) |
+| **Event Handling** | ✅ Yes (`UIEventBuilder`) | ❌ No |
+| **User Can Dismiss** | Yes (ESC key, configurable) | No (must remove programmatically) |
+| **Typical Use Cases** | Menus, inventories, dialogs | Health bars, status indicators, minimaps |
+| **Lifetime** | Temporary (opened/closed) | Persistent while active |
+
+**Use CustomUIPage when:**
+- User needs to interact with buttons, inputs, or other controls
+- UI should pause or overlay gameplay
+- UI is temporary (settings menu, inventory screen)
+
+**Use CustomUIHud when:**
+- Displaying passive information (health, mana, score)
+- UI should not interrupt gameplay
+- Information needs to persist on screen
 
 ---
 

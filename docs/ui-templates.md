@@ -312,30 +312,65 @@ Reference elements by their ID for event binding and dynamic updates.
 #ElementId
 ```
 
+### Element Targeting Syntax
+
+The full targeting syntax is `#ElementId.Property` where:
+- `#ElementId` — The element's ID (defined in .ui file as `Element #MyId { ... }`)
+- `.Property` — The property path to set
+
+**Common property patterns:**
+
+| Target | Syntax | Example |
+|--------|--------|---------|
+| Text content | `#Id.Text` | `cmd.set("#Label.Text", "Hello")` |
+| Visibility | `#Id.Visible` | `cmd.set("#Panel.Visible", false)` |
+| Numeric value | `#Id.Value` | `cmd.set("#Progress.Value", 0.5f)` |
+| Style property | `#Id.Style.Property` | `cmd.set("#Label.Style.TextColor", "#FF0000")` |
+| Nested property | `#Id.Parent.Child` | `cmd.set("#Button.Style.Default.Background.Color", "#3498db")` |
+
 ### In Event Bindings
 
 ```java
-// Server-side event registration
+// Server-side event registration (element ID only, no # prefix)
 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "MyButton");
 eventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "SearchInput");
 ```
+
+> **Note:** Event bindings use element IDs **without** the `#` prefix.
 
 ### In UICommandBuilder
 
 ```java
 UICommandBuilder cmd = new UICommandBuilder();
 
-// Set properties by element ID
+// Set text properties
 cmd.set("#PlayerName.Text", playerName);
 cmd.set("#Score.Text", String.valueOf(score));
+
+// Set visibility
+cmd.set("#WarningIcon.Visible", true);
+cmd.set("#LoadingPanel.Visible", false);
+
+// Set numeric values
+cmd.set("#HealthBar.Value", 0.85f);
+cmd.set("#ExperienceBar.Value", currentXp / maxXp);
+
+// Set boolean properties
+cmd.set("#Checkbox.Checked", true);
 
 // Append to specific element
 cmd.append("#Container", "Components/ListItem.ui");
 
-// Clear element contents
+// Append inline DSL
+cmd.appendInline("#List", "Label { Text: \"New Item\"; }");
+
+// Insert before element
+cmd.insertBefore("#Footer", "Components/Divider.ui");
+
+// Clear element contents (removes children)
 cmd.clear("#ItemList");
 
-// Remove element
+// Remove element entirely
 cmd.remove("#OldElement");
 ```
 
@@ -354,13 +389,44 @@ Group #StatusPanel {
         Anchor: (Width: 200, Height: 10);
         Value: 0;  // Will be updated server-side
     }
+
+    Group #IconContainer {
+        // Container for dynamically added icons
+    }
 }
 ```
 
 ```java
-// Update dynamically
+// Update text and progress
 cmd.set("#StatusText.Text", "Connected!");
 cmd.set("#LoadingBar.Value", 1.0f);
+
+// Add icon to container
+cmd.append("#IconContainer", "Components/StatusIcon.ui");
+
+// Clear and rebuild list
+cmd.clear("#IconContainer");
+cmd.append("#IconContainer", "Components/NewIcon.ui");
+```
+
+### ID Requirements
+
+1. **Root element cannot have an ID** — The outermost `Group` must be anonymous
+2. **IDs must be unique** — Within a single UI hierarchy
+3. **Case-sensitive** — `#myButton` and `#MyButton` are different elements
+
+```
+// Correct: Anonymous root, named children
+Group {
+    Group #Panel {
+        Label #Title { Text: "Hello"; }
+    }
+}
+
+// Wrong: Root cannot have ID
+Group #Root {  // This will fail!
+    // ...
+}
 ```
 
 ---

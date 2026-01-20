@@ -1,0 +1,17 @@
+Group {
+    Anchor: (Top: 10, Right: 10, Width: 180, Height: 70);
+    Background: (Color: #000000(0.6));
+    Padding: (Full: 10);
+    LayoutMode: Top;
+
+    Label #HealthLabel {
+        Style: (FontSize: 16, TextColor: #FF4444);
+        Text: "Health: 100";
+    }
+
+    Label #ManaLabel {
+        Anchor: (Top: 5);
+        Style: (FontSize: 16, TextColor: #4488FF);
+        Text: "Mana: 100";
+    }
+}
