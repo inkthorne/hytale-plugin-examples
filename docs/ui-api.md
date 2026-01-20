@@ -13,6 +13,7 @@ Server-side Java API reference for Hytale's UI system.
 | [UIEventBuilder](#uieventbuilder) | Build event handlers |
 | [PageManager](#pagemanager) | Full-screen page management |
 | [CustomUIPage](#customuipage) | Custom page implementation |
+| [Registering Pages for OpenCustomUI](#registering-pages-for-opencustomui) | Page suppliers for JSON interactions |
 | [WindowManager](#windowmanager) | Window lifecycle management |
 | [HudManager](#hudmanager) | HUD visibility control |
 | [CustomUIHud](#customuihud) | Custom HUD overlays |
@@ -401,6 +402,187 @@ public class InteractivePage extends BasicCustomUIPage {
 ```
 
 > **Note:** The `OnActivating: (SendData: ...)` syntax is NOT valid in .ui files. Events must be registered through the Java API.
+
+---
+
+## Registering Pages for OpenCustomUI
+
+To open custom pages via [`OpenCustomUI`](interactions-world.md#opencustomui) interactions in JSON, you must register a page supplier. This allows JSON asset files to reference your custom page by ID.
+
+### Simple Registration
+
+For pages that don't need additional JSON properties, use `registerSimple()`:
+
+```java
+import com.hypixel.hytale.server.core.interaction.OpenCustomUIInteraction;
+
+@Override
+protected void setup() {
+    OpenCustomUIInteraction.registerSimple(
+        this,                               // Plugin instance
+        MyPage.class,                       // Page class
+        "MyPage",                           // Page ID for JSON
+        playerRef -> new MyPage(playerRef)  // Factory function
+    );
+}
+```
+
+Usage in JSON:
+```json
+{
+  "Type": "OpenCustomUI",
+  "Page": { "Id": "MyPage" }
+}
+```
+
+### Custom Supplier Registration
+
+For pages that accept additional properties from JSON, implement `CustomPageSupplier`:
+
+```java
+import com.hypixel.hytale.server.core.interaction.OpenCustomUIInteraction;
+import com.hypixel.hytale.server.core.interaction.OpenCustomUIInteraction.CustomPageSupplier;
+
+public class MyPageSupplier implements CustomPageSupplier {
+    // Define codec for JSON deserialization
+    public static final BuilderCodec<MyPageSupplier> CODEC = BuilderCodec.of(
+        MyPageSupplier::new,
+        BuilderCodec.field("customProperty", String.class, s -> s.customProperty, "default")
+    );
+
+    protected String customProperty;
+
+    @Override
+    public CustomUIPage tryCreate(Ref<EntityStore> ref,
+                                   ComponentAccessor<EntityStore> accessor,
+                                   PlayerRef playerRef,
+                                   InteractionContext context) {
+        return new MyPage(playerRef, customProperty);
+    }
+}
+```
+
+Register the supplier in your plugin:
+
+```java
+@Override
+protected void setup() {
+    OpenCustomUIInteraction.registerCustomPageSupplier(
+        this,
+        MyPageSupplier.class,
+        "MyPage",
+        MyPageSupplier.CODEC
+    );
+}
+```
+
+Usage in JSON with custom properties:
+```json
+{
+  "Type": "OpenCustomUI",
+  "Page": {
+    "Id": "MyPage",
+    "customProperty": "hello"
+  }
+}
+```
+
+### CustomPageSupplier Interface
+
+```java
+public interface CustomPageSupplier {
+    /**
+     * Create a custom UI page for the given context.
+     *
+     * @param ref Entity reference
+     * @param accessor Component accessor for reading entity state
+     * @param playerRef Player reference
+     * @param context Interaction context
+     * @return The custom page, or null if creation fails
+     */
+    CustomUIPage tryCreate(
+        Ref<EntityStore> ref,
+        ComponentAccessor<EntityStore> accessor,
+        PlayerRef playerRef,
+        InteractionContext context
+    );
+}
+```
+
+### Specialized Registration Methods
+
+| Method | Use Case |
+|--------|----------|
+| `registerSimple()` | Pages with no extra JSON properties |
+| `registerCustomPageSupplier()` | Pages with custom JSON properties |
+| `registerBlockCustomPage()` | Pages tied to block state |
+| `registerBlockEntityCustomPage()` | Pages tied to block entities |
+
+### Complete Example
+
+This example shows a custom shop page that accepts a shop ID from JSON:
+
+**ShopPageSupplier.java:**
+```java
+public class ShopPageSupplier implements OpenCustomUIInteraction.CustomPageSupplier {
+    public static final BuilderCodec<ShopPageSupplier> CODEC = BuilderCodec.of(
+        ShopPageSupplier::new,
+        BuilderCodec.field("shopId", String.class, s -> s.shopId, "default_shop")
+    );
+
+    protected String shopId;
+
+    @Override
+    public CustomUIPage tryCreate(Ref<EntityStore> ref,
+                                   ComponentAccessor<EntityStore> accessor,
+                                   PlayerRef playerRef,
+                                   InteractionContext context) {
+        return new ShopPage(playerRef, shopId);
+    }
+}
+```
+
+**ShopPage.java:**
+```java
+public class ShopPage extends BasicCustomUIPage {
+    private final String shopId;
+
+    public ShopPage(PlayerRef playerRef, String shopId) {
+        super(playerRef, CustomPageLifetime.CanDismiss);
+        this.shopId = shopId;
+    }
+
+    @Override
+    public void build(UICommandBuilder cmd) {
+        cmd.append("ShopPage.ui");
+        cmd.set("#ShopTitle.Text", "Shop: " + shopId);
+    }
+}
+```
+
+**Plugin setup:**
+```java
+@Override
+protected void setup() {
+    OpenCustomUIInteraction.registerCustomPageSupplier(
+        this,
+        ShopPageSupplier.class,
+        "MyShop",
+        ShopPageSupplier.CODEC
+    );
+}
+```
+
+**JSON usage (e.g., in an NPC interaction):**
+```json
+{
+  "Type": "OpenCustomUI",
+  "Page": {
+    "Id": "MyShop",
+    "shopId": "blacksmith"
+  }
+}
+```
 
 ---
 

@@ -357,24 +357,69 @@ Opens a built-in UI page.
 ```json
 {
   "Type": "OpenPage",
-  "PageId": "hytale:inventory"
+  "PageId": "Inventory"
 }
 ```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `PageId` | string | Built-in page identifier |
+
+**Available PageIds:**
+
+| PageId | Description |
+|--------|-------------|
+| `Inventory` | Player inventory |
+| `Map` | World map |
+| `Bench` | Crafting bench |
 
 ### OpenCustomUI
 
 **Package:** `config/server/OpenCustomUIInteraction`
 
-Opens a custom UI page.
+Opens a custom UI page registered via Java. Unlike `OpenPage`, this interaction uses a nested `Page` object that can include additional properties passed to the page supplier.
 
 ```json
 {
   "Type": "OpenCustomUI",
-  "PageId": "myplugin:custom_menu"
+  "Page": {
+    "Id": "ItemRepair",
+    "RepairPenalty": 0.1
+  }
 }
 ```
 
-See [ui.md](ui.md) for custom UI details.
+| Property | Type | Description |
+|----------|------|-------------|
+| `Page.Id` | string | Registered page supplier ID |
+| `Page.*` | varies | Additional properties passed to the supplier |
+
+#### Built-in Pages
+
+| Page ID | Supplier Properties | Description |
+|---------|---------------------|-------------|
+| `ItemRepair` | `RepairPenalty` (float) | Item repair UI |
+| `Shop` | `shopId` (string) | Shop interface |
+| `Memories` | - | Memories/journal page |
+| `PrefabSpawner` | - | Prefab spawner settings |
+
+#### Example: Item Repair Interaction
+
+From `Tool_Repair_Kit_Crude.json`:
+
+```json
+{
+  "Type": "OpenCustomUI",
+  "Page": {
+    "Id": "ItemRepair",
+    "RepairPenalty": 0.1
+  }
+}
+```
+
+This opens the item repair UI with a 10% durability penalty applied to repairs.
+
+See [UI API - Registering Pages for OpenCustomUI](ui-api.md#registering-pages-for-opencustomui) for creating custom pages that work with this interaction.
 
 ---
 
