@@ -454,17 +454,153 @@ Places a block at the target location.
 
 **Package:** `config/client/ChangeStateInteraction`
 
-Changes an entity's state machine state.
+Changes block or entity state machine state. Used for toggleable blocks (torches, lanterns), traps, and temporary state effects.
+
+### Core Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Changes` | object | State transition map defining from→to state mappings |
+| `Effects` | object | Sound/particle effects triggered on state change |
+| `RunTime` | float | Duration in seconds before `Next` interaction executes |
+| `Next` | interaction | Chained interaction to execute after `RunTime` |
+| `UpdateBlockState` | boolean | Force visual state update after change |
+
+### State Transition Map (Changes)
+
+The `Changes` property defines a mapping where keys are current states and values are target states:
+
+```json
+{
+  "Changes": {
+    "default": "Off",
+    "Off": "default"
+  }
+}
+```
+
+This creates a toggle: when in `default` state, transition to `Off`; when in `Off`, transition back to `default`.
+
+**State naming conventions:**
+- `default` - The initial/primary state (lit torch, open door)
+- `Off` - Disabled/inactive state (extinguished torch)
+- `Closed` - For traps and containers
+- Custom states defined in block's `State.Definitions`
+
+### Integration with Block State Definitions
+
+ChangeState works with the block's state machine defined in its BlockType configuration:
+
+```json
+{
+  "State": {
+    "Definitions": {
+      "On": { "CanProvideSupport": { "Up": true } },
+      "Off": { "CanProvideSupport": { "Up": false } }
+    }
+  }
+}
+```
+
+Each state in `Definitions` can override block properties like collision, light emission, and support behavior. The `Changes` map references these state names.
+
+### Examples
+
+#### Simple Toggle (Torch)
+
+Basic on/off toggle for a wall torch:
 
 ```json
 {
   "Type": "ChangeState",
-  "StateId": "Stunned",
-  "Duration": 2.0
+  "Changes": {
+    "default": "Off",
+    "Off": "default"
+  }
 }
 ```
 
-Used for stagger, stun, and other state-based effects.
+#### Multi-State Transition (Colored Lantern)
+
+Transition any non-default state back to default:
+
+```json
+{
+  "Type": "ChangeState",
+  "Changes": {
+    "Off": "default",
+    "Blue": "default",
+    "Green": "default",
+    "Red": "default"
+  }
+}
+```
+
+#### One-Way Transition (Trap)
+
+Irreversible state change for triggered traps:
+
+```json
+{
+  "Type": "ChangeState",
+  "Changes": {
+    "default": "Closed"
+  }
+}
+```
+
+#### Timed State Change (Geyser)
+
+Temporary state with automatic reversion using `RunTime` and `Next`:
+
+```json
+{
+  "Type": "ChangeState",
+  "Changes": {
+    "default": "Erupting"
+  },
+  "RunTime": 3,
+  "Next": {
+    "Type": "ChangeState",
+    "Changes": {
+      "Erupting": "default"
+    }
+  }
+}
+```
+
+The geyser enters `Erupting` state, waits 3 seconds, then returns to `default`.
+
+#### With Sound Effects (Trophy)
+
+State change with audio feedback:
+
+```json
+{
+  "Type": "ChangeState",
+  "Changes": {
+    "default": "Off",
+    "Off": "default"
+  },
+  "Effects": {
+    "LocalSoundEventId": "hytale:deco.toggle"
+  }
+}
+```
+
+### File Locations
+
+Example assets using ChangeState:
+- `data/BlockTypes/Light_Sources/Wood_Torch_Wall.json` - Simple toggle
+- `data/BlockTypes/Light_Sources/Lantern_Blue.json` - Multi-state
+- `data/BlockTypes/Traps/Survival_Trap_Snapjaw.json` - One-way trap
+- `data/BlockTypes/Nature/Prototype_Geyser.json` - Timed with RunTime/Next
+- `data/BlockTypes/Decorative/Deco_Trophy_Harvest.json` - Effects property
+
+### Related
+
+- [BlockCondition](interactions-conditions.md#blockcondition) - Check current block state
+- [State.Definitions](items-blocks.md#state-definitions) - Define block states and their property overrides
 
 ---
 
