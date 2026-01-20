@@ -82,6 +82,66 @@ isEnabled()         // boolean
 isDisabled()        // boolean
 ```
 
+---
+
+## Accessing Core Modules
+
+Hytale provides singleton accessor methods for core game modules. All modules follow the same pattern: call the static `.get()` method to retrieve the module instance.
+
+### Standard Pattern
+```java
+// All modules use the same static .get() accessor pattern
+CollisionModule collision = CollisionModule.get();
+ProjectileModule projectiles = ProjectileModule.get();
+PrefabStore prefabs = PrefabStore.get();
+```
+
+### Common Modules
+
+| Module | Package | Description |
+|--------|---------|-------------|
+| `CollisionModule` | `com.hypixel.hytale.server.core.modules.collision` | Collision detection and raycasting |
+| `ProjectileModule` | `com.hypixel.hytale.server.core.modules.projectile` | Projectile spawning and management |
+| `PrefabStore` | `com.hypixel.hytale.server.core.prefab` | Load and spawn prefabs |
+| `BlockModule` | `com.hypixel.hytale.server.core.modules.block` | Block operations (place, break, query) |
+| `DamageModule` | `com.hypixel.hytale.server.core.modules.damage` | Damage calculation and application |
+| `ItemModule` | `com.hypixel.hytale.server.core.modules.item` | Item operations |
+| `EntityModule` | `com.hypixel.hytale.server.core.modules.entity` | Entity spawning and management |
+| `TimeModule` | `com.hypixel.hytale.server.core.modules.time` | Time and tick management |
+| `SoundModule` | `com.hypixel.hytale.server.core.modules.sound` | Sound playback |
+| `ParticleModule` | `com.hypixel.hytale.server.core.modules.particle` | Particle effects |
+| `PhysicsModule` | `com.hypixel.hytale.server.core.modules.physics` | Physics operations |
+
+### Usage Example
+```java
+import com.hypixel.hytale.server.core.modules.collision.CollisionModule;
+import com.hypixel.hytale.server.core.modules.projectile.ProjectileModule;
+import com.hypixel.hytale.server.core.prefab.PrefabStore;
+
+@Override
+protected void execute(CommandContext ctx, Store<EntityStore> store,
+                      Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+    // Get module instances
+    CollisionModule collision = CollisionModule.get();
+    ProjectileModule projectiles = ProjectileModule.get();
+    PrefabStore prefabs = PrefabStore.get();
+
+    // Use modules for game operations
+    // collision.raycast(...);
+    // projectiles.spawn(...);
+    // prefabs.load(...);
+}
+```
+
+### When to Use Modules
+
+Modules are accessed at runtime when you need to perform game operations. Common scenarios:
+- **Commands** - Access modules in `execute()` to perform actions
+- **Event handlers** - Access modules to respond to game events
+- **Custom interactions** - Access modules in `tick()` methods
+
+**Note:** Module instances are thread-safe singletons managed by the server. You can safely call `.get()` from any context without caching the reference.
+
 ## JavaPluginInit
 **Package:** `com.hypixel.hytale.server.core.plugin`
 

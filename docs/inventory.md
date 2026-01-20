@@ -648,6 +648,81 @@ boolean isFilter()                  // Whether filtering blocked operation
 List<ItemStackSlotTransaction> getSlotTransactions()
 ```
 
+#### Transaction Result Patterns
+
+**Basic success check:**
+```java
+ItemStack item = new ItemStack("Weapon_Sword_Wood", 1);
+ItemStackTransaction result = container.addItemStack(item);
+
+if (result.succeeded()) {
+    // Item was fully added
+} else {
+    // Operation failed or partially completed
+}
+```
+
+**Handling partial additions (inventory full):**
+```java
+ItemStack itemStack = new ItemStack("Food_Bread", 10);
+CombinedItemContainer combined = inventory.getCombinedHotbarFirst();
+
+ItemStackTransaction result = combined.addItemStack(itemStack);
+ItemStack remainder = result.getRemainder();
+
+// Calculate how many were actually added
+int requestedQuantity = itemStack.getQuantity();
+int remainderQuantity = (remainder != null && !remainder.isEmpty())
+    ? remainder.getQuantity()
+    : 0;
+int addedQuantity = requestedQuantity - remainderQuantity;
+
+if (addedQuantity == requestedQuantity) {
+    // All items added successfully
+    playerRef.sendMessage(Message.raw("Added " + addedQuantity + " items"));
+} else if (addedQuantity > 0) {
+    // Partial success - inventory was full
+    playerRef.sendMessage(Message.raw(
+        "Added " + addedQuantity + " items. " + remainderQuantity + " did not fit."
+    ));
+} else {
+    // No items added - inventory completely full
+    playerRef.sendMessage(Message.raw("Inventory is full!"));
+}
+```
+
+**Complete give item pattern:**
+```java
+public void giveItem(PlayerRef playerRef, Player player, String itemId, int quantity) {
+    ItemStack itemStack = new ItemStack(itemId, quantity);
+
+    // Validate item exists
+    if (itemStack.getItem() == Item.UNKNOWN) {
+        playerRef.sendMessage(Message.raw("Unknown item: " + itemId));
+        return;
+    }
+
+    // Try to add to combined hotbar + storage
+    CombinedItemContainer combined = player.getInventory().getCombinedHotbarFirst();
+    ItemStackTransaction result = combined.addItemStack(itemStack);
+    ItemStack remainder = result.getRemainder();
+
+    int added = quantity - (remainder != null ? remainder.getQuantity() : 0);
+
+    if (added == quantity) {
+        playerRef.sendMessage(Message.raw("Received " + quantity + "x " + itemId));
+    } else if (added > 0) {
+        playerRef.sendMessage(Message.raw(
+            "Received " + added + "x " + itemId + " (inventory full, " +
+            (quantity - added) + " dropped)"
+        ));
+        // Optionally drop remainder on ground
+    } else {
+        playerRef.sendMessage(Message.raw("Inventory full!"));
+    }
+}
+```
+
 ### ListTransaction<T extends Transaction>
 ```java
 boolean succeeded()
@@ -658,6 +733,48 @@ static <T> ListTransaction<T> getEmptyTransaction(boolean success)
 
 ### MoveTransaction<T extends Transaction>
 Wraps source and destination transactions for move operations.
+
+---
+
+## Container Iteration
+
+### forEach Pattern
+
+Use `forEach` to iterate over all slots in a container:
+
+```java
+ItemContainer container = inventory.getHotbar();
+
+container.forEach((slot, itemStack) -> {
+    if (!itemStack.isEmpty()) {
+        String itemId = itemStack.getItemId();
+        int quantity = itemStack.getQuantity();
+        System.out.println("Slot " + slot + ": " + itemId + " x" + quantity);
+    }
+});
+```
+
+**Count items matching a condition:**
+```java
+int weaponCount = 0;
+container.forEach((slot, itemStack) -> {
+    if (!itemStack.isEmpty() && itemStack.getItem().getWeapon() != null) {
+        weaponCount++;
+    }
+});
+```
+
+**Find first matching item:**
+```java
+short foundSlot = -1;
+container.forEach((slot, itemStack) -> {
+    if (foundSlot == -1 && itemStack.getItemId().equals("Tool_Pickaxe_Iron")) {
+        foundSlot = slot;
+    }
+});
+```
+
+**Note:** The `forEach` consumer receives `(short slotIndex, ItemStack itemStack)` via `ShortObjectConsumer`.
 
 ---
 

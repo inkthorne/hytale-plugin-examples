@@ -885,6 +885,99 @@ hud.setCustomHud(playerRef, null);
 hud.resetHud(playerRef);
 ```
 
+### Managing HUD State Across Players
+
+When managing HUDs for multiple players (e.g., from commands), store HUD references in a thread-safe collection:
+
+```java
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class StatusHudManager {
+    // Thread-safe storage for HUD instances by player UUID
+    private static final ConcurrentHashMap<UUID, StatusHud> playerHuds = new ConcurrentHashMap<>();
+
+    /**
+     * Show HUD for a player, creating if necessary.
+     */
+    public static void showHud(Store<EntityStore> store, Ref<EntityStore> ref, PlayerRef playerRef) {
+        UUID playerId = playerRef.getUuid();
+        Player player = store.getComponent(ref, Player.getComponentType());
+
+        // Get or create HUD instance
+        StatusHud hud = playerHuds.computeIfAbsent(playerId, id -> new StatusHud(playerRef));
+
+        // Register with HudManager
+        player.getHudManager().setCustomHud(playerRef, hud);
+    }
+
+    /**
+     * Update HUD values for a player.
+     */
+    public static void updateHud(UUID playerId, int health, int mana) {
+        StatusHud hud = playerHuds.get(playerId);
+        if (hud != null) {
+            UICommandBuilder cmd = new UICommandBuilder();
+            cmd.set("#HealthLabel.Text", "Health: " + health);
+            cmd.set("#ManaLabel.Text", "Mana: " + mana);
+            hud.update(false, cmd);
+        }
+    }
+
+    /**
+     * Hide and remove HUD for a player.
+     */
+    public static void hideHud(PlayerRef playerRef, Player player) {
+        UUID playerId = playerRef.getUUID();
+        playerHuds.remove(playerId);
+        player.getHudManager().setCustomHud(playerRef, null);
+    }
+
+    /**
+     * Clean up when player disconnects.
+     */
+    public static void onPlayerDisconnect(UUID playerId) {
+        playerHuds.remove(playerId);
+    }
+}
+```
+
+**Usage from commands:**
+```java
+public class HudCommand extends AbstractPlayerCommand {
+    private final Arg<Mode> modeArg;
+
+    public enum Mode { SHOW, HIDE }
+
+    public HudCommand() {
+        super("statushud", "Toggle status HUD");
+        modeArg = withRequiredArg("mode", "show or hide",
+            ArgTypes.forEnum("mode", Mode.class));
+    }
+
+    @Override
+    protected void execute(CommandContext ctx, Store<EntityStore> store,
+                          Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+        Player player = store.getComponent(ref, Player.getComponentType());
+        Mode mode = ctx.get(modeArg);
+
+        if (mode == Mode.SHOW) {
+            StatusHudManager.showHud(store, ref, playerRef);
+            playerRef.sendMessage(Message.raw("Status HUD enabled"));
+        } else {
+            StatusHudManager.hideHud(playerRef, player);
+            playerRef.sendMessage(Message.raw("Status HUD disabled"));
+        }
+    }
+}
+```
+
+**Key points:**
+- Use `ConcurrentHashMap` for thread-safety (commands may execute concurrently)
+- Key by player UUID, not PlayerRef (refs may change between sessions)
+- Clean up HUD references when players disconnect to prevent memory leaks
+- Store references allow updating HUD values dynamically without recreating
+
 ---
 
 ## Choosing Between CustomUIPage and CustomUIHud

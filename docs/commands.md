@@ -416,6 +416,49 @@ public class TeleportCommand extends AbstractPlayerCommand {
 }
 ```
 
+### Relative Position Resolution
+
+`RelativeDoublePosition` supports Minecraft-style relative coordinates using `~` (tilde):
+- `100 64 200` - Absolute coordinates
+- `~ ~ ~` - Player's current position
+- `~10 ~ ~-5` - 10 blocks east, same height, 5 blocks south
+
+**Full resolution pattern:**
+```java
+public class SpawnCommand extends AbstractPlayerCommand {
+    private final Argument<RelativeDoublePosition, RelativeDoublePosition> posArg;
+
+    public SpawnCommand() {
+        super("spawn", "Spawn entity at position");
+        posArg = withRequiredArg("position", "Target position", ArgTypes.RELATIVE_POSITION);
+    }
+
+    @Override
+    protected void execute(CommandContext ctx, Store<EntityStore> store,
+                          Ref<EntityStore> ref, PlayerRef playerRef, World world) {
+        // Get the relative position from command args
+        RelativeDoublePosition relPos = ctx.get(posArg);
+
+        // Get player's current transform (position + rotation)
+        Transform transform = playerRef.getTransform();
+
+        // Resolve relative coordinates against player's position and world
+        // ~10 ~ ~-5 becomes (playerX+10, playerY, playerZ-5)
+        Vector3d targetPosition = relPos.getRelativePosition(transform.getPosition(), world);
+
+        // Use the resolved absolute position
+        playerRef.sendMessage(Message.raw(
+            "Spawning at: " + targetPosition.getX() + ", " +
+            targetPosition.getY() + ", " + targetPosition.getZ()
+        ));
+    }
+}
+```
+
+**Key methods:**
+- `relPos.getRelativePosition(Vector3d origin, World world)` - Resolves relative coords against origin
+- `relPos.isRelativeX()`, `isRelativeY()`, `isRelativeZ()` - Check which axes use `~`
+
 ### Custom Enum Argument Example
 ```java
 public enum Difficulty { EASY, NORMAL, HARD }

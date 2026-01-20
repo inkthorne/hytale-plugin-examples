@@ -206,21 +206,110 @@ public void tick(..., InteractionContext context, ...) {
 }
 ```
 
-### Custom Meta Keys
+### MetaKey and MetaStore
 
-For custom interactions, create your own `MetaKey`:
+The meta system provides type-safe key-value storage for passing data between operations during interaction execution.
+
+#### MetaKey<T>
+
+`MetaKey<T>` is a type-safe key class that identifies stored values and enforces their type at compile time.
+
+**Package:** `com.hypixel.hytale.server.core.modules.interaction.meta`
 
 ```java
-// Define a custom key (typically static final)
-public static final MetaKey<MyData> MY_CUSTOM_DATA =
-    MetaKey.create("my_plugin:custom_data", MyData.class);
+// Create a key with namespace and type
+public static final MetaKey<Vector3d> IMPACT_POINT =
+    MetaKey.create("myplugin:impact", Vector3d.class);
 
-// Write
-context.setMeta(MY_CUSTOM_DATA, new MyData(...));
+public static final MetaKey<Integer> HIT_COUNT =
+    MetaKey.create("myplugin:hits", Integer.class);
 
-// Read
-MyData data = context.getMeta(MY_CUSTOM_DATA);
+public static final MetaKey<List<Ref<EntityStore>>> TARGETS =
+    MetaKey.create("myplugin:targets", List.class);
 ```
+
+**Key naming convention:** Use `namespace:name` format to avoid conflicts between plugins (e.g., `"myplugin:damage_multiplier"`).
+
+#### MetaStore
+
+`MetaStore` is the underlying storage accessed via `context.getMetaStore()`. Most operations use the convenience methods on `InteractionContext` directly.
+
+```java
+// Direct MetaStore access (rarely needed)
+MetaStore metaStore = context.getMetaStore();
+```
+
+#### Standard Keys on Interaction Class
+
+The `Interaction` class defines standard keys used by built-in operations:
+
+| Key | Type | Set By | Description |
+|-----|------|--------|-------------|
+| `Interaction.TARGET_ENTITY` | `Ref<EntityStore>` | Selector | Entity hit by selector |
+| `Interaction.HIT_LOCATION` | `Vector4d` | Selector | World position of hit |
+| `Interaction.HIT_DETAIL` | `String` | Selector | Hit detail info |
+| `Interaction.TARGET_BLOCK` | `BlockPosition` | Block targeting | Block being interacted with |
+| `Interaction.DAMAGE` | `Damage` | Damage ops | Damage calculation result |
+
+#### Custom Meta Keys
+
+Define custom keys to pass data between your operations:
+
+```java
+public class MyInteractionKeys {
+    // Define keys as static finals for reuse
+    public static final MetaKey<Vector3d> IMPACT_POINT =
+        MetaKey.create("myplugin:impact_point", Vector3d.class);
+
+    public static final MetaKey<Float> CHARGE_LEVEL =
+        MetaKey.create("myplugin:charge", Float.class);
+
+    public static final MetaKey<Boolean> IS_CRITICAL =
+        MetaKey.create("myplugin:critical", Boolean.class);
+}
+```
+
+#### Operation Communication Pattern
+
+Operations communicate by writing to and reading from the meta store:
+
+```java
+// First operation: Calculate and store data
+public class CalculateDamageOp implements Operation {
+    @Override
+    public void tick(..., InteractionContext context, ...) {
+        float baseDamage = context.getInteractionVars().getFloat("Damage", 10.0f);
+        float chargeLevel = context.getMeta(MyInteractionKeys.CHARGE_LEVEL);
+
+        float finalDamage = baseDamage * (chargeLevel != null ? chargeLevel : 1.0f);
+
+        // Store for later operations
+        context.setMeta(MyInteractionKeys.CALCULATED_DAMAGE, finalDamage);
+        context.advanceOperation();
+    }
+}
+
+// Second operation: Use the stored data
+public class ApplyDamageOp implements Operation {
+    @Override
+    public void tick(..., InteractionContext context, ...) {
+        Float damage = context.getMeta(MyInteractionKeys.CALCULATED_DAMAGE);
+        Ref<EntityStore> target = context.getMeta(Interaction.TARGET_ENTITY);
+
+        if (damage != null && target != null) {
+            // Apply damage to target
+        }
+        context.advanceOperation();
+    }
+}
+```
+
+#### Best Practices
+
+1. **Define keys as static finals** - Reuse the same key instance across operations
+2. **Use namespaced names** - Prevents conflicts with other plugins
+3. **Check for null** - Meta values may not be set if earlier operations were skipped
+4. **Type safety** - The generic type ensures compile-time type checking
 
 ---
 
