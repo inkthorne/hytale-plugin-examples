@@ -207,7 +207,7 @@ void tick(Ref<EntityStore> ref, LivingEntity entity, boolean flag, float time,
 
 // Override in subclasses
 void compile(OperationsBuilder builder)
-boolean walk(Collector collector, InteractionContext context)
+boolean walk(Collector collector, InteractionContext context)  // Visitor pattern for tree traversal and metadata collection
 boolean needsRemoteSync()
 
 // Network

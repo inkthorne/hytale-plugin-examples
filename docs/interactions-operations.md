@@ -88,6 +88,122 @@ Controls synchronization between client and server:
 
 ---
 
+## Interaction Lifecycle
+
+Understanding when each method is called helps when implementing custom interactions.
+
+### Overview Diagram
+
+```
+ASSET LOADING PHASE
+───────────────────
+1. JSON parsed → Interaction tree built
+2. walk(collector) → Traverse tree, collect metadata
+3. compile(builder) → Build flat Operation[] array
+
+RUNTIME EXECUTION PHASE
+───────────────────────
+4. handle(isStart=true) → Operation becomes active
+5. tick() / simulateTick() → Called every frame
+6. handle(isStart=false) → Operation completes
+7. Advance to next operation → Repeat from step 4
+```
+
+### Method Call Timing
+
+| Method | Phase | When Called | Purpose |
+|--------|-------|-------------|---------|
+| `walk()` | Loading | Asset compilation | Traverse interaction tree, collect metadata |
+| `compile()` | Loading | After walk() | Build flat Operation[] from tree |
+| `handle(true)` | Runtime | Operation starts | Initialize operation state |
+| `tick()` | Runtime | Every server frame | Execute operation logic |
+| `simulateTick()` | Runtime | Every client frame | Client-side prediction |
+| `handle(false)` | Runtime | Operation ends | Cleanup operation state |
+
+---
+
+## walk() Method
+
+The `walk()` method traverses the interaction tree using the Visitor pattern. It's called during asset loading to collect metadata about all nested interactions.
+
+### Method Signature
+
+```java
+boolean walk(Collector collector, InteractionContext context)
+```
+
+**Returns:** `true` to stop traversal early, `false` to continue
+
+### Collector Interface
+
+`Collector` is a visitor that receives callbacks as the tree is traversed:
+
+```java
+public interface Collector {
+    void start();           // Called once at traversal start
+    void into(InteractionContext ctx, Interaction interaction);   // Entering nested interaction
+    boolean collect(CollectorTag tag, InteractionContext ctx, Interaction interaction);  // Process node
+    void outof();           // Exiting nested interaction
+    void finished();        // Called once at traversal end
+}
+```
+
+### Traversal Flow
+
+```
+InteractionManager.walkInteraction(collector, context, tag, interactionId)
+  → collector.collect(tag, context, interaction)
+  → collector.into(context, interaction)
+  → interaction.walk(collector, context)   // Recursive
+  → collector.outof()
+```
+
+### Collector Implementations
+
+| Implementation | Purpose | Behavior |
+|---------------|---------|----------|
+| `ListCollector<T>` | Collect all interactions | Builds flat list, never stops early |
+| `SingleCollector<T>` | Find first match | Stops when result found |
+| `TreeCollector<T>` | Build tree structure | Maintains parent-child relationships |
+
+### CollectorTag
+
+Tags identify which branch is being visited in container interactions:
+
+| Interaction Type | Tag | Example |
+|-----------------|-----|---------|
+| `Serial` | `SerialTag.of(index)` | `SerialTag.of(0)`, `SerialTag.of(1)` |
+| `Parallel` | `ParallelTag.of(index)` | `ParallelTag.of(0)` |
+| `Chaining` | `ChainingTag.of(index)` | `ChainingTag.of(2)` |
+| `Charging` | `ChargingTag.of(level)` | `ChargingTag.of(0.5f)` |
+| `FirstClick` | `StringTag` | `TAG_CLICK`, `TAG_HELD` |
+
+### Implementation Patterns
+
+**Container interactions** (have children):
+```java
+@Override
+public boolean walk(Collector collector, InteractionContext context) {
+    for (int i = 0; i < interactions.length; i++) {
+        if (InteractionManager.walkInteraction(
+                collector, context, SerialTag.of(i), interactions[i])) {
+            return true;  // Stop if collector signals done
+        }
+    }
+    return false;
+}
+```
+
+**Leaf interactions** (no children):
+```java
+@Override
+public boolean walk(Collector collector, InteractionContext context) {
+    return false;  // Nothing to traverse
+}
+```
+
+---
+
 ## OperationsBuilder
 
 **Package:** `com.hypixel.hytale.server.core.modules.interaction.interaction.operation`

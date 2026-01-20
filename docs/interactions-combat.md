@@ -145,7 +145,7 @@ boolean needsRemoteSync()              // True if Next or Failed need sync
 
 // Execution flow
 void compile(OperationsBuilder builder)
-boolean walk(Collector collector, InteractionContext context)
+boolean walk(Collector collector, InteractionContext context)  // Visitor pattern for tree traversal
 ```
 
 ### Complete Examples
