@@ -20,6 +20,10 @@ The [docs/](./docs/) directory contains comprehensive API documentation:
 ### Commands & UI
 - [Commands](./docs/commands.md) - Command system and arguments
 - [UI](./docs/ui.md) - Custom UI pages and HUD
+- [UI Elements](./docs/ui-elements.md) - UI element types
+- [UI Styling](./docs/ui-styling.md) - Styling and layout
+- [UI Templates](./docs/ui-templates.md) - Reusable templates
+- [UI API](./docs/ui-api.md) - Java UI API
 - [i18n](./docs/i18n.md) - Localization
 
 ### World & Environment
@@ -62,6 +66,8 @@ The [docs/](./docs/) directory contains comprehensive API documentation:
 - [Interactions](./docs/interactions.md) - Interactions API overview
 - [Flow Control](./docs/interactions-flow.md) - Serial, Parallel, Condition
 - [Combo System](./docs/interactions-combo.md) - Chaining and charging
+- [Context](./docs/interactions-context.md) - Context variables
+- [Operations](./docs/interactions-operations.md) - Operation types
 - [World Interactions](./docs/interactions-world.md) - Spawning and positioning
 - [Combat Interactions](./docs/interactions-combat.md) - Damage and forces
 
