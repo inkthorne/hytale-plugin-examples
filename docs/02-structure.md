@@ -140,6 +140,15 @@ Assets in `Common/` are shared with clients. Use this for:
 | `Common/BlockTextures/` | Block texture files (.png) |
 | `Common/Items/` | Item models (.blockymodel) and textures (.png) |
 
+## Notable Hytale Assets
+
+Key built-in assets that may be useful for plugin and pack development:
+
+| Asset | Path | Description |
+|-------|------|-------------|
+| Player Model | `Common/Characters/Player.blockymodel` | Main player character model |
+| Player Model (with face) | `Common/Characters/Player_With_Face.blockymodel` | Player model with integrated face attachment |
+
 ## Manifest Comparison
 
 ### Pack Manifest (No Code)
