@@ -1,0 +1,428 @@
+# Block Model Format (.blockymodel)
+
+This document describes the `.blockymodel` file format used for defining 3D geometry in Hytale.
+
+## Overview
+
+Blockymodel files define 3D models using a hierarchical node system. Each node can contain mesh geometry (shapes) and child nodes, allowing complex models to be built from simple primitives. These are used for:
+
+- Non-cube block shapes (doors, furniture, decorations)
+- Item models (weapons, tools, consumables)
+- Character models (players, NPCs, creatures)
+- Environmental props and vegetation
+
+Blockymodel files work closely with `.blockyanim` files - the model defines geometry and node names, while animations reference those nodes to apply transformations over time.
+
+## File Location
+
+Block models are stored in various locations depending on their purpose:
+
+| Category | Location |
+|----------|----------|
+| Block models | `Assets/Common/Blocks/Models/` |
+| Character models | `Assets/Common/Characters/` |
+| Item models | `Assets/Common/Items/` |
+| NPC models | `Assets/Common/NPC/` |
+
+Models are organized into subdirectories by category (e.g., `Doors/`, `Furniture/`, `Tools/`).
+
+## File Structure
+
+```json
+{
+  "nodes": [...],
+  "lod": "auto"
+}
+```
+
+## Top-Level Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `nodes` | array | Yes | Array of root-level node objects defining the model hierarchy |
+| `lod` | string | No | Level-of-detail mode: `"auto"` or `"off"`. Default is `"auto"` |
+
+## Node Structure
+
+Each node in the hierarchy can contain geometry and/or child nodes:
+
+```json
+{
+  "id": 1,
+  "name": "Body",
+  "position": {"x": 0.0, "y": 0.0, "z": 0.0},
+  "orientation": {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0},
+  "shape": {...},
+  "children": [...]
+}
+```
+
+### Node Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | integer | Yes | Unique identifier for the node within the model |
+| `name` | string | Yes | Human-readable name (referenced by animations) |
+| `position` | object | No | 3D position offset `{x, y, z}` relative to parent |
+| `orientation` | object | No | Quaternion rotation `{x, y, z, w}` |
+| `shape` | object | No | Mesh geometry definition |
+| `children` | array | No | Array of child node objects |
+
+### Position and Orientation
+
+Position values are in block units (1 unit = 1 block width). Orientation uses quaternion format where `{x: 0, y: 0, z: 0, w: 1}` represents no rotation.
+
+Common quaternion values:
+| Rotation | Quaternion |
+|----------|------------|
+| No rotation | `{x: 0, y: 0, z: 0, w: 1}` |
+| 90° around Y | `{x: 0, y: 0.707, z: 0, w: 0.707}` |
+| 180° around Y | `{x: 0, y: 1, z: 0, w: 0}` |
+| 90° around X | `{x: 0.707, y: 0, z: 0, w: 0.707}` |
+
+## Shape Types
+
+The `shape` object defines the mesh geometry for a node. The `type` field determines what kind of primitive is used.
+
+### Box Shape
+
+Cuboid meshes defined by size in each dimension:
+
+```json
+{
+  "type": "box",
+  "size": {"x": 8, "y": 8, "z": 8},
+  "offset": {"x": 0, "y": 0, "z": 0},
+  "stretch": {"x": 1.0, "y": 1.0, "z": 1.0},
+  "visible": true,
+  "doubleSided": false,
+  "shadingMode": "standard",
+  "unwrapMode": "standard",
+  "textureLayout": {...}
+}
+```
+
+Size values are in pixels (16 pixels = 1 block unit).
+
+### Quad Shape
+
+Flat 2D planes, commonly used for foliage and flat decorations:
+
+```json
+{
+  "type": "quad",
+  "size": {"x": 16, "y": 16},
+  "normal": {"x": 0, "y": 0, "z": 1},
+  "offset": {"x": 0, "y": 0, "z": 0},
+  "doubleSided": true,
+  "textureLayout": {...}
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `size` | object | Width and height in pixels `{x, y}` |
+| `normal` | object | Direction the quad faces `{x, y, z}` |
+
+### None Shape
+
+Structural nodes without visible geometry. Used for grouping, attachment points, and animation pivots:
+
+```json
+{
+  "type": "none"
+}
+```
+
+## Shape Properties
+
+### Common Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `offset` | object | `{x:0, y:0, z:0}` | Position offset within the shape |
+| `stretch` | object | `{x:1, y:1, z:1}` | Scale factors (can be negative for mirroring) |
+| `visible` | boolean | `true` | Whether the shape renders |
+| `doubleSided` | boolean | `false` | Render both front and back faces |
+
+### Shading Modes
+
+| Mode | Description |
+|------|-------------|
+| `"standard"` | Normal lighting and shading (default) |
+| `"flat"` | Flat/unlit shading, no shadows |
+| `"reflective"` | Reflective surface rendering |
+
+### Unwrap Modes
+
+| Mode | Description |
+|------|-------------|
+| `"standard"` | Default UV mapping based on shape dimensions |
+| `"custom"` | Use explicit textureLayout for UV coordinates |
+
+## Texture Layout
+
+The `textureLayout` object defines how textures map to each face of a shape.
+
+### Box Texture Layout
+
+Boxes have six faces that can each be configured:
+
+```json
+{
+  "textureLayout": {
+    "top": {"offset": {"x": 16, "y": 0}, "mirror": {"x": false, "y": false}, "angle": 0},
+    "bottom": {"offset": {"x": 16, "y": 16}, "mirror": {"x": false, "y": false}, "angle": 0},
+    "front": {"offset": {"x": 0, "y": 8}, "mirror": {"x": false, "y": false}, "angle": 0},
+    "back": {"offset": {"x": 24, "y": 8}, "mirror": {"x": false, "y": false}, "angle": 0},
+    "left": {"offset": {"x": 8, "y": 8}, "mirror": {"x": false, "y": false}, "angle": 0},
+    "right": {"offset": {"x": 32, "y": 8}, "mirror": {"x": false, "y": false}, "angle": 0}
+  }
+}
+```
+
+### Quad Texture Layout
+
+Quads have a single face:
+
+```json
+{
+  "textureLayout": {
+    "front": {"offset": {"x": 0, "y": 0}, "mirror": {"x": false, "y": false}, "angle": 0}
+  }
+}
+```
+
+### Face Layout Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `offset` | object | Texture coordinates `{x, y}` in pixels from top-left of texture |
+| `mirror` | object | Flip texture on X and/or Y axis `{x: bool, y: bool}` |
+| `angle` | integer | Rotation angle in degrees (0, 90, 180, 270) |
+
+## Examples
+
+### Simple Single-Box Model
+
+A basic cube model:
+
+```json
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "Cube",
+      "shape": {
+        "type": "box",
+        "size": {"x": 16, "y": 16, "z": 16},
+        "shadingMode": "standard",
+        "textureLayout": {
+          "top": {"offset": {"x": 16, "y": 0}},
+          "bottom": {"offset": {"x": 32, "y": 0}},
+          "front": {"offset": {"x": 0, "y": 16}},
+          "back": {"offset": {"x": 16, "y": 16}},
+          "left": {"offset": {"x": 32, "y": 16}},
+          "right": {"offset": {"x": 48, "y": 16}}
+        }
+      }
+    }
+  ]
+}
+```
+
+### Multi-Part Model with Hierarchy
+
+A chest with a separate lid for animation:
+
+```json
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "R-Attachment",
+      "shape": {"type": "none"},
+      "children": [
+        {
+          "id": 2,
+          "name": "Base",
+          "position": {"x": 0.0, "y": 0.0, "z": 0.0},
+          "shape": {
+            "type": "box",
+            "size": {"x": 14, "y": 10, "z": 14},
+            "offset": {"x": -7, "y": 0, "z": -7}
+          }
+        },
+        {
+          "id": 3,
+          "name": "Lid",
+          "position": {"x": 0.0, "y": 0.625, "z": -0.4375},
+          "shape": {
+            "type": "box",
+            "size": {"x": 14, "y": 4, "z": 14},
+            "offset": {"x": -7, "y": 0, "z": 0}
+          }
+        },
+        {
+          "id": 4,
+          "name": "Latch",
+          "position": {"x": 0.0, "y": 0.375, "z": 0.5},
+          "shape": {
+            "type": "box",
+            "size": {"x": 2, "y": 4, "z": 1},
+            "offset": {"x": -1, "y": 0, "z": 0}
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Quad-Based Foliage Model
+
+A simple grass or flower using crossed quads:
+
+```json
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "Plant",
+      "shape": {"type": "none"},
+      "children": [
+        {
+          "id": 2,
+          "name": "Quad1",
+          "orientation": {"x": 0, "y": 0.383, "z": 0, "w": 0.924},
+          "shape": {
+            "type": "quad",
+            "size": {"x": 16, "y": 16},
+            "normal": {"x": 0, "y": 0, "z": 1},
+            "doubleSided": true,
+            "shadingMode": "flat"
+          }
+        },
+        {
+          "id": 3,
+          "name": "Quad2",
+          "orientation": {"x": 0, "y": -0.383, "z": 0, "w": 0.924},
+          "shape": {
+            "type": "quad",
+            "size": {"x": 16, "y": 16},
+            "normal": {"x": 0, "y": 0, "z": 1},
+            "doubleSided": true,
+            "shadingMode": "flat"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Model with Animated Nodes
+
+A door model with nodes named for animation compatibility:
+
+```json
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "R-Attachment",
+      "shape": {"type": "none"},
+      "children": [
+        {
+          "id": 2,
+          "name": "Frame",
+          "shape": {
+            "type": "box",
+            "size": {"x": 16, "y": 32, "z": 3},
+            "offset": {"x": -8, "y": 0, "z": -1.5}
+          }
+        },
+        {
+          "id": 3,
+          "name": "Door",
+          "position": {"x": -0.5, "y": 0.0, "z": 0.0},
+          "shape": {
+            "type": "box",
+            "size": {"x": 13, "y": 30, "z": 2},
+            "offset": {"x": 0, "y": 1, "z": -1}
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+The corresponding `.blockyanim` file can reference the "Door" node to rotate it open:
+
+```json
+{
+  "formatVersion": 1,
+  "duration": 10,
+  "holdLastKeyframe": true,
+  "nodeAnimations": {
+    "Door": {
+      "orientation": [
+        {"time": 0, "delta": {"x": 0, "y": 0, "z": 0, "w": 1}, "interpolationType": "smooth"},
+        {"time": 10, "delta": {"x": 0, "y": 0.707, "z": 0, "w": 0.707}, "interpolationType": "smooth"}
+      ]
+    }
+  }
+}
+```
+
+## Integration with Blocks and Items
+
+### Block Usage
+
+Blocks reference models through `CustomModel` in their definition:
+
+```json
+{
+  "BlockType": {
+    "DrawType": "Model",
+    "CustomModel": "Blocks/Furniture/Chair_Wood.blockymodel",
+    "CustomModelTexture": [
+      {"Texture": "BlockTextures/Wood_Oak.png"}
+    ],
+    "CustomModelScale": 1.0
+  }
+}
+```
+
+### Item Usage
+
+Items reference models through the `Model` field:
+
+```json
+{
+  "Model": "Items/Weapons/Sword/Iron.blockymodel"
+}
+```
+
+Model paths are relative to `Assets/Common/` and include the `.blockymodel` extension.
+
+## Best Practices
+
+1. **Use R-Attachment root nodes** - Name your root node "R-Attachment" for proper attachment point handling in the game engine
+
+2. **Name nodes for animation** - Use clear, descriptive names that match what you'll reference in `.blockyanim` files
+
+3. **Keep IDs unique** - Each node needs a unique `id` within the model for proper referencing
+
+4. **Use hierarchy for animation** - Child nodes inherit parent transformations, making complex animations easier
+
+5. **Consider LOD settings** - Use `"lod": "auto"` for most models; only disable with `"lod": "off"` if auto-LOD causes issues
+
+6. **Size in pixels** - Remember that shape sizes are in pixels (16 pixels = 1 block), while positions are in block units
+
+7. **Pivot placement** - Position offsets in shapes determine where the pivot point is - this affects how the shape rotates
+
+8. **Use doubleSided for thin geometry** - Quads and thin boxes should usually have `"doubleSided": true` to be visible from both sides
+
+9. **Match texture layouts to your texture atlas** - Coordinate the `textureLayout` offsets with your actual texture file layout
