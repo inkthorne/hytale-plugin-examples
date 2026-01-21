@@ -84,7 +84,7 @@ Plugins are deployed to `%APPDATA%\Hytale\UserData\Mods\`.
 
 ### Reference Files
 
-The Hytale installation contains useful reference files:
+Your Hytale installation contains useful reference files:
 
-- **HytaleServer.jar** - Decompile to explore API classes
-- **Assets.zip** - Contains all vanilla asset definitions as examples
+- **HytaleServer.jar** (`%APPDATA%\Hytale\install\release\package\game\latest\Server\`) - Decompile to explore API classes
+- **Assets.zip** (`%APPDATA%\Hytale\install\release\package\game\latest\`) - Contains all vanilla asset definitions as examples
