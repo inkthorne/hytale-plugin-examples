@@ -7,7 +7,7 @@ A reference for Hytale server plugin development with documentation and working 
 The [docs/](./docs/) directory contains comprehensive API documentation:
 
 ### Getting Started
-- [Overview](./docs/00-overview.md) - Quick reference and navigation
+- [Overview](./docs/00-overview.md) - Introduction and getting started
 - [Plugin Lifecycle](./docs/plugin-lifecycle.md) - Setup, lifecycle, and server events
 - [Permissions](./docs/permissions.md) - Permission system
 
