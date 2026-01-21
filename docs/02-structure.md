@@ -125,7 +125,7 @@ Assets in `Server/` are only loaded by the server and are **not sent to clients*
 | `Server/Item/` | Item definitions (.json) |
 | `Server/Audio/` | Audio configurations (.json) |
 | `Server/Drops/` | Loot tables (.json) |
-| `Server/WorldGen/` | World generation configs (.json) |
+| `Server/HytaleGenerator/` | World generation configs (.json) |
 | `Server/NPC/` | NPC definitions (.json) |
 
 ### Common/
@@ -137,7 +137,8 @@ Assets in `Common/` are shared with clients. Use this for:
 | `Common/UI/Custom/` | UI layouts (.ui files) |
 | `Common/Sounds/` | Sound files (.ogg) |
 | `Common/Blocks/` | Block models and definitions |
-| `Common/Textures/` | Texture files (.png) |
+| `Common/BlockTextures/` | Block texture files (.png) |
+| `Common/Items/` | Item models (.blockymodel) and textures (.png) |
 
 ## Manifest Comparison
 
