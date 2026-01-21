@@ -29,7 +29,7 @@ Block animations run at **20 frames per second**. All time values in keyframes a
 
 ```json
 {
-  "formatVersion": 0,
+  "formatVersion": 1,
   "duration": 10,
   "holdLastKeyframe": true,
   "nodeAnimations": {
@@ -48,7 +48,7 @@ Block animations run at **20 frames per second**. All time values in keyframes a
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `formatVersion` | integer | Yes | Schema version, currently `0` |
+| `formatVersion` | integer | Yes | Schema version, currently `1` |
 | `duration` | integer | Yes | Total animation length in frames (at 20 FPS) |
 | `holdLastKeyframe` | boolean | No | If `true`, animation holds the final keyframe values when complete. Default is `false` |
 | `nodeAnimations` | object | Yes | Map of node names to their animation tracks |
@@ -61,11 +61,11 @@ The `nodeAnimations` object maps node names (as defined in the block's `.blockym
 
 | Track | Value Type | Description |
 |-------|------------|-------------|
-| `position` | `[x, y, z]` | Translates the node in 3D space |
-| `orientation` | `[x, y, z, w]` | Rotates the node using quaternion values |
-| `shapeStretch` | `[x, y, z]` | Scales the node along each axis |
+| `position` | `{"x", "y", "z"}` | Translates the node in 3D space |
+| `orientation` | `{"x", "y", "z", "w"}` | Rotates the node using quaternion values |
+| `shapeStretch` | `{"x", "y", "z"}` | Scales the node along each axis |
 | `shapeVisible` | `boolean` | Shows or hides the node |
-| `shapeUvOffset` | `[u, v]` | Offsets texture UV coordinates for scrolling effects |
+| `shapeUvOffset` | `{"u", "v"}` | Offsets texture UV coordinates for scrolling effects |
 
 ## Keyframe Structure
 
@@ -76,15 +76,15 @@ Each track contains an array of keyframes. Keyframe structure varies by track ty
 ```json
 {
   "time": 0,
-  "delta": [0.0, 0.5, 0.0],
-  "interpolationType": "Linear"
+  "delta": {"x": 0.0, "y": 0.5, "z": 0.0},
+  "interpolationType": "smooth"
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `time` | integer | Frame number when this keyframe occurs |
-| `delta` | array | The value at this keyframe (format depends on track type) |
+| `delta` | object | The value at this keyframe (format depends on track type) |
 | `interpolationType` | string | How to interpolate to this keyframe |
 
 ### ShapeVisible Keyframes
@@ -102,12 +102,8 @@ Visibility keyframes don't use interpolation - they switch instantly.
 
 | Type | Description |
 |------|-------------|
-| `None` | No interpolation, value snaps instantly |
-| `Linear` | Linear interpolation between keyframes |
-| `EaseIn` | Starts slow, accelerates |
-| `EaseOut` | Starts fast, decelerates |
-| `EaseInOut` | Starts slow, speeds up, then slows down |
-| `Bezier` | Custom bezier curve interpolation |
+| `smooth` | Smooth interpolation (most common) |
+| `linear` | Linear interpolation between keyframes |
 
 ## Examples
 
@@ -117,7 +113,7 @@ A door that rotates open over 10 frames:
 
 ```json
 {
-  "formatVersion": 0,
+  "formatVersion": 1,
   "duration": 10,
   "holdLastKeyframe": true,
   "nodeAnimations": {
@@ -125,13 +121,13 @@ A door that rotates open over 10 frames:
       "orientation": [
         {
           "time": 0,
-          "delta": [0.0, 0.0, 0.0, 1.0],
-          "interpolationType": "EaseOut"
+          "delta": {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0},
+          "interpolationType": "smooth"
         },
         {
           "time": 10,
-          "delta": [0.0, 0.707, 0.0, 0.707],
-          "interpolationType": "EaseOut"
+          "delta": {"x": 0.0, "y": 0.707, "z": 0.0, "w": 0.707},
+          "interpolationType": "smooth"
         }
       ]
     }
@@ -145,7 +141,7 @@ A light that flickers by toggling visibility:
 
 ```json
 {
-  "formatVersion": 0,
+  "formatVersion": 1,
   "duration": 20,
   "holdLastKeyframe": false,
   "nodeAnimations": {
@@ -168,7 +164,7 @@ Animated texture scrolling for water or conveyor effects:
 
 ```json
 {
-  "formatVersion": 0,
+  "formatVersion": 1,
   "duration": 40,
   "holdLastKeyframe": false,
   "nodeAnimations": {
@@ -176,13 +172,13 @@ Animated texture scrolling for water or conveyor effects:
       "shapeUvOffset": [
         {
           "time": 0,
-          "delta": [0.0, 0.0],
-          "interpolationType": "Linear"
+          "delta": {"u": 0.0, "v": 0.0},
+          "interpolationType": "linear"
         },
         {
           "time": 40,
-          "delta": [1.0, 0.0],
-          "interpolationType": "Linear"
+          "delta": {"u": 1.0, "v": 0.0},
+          "interpolationType": "linear"
         }
       ]
     }
@@ -196,7 +192,7 @@ A chest with a lid that rotates and hinges that move:
 
 ```json
 {
-  "formatVersion": 0,
+  "formatVersion": 1,
   "duration": 8,
   "holdLastKeyframe": true,
   "nodeAnimations": {
@@ -204,13 +200,13 @@ A chest with a lid that rotates and hinges that move:
       "orientation": [
         {
           "time": 0,
-          "delta": [0.0, 0.0, 0.0, 1.0],
-          "interpolationType": "EaseOut"
+          "delta": {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0},
+          "interpolationType": "smooth"
         },
         {
           "time": 8,
-          "delta": [-0.383, 0.0, 0.0, 0.924],
-          "interpolationType": "EaseOut"
+          "delta": {"x": -0.383, "y": 0.0, "z": 0.0, "w": 0.924},
+          "interpolationType": "smooth"
         }
       ]
     },
@@ -218,13 +214,13 @@ A chest with a lid that rotates and hinges that move:
       "position": [
         {
           "time": 0,
-          "delta": [0.0, 0.0, 0.0],
-          "interpolationType": "Linear"
+          "delta": {"x": 0.0, "y": 0.0, "z": 0.0},
+          "interpolationType": "linear"
         },
         {
           "time": 4,
-          "delta": [0.0, 0.0, -0.0625],
-          "interpolationType": "Linear"
+          "delta": {"x": 0.0, "y": 0.0, "z": -0.0625},
+          "interpolationType": "linear"
         }
       ]
     }
@@ -255,7 +251,7 @@ The animation path is relative to `Assets/Common/` and omits the `.blockyanim` e
 ## Best Practices
 
 1. **Keep durations short** - Most block animations are 5-20 frames (0.25-1 second)
-2. **Use EaseOut for mechanical motion** - Doors and lids feel more natural with deceleration
+2. **Use smooth for mechanical motion** - Doors and lids feel more natural with smooth interpolation
 3. **Match node names exactly** - Node names must match those in the `.blockymodel` file
 4. **Consider reverse animations** - Doors need both open and close animations
 5. **Test at 20 FPS** - Remember the fixed frame rate when timing animations
