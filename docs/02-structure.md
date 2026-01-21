@@ -25,10 +25,10 @@ Hytale supports two types of mods:
 
 ## Pack Structure
 
-A pack is a folder containing assets and a manifest. No Java code is involved.
+A pack is a folder or `.zip` file containing assets and a manifest. No Java code is involved.
 
 ```
-MyPack/
+MyPack/          (or MyPack.zip)
 ├── manifest.json
 ├── Server/
 │   ├── Item/
@@ -264,7 +264,7 @@ Both packs and plugins are deployed to the mods folder:
 %APPDATA%\Hytale\UserData\Mods\
 ```
 
-- **Packs**: Copy the entire folder to the mods directory
+- **Packs**: Copy the folder or `.zip` file to the mods directory
 - **Plugins**: Copy the built JAR file to the mods directory
 
 For plugins, use the build scripts in each example:
