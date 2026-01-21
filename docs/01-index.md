@@ -6,6 +6,7 @@ Complete reference for finding the right documentation file. For a beginner-frie
 
 | File | Description |
 |------|-------------|
+| [02-structure.md](02-structure.md) | Pack vs plugin directory structure, Server/ vs Common/ directories, and manifest configuration. |
 | [interactions.md](interactions.md) | Comprehensive reference for entity interactions including combo systems, combat effects, control flow, and world manipulation. |
 | [interactions-operations.md](interactions-operations.md) | Low-level Operation system that powers interaction execution, including OperationsBuilder and label-based flow control. |
 | [interactions-context.md](interactions-context.md) | InteractionContext API for accessing entities, items, meta store, and InteractionVars during interaction execution. |
@@ -172,6 +173,7 @@ JSON asset types used in Hytale's data-driven systems.
 ## Topic Groups
 
 **Core** - Essential plugin development
+- 02-structure.md - Pack vs plugin directory structure and manifest configuration
 - plugin-lifecycle.md - Plugin entry point, setup, and server lifecycle events
 - commands.md - Slash commands
 - entities.md - Players, entities, stats, velocity, and entity events

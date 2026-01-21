@@ -13,6 +13,8 @@ This documentation covers two main areas:
 
 Most custom content in Hytale is created through asset definitions rather than code. The data-driven approach means you can create new weapons, tools, and items by writing JSON files that inherit from templates.
 
+For details on how to organize your files, see [Pack vs Plugin Directory Structure](02-structure.md).
+
 ## Your First Custom Asset
 
 The easiest way to start modding is to create a custom weapon or tool. Hytale provides templates that handle all the combat logic, animations, and effects - you just customize the properties.
