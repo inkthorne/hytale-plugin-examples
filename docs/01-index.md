@@ -41,6 +41,7 @@ Complete reference for finding the right documentation file. For a beginner-frie
 | [singleplayer.md](singleplayer.md) | Singleplayer-specific functionality with SingleplayerRequestAccessEvent for handling local server access requests. |
 | [audio.md](audio.md) | Audio system documentation covering sound events, audio categories, ambience, reverb, EQ, and integration with other systems. |
 | [worldgen.md](worldgen.md) | World generation system overview including zones, biomes, terrain layers, caves, and structure placement. |
+| [blockyanim-format.md](blockyanim-format.md) | Block animation (.blockyanim) file format for animating block states like doors, chests, and lights. |
 
 ## Asset Type Index
 
@@ -188,6 +189,7 @@ JSON asset types used in Hytale's data-driven systems.
 - tasks.md - Async scheduling
 - ui.md - Player UI
 - blocks.md - Block manipulation and block events
+- blockyanim-format.md - Block animation file format
 - assets.md - Asset registry, models, and asset events
 - interactions.md - Interaction system (attacks, abilities)
 - interactions-operations.md - Operation execution model and flow control

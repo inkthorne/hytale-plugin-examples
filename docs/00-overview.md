@@ -46,6 +46,7 @@ Tools follow the same inheritance pattern. The [Tool Items](items-tools.md) docu
 | Define crafting recipes | [Crafting System](items-crafting.md) |
 | Configure NPC behaviors | [NPC Roles](npc-roles.md) |
 | Customize world generation | [World Generation](worldgen.md) |
+| Animate blocks | [Block Animation Format](blockyanim-format.md) |
 
 ## Documentation Structure
 
