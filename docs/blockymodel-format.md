@@ -63,7 +63,7 @@ Each node in the hierarchy can contain geometry and/or child nodes:
 |-------|------|----------|-------------|
 | `id` | integer | Yes | Unique identifier for the node within the model |
 | `name` | string | Yes | Human-readable name (referenced by animations) |
-| `position` | object | No | 3D position offset `{x, y, z}` relative to parent |
+| `position` | object | No | 3D position offset `{x, y, z}` relative to parent's mesh center (parent node position + parent shape offset) |
 | `orientation` | object | No | Quaternion rotation `{x, y, z, w}` |
 | `shape` | object | No | Mesh geometry definition |
 | `children` | array | No | Array of child node objects |
@@ -148,6 +148,8 @@ Structural nodes without visible geometry. Used for grouping, attachment points,
 | `stretch` | object | `{x:1, y:1, z:1}` | Scale factors (can be negative for mirroring) |
 | `visible` | boolean | `true` | Whether the shape renders |
 | `doubleSided` | boolean | `false` | Render both front and back faces |
+
+> **Note:** The `offset` property affects where child nodes are positioned. Children with a `position` are placed relative to the parent's mesh center (parent position + parent offset), not just the parent's node origin. This allows attachment points to be relative to the visible mesh rather than the pivot point.
 
 ### Shading Modes
 
