@@ -70,7 +70,7 @@ Each node in the hierarchy can contain geometry and/or child nodes:
 
 ### Position and Orientation
 
-Position values are in block units (1 unit = 1 block width). Orientation uses quaternion format where `{x: 0, y: 0, z: 0, w: 1}` represents no rotation.
+Position values are in pixels (16 pixels = 1 block unit). Orientation uses quaternion format where `{x: 0, y: 0, z: 0, w: 1}` represents no rotation.
 
 Common quaternion values:
 | Rotation | Quaternion |
@@ -91,9 +91,11 @@ Cuboid meshes defined by size in each dimension:
 ```json
 {
   "type": "box",
-  "size": {"x": 8, "y": 8, "z": 8},
   "offset": {"x": 0, "y": 0, "z": 0},
   "stretch": {"x": 1.0, "y": 1.0, "z": 1.0},
+  "settings": {
+    "size": {"x": 8, "y": 8, "z": 8}
+  },
   "visible": true,
   "doubleSided": false,
   "shadingMode": "standard",
@@ -111,9 +113,11 @@ Flat 2D planes, commonly used for foliage and flat decorations:
 ```json
 {
   "type": "quad",
-  "size": {"x": 16, "y": 16},
-  "normal": {"x": 0, "y": 0, "z": 1},
   "offset": {"x": 0, "y": 0, "z": 0},
+  "settings": {
+    "size": {"x": 16, "y": 16},
+    "normal": {"x": 0, "y": 0, "z": 1}
+  },
   "doubleSided": true,
   "textureLayout": {...}
 }
@@ -121,8 +125,8 @@ Flat 2D planes, commonly used for foliage and flat decorations:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `size` | object | Width and height in pixels `{x, y}` |
-| `normal` | object | Direction the quad faces `{x, y, z}` |
+| `settings.size` | object | Width and height in pixels `{x, y}` |
+| `settings.normal` | object | Direction the quad faces `{x, y, z}` |
 
 ### None Shape
 
@@ -215,7 +219,9 @@ A basic cube model:
       "name": "Cube",
       "shape": {
         "type": "box",
-        "size": {"x": 16, "y": 16, "z": 16},
+        "settings": {
+          "size": {"x": 16, "y": 16, "z": 16}
+        },
         "shadingMode": "standard",
         "textureLayout": {
           "top": {"offset": {"x": 16, "y": 0}},
@@ -249,8 +255,10 @@ A chest with a separate lid for animation:
           "position": {"x": 0.0, "y": 0.0, "z": 0.0},
           "shape": {
             "type": "box",
-            "size": {"x": 14, "y": 10, "z": 14},
-            "offset": {"x": -7, "y": 0, "z": -7}
+            "offset": {"x": -7, "y": 0, "z": -7},
+            "settings": {
+              "size": {"x": 14, "y": 10, "z": 14}
+            }
           }
         },
         {
@@ -259,8 +267,10 @@ A chest with a separate lid for animation:
           "position": {"x": 0.0, "y": 0.625, "z": -0.4375},
           "shape": {
             "type": "box",
-            "size": {"x": 14, "y": 4, "z": 14},
-            "offset": {"x": -7, "y": 0, "z": 0}
+            "offset": {"x": -7, "y": 0, "z": 0},
+            "settings": {
+              "size": {"x": 14, "y": 4, "z": 14}
+            }
           }
         },
         {
@@ -269,8 +279,10 @@ A chest with a separate lid for animation:
           "position": {"x": 0.0, "y": 0.375, "z": 0.5},
           "shape": {
             "type": "box",
-            "size": {"x": 2, "y": 4, "z": 1},
-            "offset": {"x": -1, "y": 0, "z": 0}
+            "offset": {"x": -1, "y": 0, "z": 0},
+            "settings": {
+              "size": {"x": 2, "y": 4, "z": 1}
+            }
           }
         }
       ]
@@ -297,8 +309,10 @@ A simple grass or flower using crossed quads:
           "orientation": {"x": 0, "y": 0.383, "z": 0, "w": 0.924},
           "shape": {
             "type": "quad",
-            "size": {"x": 16, "y": 16},
-            "normal": {"x": 0, "y": 0, "z": 1},
+            "settings": {
+              "size": {"x": 16, "y": 16},
+              "normal": {"x": 0, "y": 0, "z": 1}
+            },
             "doubleSided": true,
             "shadingMode": "flat"
           }
@@ -309,8 +323,10 @@ A simple grass or flower using crossed quads:
           "orientation": {"x": 0, "y": -0.383, "z": 0, "w": 0.924},
           "shape": {
             "type": "quad",
-            "size": {"x": 16, "y": 16},
-            "normal": {"x": 0, "y": 0, "z": 1},
+            "settings": {
+              "size": {"x": 16, "y": 16},
+              "normal": {"x": 0, "y": 0, "z": 1}
+            },
             "doubleSided": true,
             "shadingMode": "flat"
           }
@@ -338,8 +354,10 @@ A door model with nodes named for animation compatibility:
           "name": "Frame",
           "shape": {
             "type": "box",
-            "size": {"x": 16, "y": 32, "z": 3},
-            "offset": {"x": -8, "y": 0, "z": -1.5}
+            "offset": {"x": -8, "y": 0, "z": -1.5},
+            "settings": {
+              "size": {"x": 16, "y": 32, "z": 3}
+            }
           }
         },
         {
@@ -348,8 +366,10 @@ A door model with nodes named for animation compatibility:
           "position": {"x": -0.5, "y": 0.0, "z": 0.0},
           "shape": {
             "type": "box",
-            "size": {"x": 13, "y": 30, "z": 2},
-            "offset": {"x": 0, "y": 1, "z": -1}
+            "offset": {"x": 0, "y": 1, "z": -1},
+            "settings": {
+              "size": {"x": 13, "y": 30, "z": 2}
+            }
           }
         }
       ]
@@ -419,7 +439,7 @@ Model paths are relative to `Assets/Common/` and include the `.blockymodel` exte
 
 5. **Consider LOD settings** - Use `"lod": "auto"` for most models; only disable with `"lod": "off"` if auto-LOD causes issues
 
-6. **Size in pixels** - Remember that shape sizes are in pixels (16 pixels = 1 block), while positions are in block units
+6. **Units in pixels** - Both sizes and positions are in pixels (16 pixels = 1 block unit)
 
 7. **Pivot placement** - Position offsets in shapes determine where the pivot point is - this affects how the shape rotates
 
